@@ -395,6 +395,7 @@ const AtelierPlinth: React.FC<{ isDark: boolean; visible: boolean }> = ({ isDark
 export const AtelierViewer: React.FC = () => {
   const activeSpecimenId = useAnatomyStore((s) => s.activeSpecimenId);
   const autoRotate = useAnatomyStore((s) => s.autoRotate);
+  const autoRotateSpeed = useAnatomyStore((s) => s.autoRotateSpeed);
   const toggleAutoRotate = useAnatomyStore((s) => s.toggleAutoRotate);
   const language = useAnatomyStore((s) => s.language);
   const atelierTheme = useAnatomyStore((s) => s.atelierTheme);
@@ -592,9 +593,10 @@ export const AtelierViewer: React.FC = () => {
           <OrbitControls
             ref={controlsRef}
             autoRotate={autoRotate}
-            autoRotateSpeed={1.2}
+            autoRotateSpeed={autoRotateSpeed === 'slow' ? 0.75 : autoRotateSpeed === 'fast' ? 2.4 : 1.2}
             enableDamping
-            dampingFactor={0.06}
+            dampingFactor={0.08}
+            rotateSpeed={0.85}
             minDistance={0.6}
             maxDistance={6.0}
             target={[0, 0, 0]}

@@ -41,6 +41,27 @@ export function App() {
     fetchInitialData();
     checkAuth();
 
+    // Initialize and sync route with browser URL
+    const pathname = window.location.pathname.toLowerCase();
+    if (pathname === '/' || pathname === '') {
+      window.history.replaceState({ viewMode: 'full-body' }, '', '/toanthan');
+    }
+
+    const handlePopState = () => {
+      const currentPath = window.location.pathname.toLowerCase();
+      if (currentPath.includes('tieubansau') || currentPath.includes('tieu-ban-sau') || currentPath.includes('specimen')) {
+        useAnatomyStore.setState({ viewMode: 'specimen' });
+        const match = currentPath.match(/\/(?:tieubansau|tieu-ban-sau|specimens?)\/([a-z0-9_-]+)/);
+        if (match && match[1]) {
+          useAnatomyStore.setState({ activeSpecimenId: match[1] });
+        }
+      } else {
+        useAnatomyStore.setState({ viewMode: 'full-body' });
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
     // Global keyboard listener for search (Ctrl+K) and Escape
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
@@ -52,7 +73,10 @@ export function App() {
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('popstate', handlePopState);
+    };
   }, [fetchInitialData, checkAuth, setActiveModal]);
 
   return (

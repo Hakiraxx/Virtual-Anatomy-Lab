@@ -142,6 +142,85 @@ interface AnatomyState {
   setQuizListener: (targetOrganId: string | null, onSelect?: (organId: string) => void) => void;
 }
 
+const getInitialViewMode = (): 'full-body' | 'specimen' => {
+  if (typeof window === 'undefined') return 'full-body';
+  const path = window.location.pathname.toLowerCase();
+  if (path.includes('tieubansau') || path.includes('tieu-ban-sau') || path.includes('specimen')) {
+    return 'specimen';
+  }
+  return 'full-body';
+};
+
+const getInitialSpecimenId = (): string => {
+  if (typeof window === 'undefined') return 'heart';
+  const path = window.location.pathname.toLowerCase();
+  const match = path.match(/\/(?:tieubansau|tieu-ban-sau|specimens?)\/([a-z0-9_-]+)/);
+  if (match && match[1]) {
+    return match[1];
+  }
+  return 'heart';
+};
+
+let transitionRafId: number | null = null;
+
+function crossfadeLayers(
+  targetVisibilities: Record<number, boolean>,
+  targetOpacities: Record<number, number>,
+  set: any,
+  get: any,
+  duration = 380
+) {
+  if (typeof window === 'undefined') {
+    set({ layerVisibility: targetVisibilities, layerOpacity: targetOpacities });
+    return;
+  }
+
+  if (transitionRafId !== null) {
+    cancelAnimationFrame(transitionRafId);
+    transitionRafId = null;
+  }
+
+  const currentOpacities = { ...get().layerOpacity };
+  const currentVisibilities = { ...get().layerVisibility };
+
+  // Make all incoming or existing layers visible immediately so they can crossfade smoothly
+  const mergedVisibility: Record<number, boolean> = {};
+  for (let i = 1; i <= 8; i++) {
+    mergedVisibility[i] = Boolean(currentVisibilities[i] || targetVisibilities[i]);
+  }
+  set({ layerVisibility: mergedVisibility });
+
+  const startTime = performance.now();
+
+  const animate = (now: number) => {
+    const elapsed = now - startTime;
+    const progress = Math.min(1.0, elapsed / duration);
+    // Smooth sinusoidal easing
+    const ease = 0.5 - 0.5 * Math.cos(progress * Math.PI);
+
+    const nextOpacities: Record<number, number> = {};
+    for (let i = 1; i <= 8; i++) {
+      const from = currentOpacities[i] ?? 0;
+      const to = targetOpacities[i] ?? 0;
+      nextOpacities[i] = Number((from + (to - from) * ease).toFixed(3));
+    }
+
+    set({ layerOpacity: nextOpacities });
+
+    if (progress < 1.0) {
+      transitionRafId = requestAnimationFrame(animate);
+    } else {
+      transitionRafId = null;
+      set({
+        layerVisibility: targetVisibilities,
+        layerOpacity: targetOpacities
+      });
+    }
+  };
+
+  transitionRafId = requestAnimationFrame(animate);
+}
+
 export const useAnatomyStore = create<AnatomyState>((set, get) => ({
   systems: [],
   organs: [],
@@ -170,7 +249,7 @@ export const useAnatomyStore = create<AnatomyState>((set, get) => ({
   quizTargetOrganId: null,
 
   // Atelier defaults
-  activeSpecimenId: 'heart',
+  activeSpecimenId: getInitialSpecimenId(),
   autoRotate: false,
   language: 'vi',
   atelierTheme: 'light', // Matches xuonggiaiphau.com default ivory aesthetic
@@ -213,8 +292,16 @@ export const useAnatomyStore = create<AnatomyState>((set, get) => ({
   gender: 'male',
   setGender: (gender) => set({ gender }),
 
-  viewMode: 'full-body',
-  setViewMode: (viewMode) => set({ viewMode }),
+  viewMode: getInitialViewMode(),
+  setViewMode: (viewMode) => {
+    set({ viewMode });
+    if (typeof window !== 'undefined') {
+      const targetPath = viewMode === 'specimen' ? '/tieubansau' : '/toanthan';
+      if (!window.location.pathname.includes(targetPath)) {
+        window.history.pushState({ viewMode }, '', targetPath);
+      }
+    }
+  },
 
   // 8-Layer Dissection Engine — Default to clean independent whole body
   layerVisibility: {
@@ -248,43 +335,31 @@ export const useAnatomyStore = create<AnatomyState>((set, get) => ({
 
   visualizationMode: 'default',
   setVisualizationMode: (mode) => {
+    let targetVis: Record<number, boolean>;
+    let targetOp: Record<number, number>;
+
     if (mode === 'skeleton') {
-      set({
-        visualizationMode: 'skeleton',
-        layerVisibility: { 1: false, 2: false, 3: false, 4: true, 5: false, 6: false, 7: false, 8: false },
-        layerOpacity: { 1: 0, 2: 0, 3: 0, 4: 1.0, 5: 0, 6: 0, 7: 0, 8: 0 }
-      });
+      targetVis = { 1: false, 2: false, 3: false, 4: true, 5: false, 6: false, 7: false, 8: false };
+      targetOp = { 1: 0, 2: 0, 3: 0, 4: 1.0, 5: 0, 6: 0, 7: 0, 8: 0 };
     } else if (mode === 'muscles') {
-      set({
-        visualizationMode: 'muscles',
-        layerVisibility: { 1: false, 2: false, 3: true, 4: false, 5: false, 6: false, 7: false, 8: false },
-        layerOpacity: { 1: 0, 2: 0, 3: 1.0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 }
-      });
+      targetVis = { 1: false, 2: false, 3: true, 4: false, 5: false, 6: false, 7: false, 8: false };
+      targetOp = { 1: 0, 2: 0, 3: 1.0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 };
     } else if (mode === 'organs') {
-      set({
-        visualizationMode: 'organs',
-        layerVisibility: { 1: true, 2: false, 3: false, 4: false, 5: true, 6: false, 7: false, 8: true },
-        layerOpacity: { 1: 0.08, 2: 0, 3: 0, 4: 0, 5: 1.0, 6: 0, 7: 0, 8: 1.0 }
-      });
+      targetVis = { 1: true, 2: false, 3: false, 4: false, 5: true, 6: false, 7: false, 8: true };
+      targetOp = { 1: 0.08, 2: 0, 3: 0, 4: 0, 5: 1.0, 6: 0, 7: 0, 8: 1.0 };
     } else if (mode === 'vascular') {
-      set({
-        visualizationMode: 'vascular',
-        layerVisibility: { 1: true, 2: false, 3: false, 4: true, 5: false, 6: true, 7: false, 8: false },
-        layerOpacity: { 1: 0.12, 2: 0, 3: 0, 4: 0.20, 5: 0, 6: 1.0, 7: 0, 8: 0 }
-      });
+      targetVis = { 1: true, 2: false, 3: false, 4: true, 5: false, 6: true, 7: false, 8: false };
+      targetOp = { 1: 0.10, 2: 0, 3: 0, 4: 0.15, 5: 0, 6: 1.0, 7: 0, 8: 0 };
     } else if (mode === 'nervous') {
-      set({
-        visualizationMode: 'nervous',
-        layerVisibility: { 1: true, 2: false, 3: false, 4: true, 5: false, 6: false, 7: true, 8: false },
-        layerOpacity: { 1: 0.12, 2: 0, 3: 0, 4: 0.20, 5: 0, 6: 0, 7: 1.0, 8: 0 }
-      });
+      targetVis = { 1: true, 2: false, 3: false, 4: true, 5: false, 6: false, 7: true, 8: false };
+      targetOp = { 1: 0.10, 2: 0, 3: 0, 4: 0.15, 5: 0, 6: 0, 7: 1.0, 8: 0 };
     } else {
-      set({
-        visualizationMode: 'default',
-        layerVisibility: { 1: true, 2: false, 3: false, 4: false, 5: false, 6: false, 7: false, 8: false },
-        layerOpacity: { 1: 0.98, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 }
-      });
+      targetVis = { 1: true, 2: false, 3: false, 4: false, 5: false, 6: false, 7: false, 8: false };
+      targetOp = { 1: 0.98, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 };
     }
+
+    set({ visualizationMode: mode, selectedStructureId: null });
+    crossfadeLayers(targetVis, targetOp, set, get);
   },
 
   selectedStructureId: null,
@@ -503,7 +578,15 @@ export const useAnatomyStore = create<AnatomyState>((set, get) => ({
   setCameraAnglePreset: (angle) => set({ cameraAnglePreset: angle }),
   updateCurrentCamera: (pos, target) => set({ currentCameraPosition: pos, currentCameraTarget: target }),
 
-  setActiveSpecimen: (id) => set({ activeSpecimenId: id, selectedOrganId: id }),
+  setActiveSpecimen: (id) => {
+    set({ activeSpecimenId: id, selectedOrganId: id });
+    if (typeof window !== 'undefined') {
+      const targetPath = `/tieubansau/${id}`;
+      if (window.location.pathname !== targetPath) {
+        window.history.pushState({ viewMode: 'specimen', specimenId: id }, '', targetPath);
+      }
+    }
+  },
   toggleAutoRotate: () => set((s) => ({ autoRotate: !s.autoRotate })),
   setLanguage: (lang) => set({ language: lang }),
   setAtelierTheme: (theme) => set({ atelierTheme: theme }),
