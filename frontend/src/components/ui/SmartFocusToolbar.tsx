@@ -57,7 +57,7 @@ export const SmartFocusToolbar: React.FC = () => {
   ];
 
   return (
-    <div className="absolute bottom-12 sm:bottom-14 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 select-none pointer-events-auto max-w-[95vw]">
+    <div className="absolute bottom-3 sm:bottom-14 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 select-none pointer-events-auto max-w-[95vw]">
       {/* 1. Pop-up Panel: Exploded View Slider */}
       {showExplodeSlider && (
         <div

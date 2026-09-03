@@ -69,23 +69,21 @@ const NormalizedOrganMesh: React.FC<NormalizedOrganProps> = ({
     );
   }, [isSelected, layerVisible, layerOpacity, structureId, selectedId, isIsolated]);
 
-  // Apply PBR materials and clipping via centralized manager
-  useMemo(() => {
-    normalizedGroup.traverse((child: any) => {
-      if (child.isMesh) {
-        child.castShadow = true;
-        child.receiveShadow = true;
-        AnatomyVisibilityManager.applyAnatomicalMaterial(
-          child,
-          computedOpacity,
-          isSelected,
-          clippingPlanes
-        );
-      }
-    });
-  }, [normalizedGroup, computedOpacity, isSelected, clippingPlanes]);
-
   if (computedOpacity <= 0) return null;
+
+  // Apply PBR materials and clipping via centralized manager for visible meshes only
+  normalizedGroup.traverse((child: any) => {
+    if (child.isMesh) {
+      child.castShadow = true;
+      child.receiveShadow = true;
+      AnatomyVisibilityManager.applyAnatomicalMaterial(
+        child,
+        computedOpacity,
+        isSelected,
+        clippingPlanes
+      );
+    }
+  });
 
   return (
     <primitive
@@ -117,18 +115,17 @@ const HumanBodySilhouette: React.FC<{
   useMemo(() => {
     normalizedSkin.traverse((child: any) => {
       if (child.isMesh && child.material) {
-        const mat = child.material.clone();
+        const mat = (Array.isArray(child.material) ? child.material[0] : child.material) as THREE.MeshStandardMaterial;
         const isSilhouette = opacity <= 0.1;
         mat.transparent = true;
         mat.opacity = opacity;
         mat.depthWrite = !isSilhouette && opacity > 0.4;
         mat.side = isSilhouette ? THREE.FrontSide : THREE.DoubleSide;
         mat.clippingPlanes = clippingPlanes;
-        // Subtle medical cyan/skin holographic contour
-        mat.color = new THREE.Color(isSilhouette ? '#b0cbe8' : '#c5d6e8');
+        mat.color.set(isSilhouette ? '#b0cbe8' : '#c5d6e8');
         mat.roughness = 0.6;
         mat.metalness = 0.05;
-        child.material = mat;
+        mat.needsUpdate = true;
       }
     });
   }, [normalizedSkin, opacity, clippingPlanes]);
@@ -164,7 +161,7 @@ const MuscularBodyLayer: React.FC<{
       if (child.isMesh && child.material) {
         child.castShadow = true;
         child.receiveShadow = true;
-        const mat = child.material.clone();
+        const mat = (Array.isArray(child.material) ? child.material[0] : child.material) as THREE.MeshStandardMaterial;
         const isSolid = opacity >= 0.95;
         mat.transparent = !isSolid;
         mat.opacity = opacity;
@@ -176,16 +173,18 @@ const MuscularBodyLayer: React.FC<{
         mat.metalness = 0.05;
 
         if (isSelected) {
-          mat.color = new THREE.Color('#b91c1c'); // Active muscular crimson
-          mat.emissive = new THREE.Color('#f59e0b');
+          mat.color.set('#b91c1c'); // Active muscular crimson
+          if (!mat.emissive) mat.emissive = new THREE.Color('#f59e0b');
+          else mat.emissive.set('#f59e0b');
           mat.emissiveIntensity = 0.5;
         } else {
-          mat.color = new THREE.Color('#881337'); // Deep striated anatomical muscle red
-          mat.emissive = new THREE.Color('#000000');
-          mat.emissiveIntensity = 0.0;
+          mat.color.set('#881337'); // Deep striated anatomical muscle red
+          if (mat.emissive) {
+            mat.emissive.set('#000000');
+            mat.emissiveIntensity = 0.0;
+          }
         }
-
-        child.material = mat;
+        mat.needsUpdate = true;
       }
     });
   }, [normalizedMuscle, opacity, isSelected, clippingPlanes]);
@@ -342,8 +341,22 @@ export const FullBodyViewer: React.FC = () => {
           </button>
 
           <button
+            onClick={handleRestoreBody}
+            className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold shadow-md backdrop-blur-md transition-all cursor-pointer ${
+              isDark
+                ? 'bg-slate-900/90 border border-slate-800 text-slate-300 hover:text-white'
+                : 'bg-white/90 border border-[#e7ded3] text-slate-700 hover:text-black'
+            }`}
+            title="Khôi phục góc nhìn toàn thân"
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-amber-600" />
+            <span className="hidden xl:inline">{isVi ? 'Khôi phục' : 'Restore'}</span>
+          </button>
+
+          {/* 8 Lớp — Hidden on mobile to prevent overlapping mode switcher */}
+          <button
             onClick={() => setShowLayerPanel(!showLayerPanel)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold shadow-md backdrop-blur-md transition-all cursor-pointer ${
+            className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold shadow-md backdrop-blur-md transition-all cursor-pointer ${
               showLayerPanel
                 ? 'bg-amber-600 text-white shadow-amber-500/20'
                 : isDark
@@ -356,22 +369,10 @@ export const FullBodyViewer: React.FC = () => {
             <span className="hidden xl:inline">{isVi ? '8 Lớp' : 'Layers'}</span>
           </button>
 
-          <button
-            onClick={handleRestoreBody}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold shadow-md backdrop-blur-md transition-all cursor-pointer ${
-              isDark
-                ? 'bg-slate-900/90 border border-slate-800 text-slate-300 hover:text-white'
-                : 'bg-white/90 border border-[#e7ded3] text-slate-700 hover:text-black'
-            }`}
-            title="Khôi phục góc nhìn toàn thân"
-          >
-            <RotateCcw className="w-3.5 h-3.5 text-amber-600" />
-            <span className="hidden xl:inline">{isVi ? 'Khôi phục' : 'Restore'}</span>
-          </button>
-
+          {/* Mốc giải phẫu — Hidden on small screens */}
           <button
             onClick={() => setShowAlignmentMode(!showAlignmentMode)}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold shadow-md backdrop-blur-md transition-all cursor-pointer ${
+            className={`hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold shadow-md backdrop-blur-md transition-all cursor-pointer ${
               showAlignmentMode
                 ? 'bg-sky-600 text-white shadow-sky-500/20'
                 : isDark
@@ -384,9 +385,10 @@ export const FullBodyViewer: React.FC = () => {
             <span className="hidden xl:inline">{isVi ? 'Mốc' : 'Landmarks'}</span>
           </button>
 
+          {/* Inspector — Hidden on small screens */}
           <button
             onClick={() => setShowInspector(!showInspector)}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold shadow-md backdrop-blur-md transition-all cursor-pointer ${
+            className={`hidden xl:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold shadow-md backdrop-blur-md transition-all cursor-pointer ${
               showInspector
                 ? 'bg-emerald-600 text-white shadow-emerald-500/20'
                 : isDark
@@ -396,12 +398,12 @@ export const FullBodyViewer: React.FC = () => {
             title="Mở bảng thanh tra node 3D"
           >
             <Box className="w-3.5 h-3.5 text-emerald-500" />
-            <span className="hidden xl:inline">Inspector</span>
+            <span>Inspector</span>
           </button>
         </div>
 
         {/* Right: Primary Visualization Mode Switcher with horizontal swipe scroll on mobile */}
-        <div className="flex items-center gap-0.5 p-1 rounded-full shadow-lg backdrop-blur-md bg-white/95 dark:bg-slate-900/95 border border-[#e7ded3] dark:border-slate-800 text-xs select-none pointer-events-auto overflow-x-auto max-w-[52vw] sm:max-w-none scrollbar-none flex-nowrap">
+        <div className="flex items-center gap-0.5 p-0.5 sm:p-1 rounded-full shadow-lg backdrop-blur-md bg-white/95 dark:bg-slate-900/95 border border-[#e7ded3] dark:border-slate-800 text-xs select-none pointer-events-auto overflow-x-auto max-w-[62vw] sm:max-w-none scrollbar-none flex-nowrap shrink-0">
           {(
             [
               { id: 'default', labelVi: 'Toàn thân', labelEn: 'Whole' },
@@ -480,12 +482,14 @@ export const FullBodyViewer: React.FC = () => {
       {/* 3D Canvas Viewport */}
       <div className="flex-1 w-full h-full cursor-grab active:cursor-grabbing">
         <Canvas
-          shadows
+          shadows={typeof window !== 'undefined' ? window.innerWidth >= 768 : true}
+          dpr={[1, typeof window !== 'undefined' && window.innerWidth < 768 ? 1.5 : 2]}
           camera={{ position: [0, 0.95, 3.1], fov: 38 }}
           gl={{
-            antialias: true,
+            powerPreference: 'high-performance',
+            antialias: typeof window !== 'undefined' ? window.innerWidth >= 768 : true,
             alpha: true,
-            preserveDrawingBuffer: true,
+            preserveDrawingBuffer: false,
             localClippingEnabled: true,
             toneMapping: THREE.ACESFilmicToneMapping,
             toneMappingExposure: 1.15
@@ -497,8 +501,8 @@ export const FullBodyViewer: React.FC = () => {
           <directionalLight
             position={[4, 7, 5]}
             intensity={1.7}
-            castShadow
-            shadow-mapSize={[2048, 2048]}
+            castShadow={typeof window !== 'undefined' ? window.innerWidth >= 768 : true}
+            shadow-mapSize={typeof window !== 'undefined' && window.innerWidth < 768 ? [512, 512] : [1024, 1024]}
           />
           <directionalLight position={[-4, 4, -4]} intensity={0.65} color="#38bdf8" />
           <directionalLight position={[0, -2, 2]} intensity={0.4} color="#f59e0b" />
@@ -899,7 +903,7 @@ export const FullBodyViewer: React.FC = () => {
               {/* LAYER 5: Visceral Organs (Cardiopulmonary, Digestive, Renal) */}
               <NormalizedOrganMesh
                 organKey="heart"
-                modelPath="/models/heart.glb"
+                modelPath="/models/heart-v7.glb"
                 structureId="heart"
                 layerIndex={5}
                 isSelected={selectedStructureId === 'heart'}
@@ -1036,7 +1040,7 @@ export const FullBodyViewer: React.FC = () => {
               {layerVisibility[6] && !layerVisibility[5] && (
                 <NormalizedOrganMesh
                   organKey="heart"
-                  modelPath="/models/heart.glb"
+                  modelPath="/models/heart-v7.glb"
                   structureId="heart"
                   layerIndex={6}
                   isSelected={selectedStructureId === 'heart'}
@@ -1473,8 +1477,8 @@ export const FullBodyViewer: React.FC = () => {
       {/* Floating Smart Focus Toolbar */}
       <SmartFocusToolbar />
 
-      {/* Footer Status Bar */}
-      <div className="h-10 border-t flex items-center justify-between px-5 text-xs font-serif z-10 bg-white/75 dark:bg-slate-900/75 border-[#e7ded3] dark:border-slate-800 text-slate-600 dark:text-slate-400">
+      {/* Footer Status Bar — Hidden on mobile to prevent overlapping SmartFocusToolbar */}
+      <div className="hidden md:flex h-10 border-t items-center justify-between px-5 text-xs font-serif z-10 bg-white/75 dark:bg-slate-900/75 border-[#e7ded3] dark:border-slate-800 text-slate-600 dark:text-slate-400">
         <div className="flex items-center gap-2">
           <span className="text-[11px] uppercase tracking-wider text-slate-400 font-mono">
             {isVi ? 'HỆ THỐNG GIẢI PHẪU' : 'ANATOMY SYSTEM'}

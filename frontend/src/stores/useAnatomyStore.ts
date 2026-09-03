@@ -263,8 +263,8 @@ export const useAnatomyStore = create<AnatomyState>((set, get) => ({
     } else if (mode === 'organs') {
       set({
         visualizationMode: 'organs',
-        layerVisibility: { 1: true, 2: false, 3: false, 4: true, 5: true, 6: false, 7: false, 8: true },
-        layerOpacity: { 1: 0.10, 2: 0, 3: 0, 4: 0.18, 5: 1.0, 6: 0, 7: 0, 8: 1.0 }
+        layerVisibility: { 1: true, 2: false, 3: false, 4: false, 5: true, 6: false, 7: false, 8: true },
+        layerOpacity: { 1: 0.08, 2: 0, 3: 0, 4: 0, 5: 1.0, 6: 0, 7: 0, 8: 1.0 }
       });
     } else if (mode === 'vascular') {
       set({
@@ -288,15 +288,42 @@ export const useAnatomyStore = create<AnatomyState>((set, get) => ({
   },
 
   selectedStructureId: null,
-  selectStructure: (id) => set({ selectedStructureId: id, isInfoOpen: Boolean(id) }),
+  selectStructure: (id) =>
+    set((s) => ({
+      selectedStructureId: id,
+      isInfoOpen: Boolean(id),
+      isTreeOpen: Boolean(id) && typeof window !== 'undefined' && window.innerWidth < 1024 ? false : s.isTreeOpen
+    })),
 
   isTreeOpen: typeof window !== 'undefined' ? window.innerWidth >= 1280 : true,
-  toggleTreeOpen: () => set((s) => ({ isTreeOpen: !s.isTreeOpen })),
-  setIsTreeOpen: (open) => set({ isTreeOpen: open }),
+  toggleTreeOpen: () =>
+    set((s) => {
+      const next = !s.isTreeOpen;
+      return {
+        isTreeOpen: next,
+        isInfoOpen: next && typeof window !== 'undefined' && window.innerWidth < 1024 ? false : s.isInfoOpen
+      };
+    }),
+  setIsTreeOpen: (open) =>
+    set((s) => ({
+      isTreeOpen: open,
+      isInfoOpen: open && typeof window !== 'undefined' && window.innerWidth < 1024 ? false : s.isInfoOpen
+    })),
 
   isInfoOpen: typeof window !== 'undefined' ? window.innerWidth >= 1440 : false,
-  toggleInfoOpen: () => set((s) => ({ isInfoOpen: !s.isInfoOpen })),
-  setIsInfoOpen: (open) => set({ isInfoOpen: open }),
+  toggleInfoOpen: () =>
+    set((s) => {
+      const next = !s.isInfoOpen;
+      return {
+        isInfoOpen: next,
+        isTreeOpen: next && typeof window !== 'undefined' && window.innerWidth < 1024 ? false : s.isTreeOpen
+      };
+    }),
+  setIsInfoOpen: (open) =>
+    set((s) => ({
+      isInfoOpen: open,
+      isTreeOpen: open && typeof window !== 'undefined' && window.innerWidth < 1024 ? false : s.isTreeOpen
+    })),
 
   toggleLayers: () => set((s) => ({ isLayersActive: !s.isLayersActive })),
 

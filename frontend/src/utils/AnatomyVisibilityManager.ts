@@ -128,7 +128,7 @@ export class AnatomyVisibilityManager {
     clippingPlanes: THREE.Plane[]
   ): void {
     if (!mesh.material) return;
-    const mat = (mesh.material as THREE.Material).clone() as THREE.MeshStandardMaterial;
+    const mat = (Array.isArray(mesh.material) ? mesh.material[0] : mesh.material) as THREE.MeshStandardMaterial;
 
     const isSolid = opacity >= 0.98;
     mat.transparent = !isSolid;
@@ -139,14 +139,16 @@ export class AnatomyVisibilityManager {
     mat.side = THREE.DoubleSide;
 
     if (isSelected) {
-      mat.emissive = new THREE.Color('#f59e0b');
+      if (!mat.emissive) mat.emissive = new THREE.Color('#f59e0b');
+      else mat.emissive.set('#f59e0b');
       mat.emissiveIntensity = 0.55;
     } else {
-      mat.emissive = new THREE.Color('#000000');
-      mat.emissiveIntensity = 0.0;
+      if (mat.emissive) {
+        mat.emissive.set('#000000');
+        mat.emissiveIntensity = 0.0;
+      }
     }
-
-    mesh.material = mat;
+    mat.needsUpdate = true;
   }
 
   /**
