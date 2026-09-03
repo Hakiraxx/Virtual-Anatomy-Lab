@@ -12,7 +12,7 @@ export const ViewModeSwitcher: React.FC = () => {
 
   return (
     <div
-      className={`hidden sm:inline-flex items-center p-0.5 rounded-full border shadow-sm select-none transition-colors ${
+      className={`inline-flex items-center p-0.5 rounded-full border shadow-sm select-none transition-colors ${
         isDark
           ? 'bg-slate-900/90 border-slate-800 text-slate-300'
           : 'bg-[#ede3d5] border-[#dfd4c4] text-[#28231d]'
