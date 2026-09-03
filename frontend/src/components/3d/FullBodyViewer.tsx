@@ -248,6 +248,24 @@ export const FullBodyViewer: React.FC = () => {
     return planes;
   }, [crossSection]);
 
+  // Dynamic Vessel Network Opacity (softly dims when non-vascular organ is focused)
+  const vesselNetworkOpacity = useMemo(() => {
+    const base = layerOpacity[6] ?? 1.0;
+    if (selectedStructureId) {
+      if (
+        selectedStructureId.includes('vessel') ||
+        selectedStructureId.includes('artery') ||
+        selectedStructureId.includes('vein') ||
+        selectedStructureId.includes('aorta') ||
+        selectedStructureId === 'heart'
+      ) {
+        return base;
+      }
+      return Math.min(0.20, base);
+    }
+    return base;
+  }, [selectedStructureId, layerOpacity]);
+
   // Selection & Camera glide using mathematical FOV framing (Section 10 & 11)
   const handleSelectStructure = (structureId: string, worldCenter: [number, number, number]) => {
     selectStructure(structureId);
@@ -1034,7 +1052,7 @@ export const FullBodyViewer: React.FC = () => {
 
               {/* LAYER 6: Cardiovascular System & Full-Body Angiology Network */}
               {layerVisibility[6] && (
-                <ConnectedVesselsNetwork opacity={layerOpacity[6] ?? 1.0} />
+                <ConnectedVesselsNetwork opacity={vesselNetworkOpacity} />
               )}
               {/* Cardiac Pump Central Anchor when in Vascular Mode */}
               {layerVisibility[6] && !layerVisibility[5] && (
