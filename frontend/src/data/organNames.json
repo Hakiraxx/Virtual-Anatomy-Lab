@@ -1,0 +1,238 @@
+{
+  "heart": {
+    "nameVi": "Tim",
+    "nameEn": "Heart"
+  },
+  "brain": {
+    "nameVi": "Não",
+    "nameEn": "Brain"
+  },
+  "lungs": {
+    "nameVi": "Phổi",
+    "nameEn": "Lungs"
+  },
+  "liver": {
+    "nameVi": "Gan",
+    "nameEn": "Liver"
+  },
+  "kidneys": {
+    "nameVi": "Thận",
+    "nameEn": "Kidneys"
+  },
+  "eyeball": {
+    "nameVi": "Mắt",
+    "nameEn": "Eye"
+  },
+  "intestine": {
+    "nameVi": "Ruột",
+    "nameEn": "Intestine"
+  },
+  "pancreas": {
+    "nameVi": "Tụy",
+    "nameEn": "Pancreas"
+  },
+  "skin": {
+    "nameVi": "Da",
+    "nameEn": "Skin"
+  },
+  "stomach": {
+    "nameVi": "Dạ dày",
+    "nameEn": "Stomach"
+  },
+  "spleen": {
+    "nameVi": "Lách",
+    "nameEn": "Spleen"
+  },
+  "gallbladder": {
+    "nameVi": "Túi mật",
+    "nameEn": "Gallbladder"
+  },
+  "bladder": {
+    "nameVi": "Bàng quang",
+    "nameEn": "Urinary Bladder"
+  },
+  "thyroid": {
+    "nameVi": "Tuyến giáp",
+    "nameEn": "Thyroid Gland"
+  },
+  "skull": {
+    "nameVi": "Hộp sọ",
+    "nameEn": "Skull"
+  },
+  "spine": {
+    "nameVi": "Cột sống",
+    "nameEn": "Vertebral Column"
+  },
+  "nerves": {
+    "nameVi": "Hệ thần kinh",
+    "nameEn": "Nervous System"
+  },
+  "spinal-cord": {
+    "nameVi": "Tủy sống",
+    "nameEn": "Spinal Cord"
+  },
+  "ear": {
+    "nameVi": "Tai trong",
+    "nameEn": "Inner Ear"
+  },
+  "larynx": {
+    "nameVi": "Thanh quản",
+    "nameEn": "Larynx"
+  },
+  "diaphragm": {
+    "nameVi": "Cơ hoành",
+    "nameEn": "Diaphragm"
+  },
+  "uterus": {
+    "nameVi": "Tử cung",
+    "nameEn": "Uterus"
+  },
+  "prostate": {
+    "nameVi": "Tuyến tiền liệt",
+    "nameEn": "Prostate"
+  },
+  "adrenal": {
+    "nameVi": "Tuyến thượng thận",
+    "nameEn": "Adrenal Glands"
+  },
+  "pelvis": {
+    "nameVi": "Khung chậu",
+    "nameEn": "Pelvis"
+  },
+  "muscle": {
+    "nameVi": "Cơ vân",
+    "nameEn": "Skeletal Muscle"
+  },
+  "ribcage": {
+    "nameVi": "Lồng ngực",
+    "nameEn": "Thoracic Cage"
+  },
+  "knee": {
+    "nameVi": "Khớp gối",
+    "nameEn": "Knee Joint"
+  },
+  "penis": {
+    "nameVi": "Dương vật",
+    "nameEn": "Penis"
+  },
+  "testis": {
+    "nameVi": "Tinh hoàn",
+    "nameEn": "Testis"
+  },
+  "vagina": {
+    "nameVi": "Âm đạo",
+    "nameEn": "Vagina"
+  },
+  "ovary": {
+    "nameVi": "Buồng trứng",
+    "nameEn": "Ovary"
+  },
+  "uterine-tube": {
+    "nameVi": "Vòi tử cung",
+    "nameEn": "Uterine tube"
+  },
+  "breast": {
+    "nameVi": "Tuyến vú",
+    "nameEn": "Breast"
+  },
+  "aortic-arch": {
+    "nameVi": "Quai động mạch chủ",
+    "nameEn": "Aortic arch"
+  },
+  "circle-of-willis": {
+    "nameVi": "Vòng động mạch não",
+    "nameEn": "Cerebral arterial circle"
+  },
+  "coronary-arteries": {
+    "nameVi": "Động mạch vành",
+    "nameEn": "Coronary arteries"
+  },
+  "portal-vein": {
+    "nameVi": "Tĩnh mạch cửa",
+    "nameEn": "Hepatic portal vein"
+  },
+  "leg-veins": {
+    "nameVi": "Tĩnh mạch chi dưới",
+    "nameEn": "Leg veins"
+  },
+  "brachial-plexus": {
+    "nameVi": "Đám rối cánh tay",
+    "nameEn": "Brachial plexus"
+  },
+  "dentomaxillofacial": {
+    "nameVi": "Răng hàm mặt",
+    "nameEn": "Jaws and Teeth"
+  },
+  "tongue": {
+    "nameVi": "Lưỡi",
+    "nameEn": "Tongue"
+  },
+  "hand": {
+    "nameVi": "Xương bàn tay",
+    "nameEn": "Bones of the Hand"
+  },
+  "oesophagus": {
+    "nameVi": "Thực quản",
+    "nameEn": "Oesophagus"
+  },
+  "appendix": {
+    "nameVi": "Manh tràng và Ruột thừa",
+    "nameEn": "Caecum and Appendix"
+  },
+  "brainstem": {
+    "nameVi": "Thân não",
+    "nameEn": "Brainstem"
+  },
+  "rectum": {
+    "nameVi": "Trực tràng và Ống hậu môn",
+    "nameEn": "Rectum and Anal Canal"
+  },
+  "salivary-glands": {
+    "nameVi": "Tuyến nước bọt",
+    "nameEn": "Salivary Glands"
+  },
+  "shoulder": {
+    "nameVi": "Khớp vai",
+    "nameEn": "Shoulder Joint"
+  },
+  "hip": {
+    "nameVi": "Khớp háng",
+    "nameEn": "Hip Joint"
+  },
+  "foot": {
+    "nameVi": "Xương bàn chân",
+    "nameEn": "Bones of the Foot"
+  },
+  "long-bone": {
+    "nameVi": "Xương dài",
+    "nameEn": "Long Bone"
+  },
+  "gravid-uterus": {
+    "nameVi": "Tử cung đủ tháng",
+    "nameEn": "Uterus at Term"
+  },
+  "cranial-nerves": {
+    "nameVi": "Dây thần kinh sọ",
+    "nameEn": "Cranial Nerves"
+  },
+  "cardiac-conduction": {
+    "nameVi": "Hệ dẫn truyền tim",
+    "nameEn": "Cardiac Conducting System"
+  },
+  "lymph-node": {
+    "nameVi": "Hạch bạch huyết",
+    "nameEn": "Lymph Node"
+  },
+  "lumbosacral-plexus": {
+    "nameVi": "Đám rối thắt lưng cùng",
+    "nameEn": "Lumbosacral Plexus"
+  },
+  "pancreas-sectioned": {
+    "nameVi": "Hệ ống tuỵ",
+    "nameEn": "Pancreatic Duct System"
+  },
+  "pituitary": {
+    "nameVi": "Tuyến yên",
+    "nameEn": "Pituitary Gland"
+  }
+}

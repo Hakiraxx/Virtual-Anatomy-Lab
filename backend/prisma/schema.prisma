@@ -1,0 +1,206 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Role strings: STUDENT, TEACHER, ADMIN
+
+model User {
+  id               String           @id @default(uuid())
+  email            String           @unique
+  password         String
+  name             String
+  role             String           @default("STUDENT")
+  avatar           String?
+  streak           Int              @default(1)
+  studyTimeMinutes Int              @default(0)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  notes            Note[]
+  bookmarks        Bookmark[]
+  quizAttempts     QuizAttempt[]
+  userFlashcards   UserFlashcard[]
+  studyProgresses  StudyProgress[]
+}
+
+model System {
+  id          String         @id
+  name        String
+  nameEn      String
+  nameLatin   String?
+  description String
+  color       String
+  orderIndex  Int            @default(0)
+  icon        String?
+
+  organs      Organ[]
+  lessons     Lesson[]
+  quizzes     QuizQuestion[]
+  flashcards  Flashcard[]
+}
+
+model Organ {
+  id              String             @id
+  systemId        String
+  system          System             @relation(fields: [systemId], references: [id], onDelete: Cascade)
+  name            String
+  nameEn          String
+  nameLatin       String
+  description     String
+  function        String
+  location        String
+  clinicalNotes   String?
+  source          String             @default("Gray's Anatomy 42nd Ed., Netter's Atlas")
+  reviewStatus    String             @default("VERIFIED")
+  modelUrl        String?
+  layerDepth      Float              @default(0.5)
+  positionX       Float              @default(0)
+  positionY       Float              @default(0)
+  positionZ       Float              @default(0)
+  scale           Float              @default(1.0)
+  color           String             @default("#e11d48")
+
+  structures      Structure[]
+  outgoingRel     OrganRelationship[] @relation("RelFrom")
+  incomingRel     OrganRelationship[] @relation("RelTo")
+  notes           Note[]
+  bookmarks       Bookmark[]
+  quizQuestions   QuizQuestion[]
+  flashcards      Flashcard[]
+}
+
+model Structure {
+  id          String   @id
+  organId     String
+  organ       Organ    @relation(fields: [organId], references: [id], onDelete: Cascade)
+  name        String
+  nameEn      String
+  nameLatin   String?
+  description String
+  function    String?
+  localPosX   Float    @default(0)
+  localPosY   Float    @default(0)
+  localPosZ   Float    @default(0)
+}
+
+model OrganRelationship {
+  id          String   @id @default(uuid())
+  fromOrganId String
+  toOrganId   String
+  fromOrgan   Organ    @relation("RelFrom", fields: [fromOrganId], references: [id], onDelete: Cascade)
+  toOrgan     Organ    @relation("RelTo", fields: [toOrganId], references: [id], onDelete: Cascade)
+  relationType String
+  description String
+}
+
+model Lesson {
+  id          String          @id
+  systemId    String
+  system      System          @relation(fields: [systemId], references: [id], onDelete: Cascade)
+  title       String
+  titleEn     String
+  description String
+  orderIndex  Int             @default(0)
+  isPublished Boolean         @default(true)
+
+  sections    LessonSection[]
+}
+
+model LessonSection {
+  id           String   @id
+  lessonId     String
+  lesson       Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  title        String
+  content      String
+  organFocusId String?
+  orderIndex   Int      @default(0)
+}
+
+model QuizQuestion {
+  id            String   @id @default(uuid())
+  systemId      String
+  system        System   @relation(fields: [systemId], references: [id], onDelete: Cascade)
+  organId       String?
+  organ         Organ?   @relation(fields: [organId], references: [id], onDelete: SetNull)
+  question      String
+  type          String   @default("MULTIPLE_CHOICE") // MULTIPLE_CHOICE, IDENTIFY_ORGAN
+  options       String   // JSON string array of options
+  correctAnswer String
+  explanation   String
+  difficulty    String   @default("MEDIUM") // EASY, MEDIUM, HARD
+}
+
+model QuizAttempt {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score          Int
+  totalQuestions Int
+  completedAt    DateTime @default(now())
+}
+
+model Flashcard {
+  id         String          @id @default(uuid())
+  systemId   String
+  system     System          @relation(fields: [systemId], references: [id], onDelete: Cascade)
+  organId    String?
+  organ      Organ?          @relation(fields: [organId], references: [id], onDelete: SetNull)
+  front      String
+  back       String
+  latinTerm  String?
+  hint       String?
+  difficulty String          @default("MEDIUM")
+
+  userCards  UserFlashcard[]
+}
+
+model UserFlashcard {
+  id             String    @id @default(uuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flashcardId    String
+  flashcard      Flashcard @relation(fields: [flashcardId], references: [id], onDelete: Cascade)
+  box            Int       @default(1)
+  nextReviewDate DateTime  @default(now())
+  easeFactor     Float     @default(2.5)
+}
+
+model Note {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organId   String
+  organ     Organ    @relation(fields: [organId], references: [id], onDelete: Cascade)
+  title     String
+  content   String
+  isPinned  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Bookmark {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organId   String
+  organ     Organ    @relation(fields: [organId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, organId])
+}
+
+model StudyProgress {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  systemId        String
+  progressPercent Float    @default(0)
+  lastAccessed    DateTime @default(now())
+
+  @@unique([userId, systemId])
+}

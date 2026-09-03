@@ -1,0 +1,258 @@
+[
+  {
+    "file": "adrenal.glb",
+    "sizeKB": "1137.1"
+  },
+  {
+    "file": "anatomy_full.glb",
+    "sizeKB": "35467.9"
+  },
+  {
+    "file": "aortic-arch.glb",
+    "sizeKB": "1052.2"
+  },
+  {
+    "file": "appendix.glb",
+    "sizeKB": "1295.6"
+  },
+  {
+    "file": "bladder.glb",
+    "sizeKB": "1069.5"
+  },
+  {
+    "file": "body.glb",
+    "sizeKB": "1662.5"
+  },
+  {
+    "file": "brachial-plexus.glb",
+    "sizeKB": "1270.8"
+  },
+  {
+    "file": "brain.glb",
+    "sizeKB": "6441.9"
+  },
+  {
+    "file": "brainstem.glb",
+    "sizeKB": "1156.9"
+  },
+  {
+    "file": "breast.glb",
+    "sizeKB": "1917.9"
+  },
+  {
+    "file": "cardiac-conduction.glb",
+    "sizeKB": "1505.2"
+  },
+  {
+    "file": "circle-of-willis.glb",
+    "sizeKB": "985.0"
+  },
+  {
+    "file": "coronary-arteries.glb",
+    "sizeKB": "1498.1"
+  },
+  {
+    "file": "cranial-nerves.glb",
+    "sizeKB": "1536.8"
+  },
+  {
+    "file": "dentomaxillofacial.glb",
+    "sizeKB": "1299.8"
+  },
+  {
+    "file": "diaphragm.glb",
+    "sizeKB": "1056.5"
+  },
+  {
+    "file": "ear.glb",
+    "sizeKB": "1104.1"
+  },
+  {
+    "file": "eyeball.glb",
+    "sizeKB": "872.8"
+  },
+  {
+    "file": "foot.glb",
+    "sizeKB": "1265.6"
+  },
+  {
+    "file": "gallbladder.glb",
+    "sizeKB": "1062.1"
+  },
+  {
+    "file": "gravid-uterus.glb",
+    "sizeKB": "1571.3"
+  },
+  {
+    "file": "hand.glb",
+    "sizeKB": "1339.2"
+  },
+  {
+    "file": "heart-v7.glb",
+    "sizeKB": "1253.2"
+  },
+  {
+    "file": "heart.glb",
+    "sizeKB": "7378.4"
+  },
+  {
+    "file": "hip.glb",
+    "sizeKB": "1515.3"
+  },
+  {
+    "file": "intestine.glb",
+    "sizeKB": "648.1"
+  },
+  {
+    "file": "kidney.glb",
+    "sizeKB": "7889.2"
+  },
+  {
+    "file": "kidneys.glb",
+    "sizeKB": "846.7"
+  },
+  {
+    "file": "knee.glb",
+    "sizeKB": "1036.7"
+  },
+  {
+    "file": "larynx.glb",
+    "sizeKB": "1008.0"
+  },
+  {
+    "file": "leg-veins.glb",
+    "sizeKB": "1349.0"
+  },
+  {
+    "file": "liver.glb",
+    "sizeKB": "12220.6"
+  },
+  {
+    "file": "long-bone.glb",
+    "sizeKB": "1336.2"
+  },
+  {
+    "file": "lumbosacral-plexus.glb",
+    "sizeKB": "1047.9"
+  },
+  {
+    "file": "lung.glb",
+    "sizeKB": "16745.5"
+  },
+  {
+    "file": "lungs.glb",
+    "sizeKB": "1188.3"
+  },
+  {
+    "file": "lymph-node.glb",
+    "sizeKB": "1332.3"
+  },
+  {
+    "file": "muscle.glb",
+    "sizeKB": "1146.9"
+  },
+  {
+    "file": "nerves-md.glb",
+    "sizeKB": "1624.4"
+  },
+  {
+    "file": "oesophagus.glb",
+    "sizeKB": "1155.6"
+  },
+  {
+    "file": "ovary.glb",
+    "sizeKB": "1196.1"
+  },
+  {
+    "file": "pancreas-sectioned.glb",
+    "sizeKB": "1381.1"
+  },
+  {
+    "file": "pancreas.glb",
+    "sizeKB": "1436.2"
+  },
+  {
+    "file": "pelvis.glb",
+    "sizeKB": "1225.8"
+  },
+  {
+    "file": "penis.glb",
+    "sizeKB": "1336.5"
+  },
+  {
+    "file": "pituitary.glb",
+    "sizeKB": "984.5"
+  },
+  {
+    "file": "portal-vein.glb",
+    "sizeKB": "1186.9"
+  },
+  {
+    "file": "prostate.glb",
+    "sizeKB": "1199.4"
+  },
+  {
+    "file": "rectum.glb",
+    "sizeKB": "1289.3"
+  },
+  {
+    "file": "ribcage.glb",
+    "sizeKB": "1193.1"
+  },
+  {
+    "file": "salivary-glands.glb",
+    "sizeKB": "1068.3"
+  },
+  {
+    "file": "shoulder.glb",
+    "sizeKB": "1275.2"
+  },
+  {
+    "file": "skin.glb",
+    "sizeKB": "1655.3"
+  },
+  {
+    "file": "skull.glb",
+    "sizeKB": "1186.8"
+  },
+  {
+    "file": "spinal-cord.glb",
+    "sizeKB": "1139.1"
+  },
+  {
+    "file": "spine.glb",
+    "sizeKB": "1574.0"
+  },
+  {
+    "file": "spleen.glb",
+    "sizeKB": "1010.3"
+  },
+  {
+    "file": "stomach.glb",
+    "sizeKB": "1523.3"
+  },
+  {
+    "file": "testis.glb",
+    "sizeKB": "1452.2"
+  },
+  {
+    "file": "thyroid.glb",
+    "sizeKB": "1020.9"
+  },
+  {
+    "file": "tongue.glb",
+    "sizeKB": "2052.2"
+  },
+  {
+    "file": "uterine-tube.glb",
+    "sizeKB": "1073.7"
+  },
+  {
+    "file": "uterus.glb",
+    "sizeKB": "1294.2"
+  },
+  {
+    "file": "vagina.glb",
+    "sizeKB": "1180.8"
+  }
+]

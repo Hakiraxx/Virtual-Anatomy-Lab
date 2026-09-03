@@ -1,0 +1,22 @@
+# Node dependencies
+node_modules
+*/node_modules
+**/node_modules
+
+# Build artifacts
+dist
+*/dist
+**/dist
+.system_generated
+
+# Environment & local secret files
+.env
+.env.local
+.env.*.local
+*.log
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+.vscode
+.idea
