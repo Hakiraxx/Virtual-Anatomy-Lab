@@ -713,6 +713,18 @@ export const WISDOM_SURGICAL_DATABASE: WisdomSurgicalData = {
       signEn: 'Root embracing canal',
       oddsRatioRisk: 'OR = 18.0 (Cực kỳ nguy hiểm nếu nhổ bẩy nguyên khối)',
       cbctIndicationVi: 'Chỉ định phẫu thuật cắt thân răng giữ lại chân (Coronectomy) để bảo tồn thần kinh IAN.'
+    },
+    {
+      signVi: 'Đổi hướng / Gập góc chóp chân răng (Deviation of root apex)',
+      signEn: 'Deviation of root apex',
+      oddsRatioRisk: 'OR = 3.2',
+      cbctIndicationVi: 'Chóp răng bị uốn cong đột ngột khi tiếp xúc với vỏ ống thần kinh.'
+    },
+    {
+      signVi: 'Thu hẹp chóp chân răng (Narrowing of root apex)',
+      signEn: 'Narrowing of root apex',
+      oddsRatioRisk: 'OR = 2.9',
+      cbctIndicationVi: 'Chân răng thon nhọn bất thường khi đi xuyên hoặc đè vào thành ống thần kinh.'
     }
   ],
   surgicalSteps: [

@@ -197,6 +197,51 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
 
       {/* Scrollable Tree */}
       <div className="flex-1 overflow-y-auto p-2 space-y-1 text-xs font-sans">
+        {/* SPECIALIZED QUICK NAVIGATION FOR WISDOM SURGERY */}
+        {activeSpecimenMode === 'wisdom_surgery' && (
+          <div className={`p-2.5 rounded-2xl border mb-2.5 ${isDark ? 'bg-amber-950/20 border-amber-500/30' : 'bg-amber-50 border-amber-200'}`}>
+            <div className="flex items-center justify-between gap-1 text-amber-600 dark:text-amber-400 mb-1.5 px-0.5">
+              <span className="font-serif font-bold text-xs flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <span>Tiêu Bản Phẫu Thuật Răng Khôn</span>
+              </span>
+              <span className="text-[8px] font-mono font-bold uppercase px-1 py-0.2 rounded bg-amber-500/20">
+                WISDOM LAB
+              </span>
+            </div>
+            <div className="space-y-0.5">
+              {[
+                { id: 'tooth_48', label: 'Răng 48 (Khôn dưới phải)', type: 'Răng 8' },
+                { id: 'tooth_38', label: 'Răng 38 (Khôn dưới trái)', type: 'Răng 8' },
+                { id: 'bone_mandible', label: 'Xương hàm dưới (Mandible)', type: 'Xương' },
+                { id: 'mandibular_canal', label: 'Ống hàm dưới & IAN', type: 'Ống & TK' },
+                { id: 'nerve_lingual', label: 'Thần kinh Lưỡi (Lingual)', type: 'Thần kinh' },
+                { id: 'mental_foramen', label: 'Lỗ cằm & Thần kinh cằm', type: 'Lỗ sọ' },
+                { id: 'mandibular_foramen', label: 'Lỗ hàm dưới & Gai Spix', type: 'Lỗ sọ' }
+              ].map((item) => {
+                const isSelected = selectedAnatomyId === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    id={`tree_item_${item.id}`}
+                    onClick={() => handleItemSelect(item.id)}
+                    className={`w-full text-left px-2 py-1 rounded-lg text-[11px] flex items-center justify-between transition cursor-pointer ${
+                      isSelected
+                        ? 'bg-amber-600 text-white font-bold shadow-sm'
+                        : isDark
+                        ? 'hover:bg-slate-800 text-slate-200'
+                        : 'hover:bg-white text-slate-800'
+                    }`}
+                  >
+                    <span>{item.label}</span>
+                    <span className="text-[8px] font-mono opacity-70 px-1 py-0.2 rounded bg-black/10 dark:bg-white/10">{item.type}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* SECTION 1: CRANIAL NERVES */}
         <div>
           <button
@@ -683,6 +728,17 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
           {expandedSections.mandible && (
             <div className={`pl-3 border-l mt-1 space-y-0.5 ${isDark ? 'border-slate-800' : 'border-[#e7ded3]'}`}>
               <button
+                id="tree_item_bone_mandible"
+                onClick={() => handleItemSelect('bone_mandible')}
+                className={`w-full text-left px-2 py-0.5 rounded text-[10px] font-medium cursor-pointer ${
+                  selectedAnatomyId === 'bone_mandible'
+                    ? 'bg-amber-600 text-white font-bold'
+                    : 'text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5'
+                }`}
+              >
+                · Xương hàm dưới (Mandible)
+              </button>
+              <button
                 id="tree_item_mandibular_foramen"
                 onClick={() => handleItemSelect('mandibular_foramen')}
                 className={`w-full text-left px-2 py-0.5 rounded text-[10px] font-medium cursor-pointer ${
@@ -697,12 +753,23 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                 id="tree_item_nerve_ian"
                 onClick={() => handleItemSelect('nerve_ian')}
                 className={`w-full text-left px-2 py-0.5 rounded text-[10px] font-medium cursor-pointer ${
-                  selectedAnatomyId === 'nerve_ian'
+                  selectedAnatomyId === 'nerve_ian' || selectedAnatomyId === 'mandibular_canal'
                     ? 'bg-rose-600 text-white font-bold'
                     : 'text-rose-600 dark:text-rose-300 hover:bg-rose-500/10'
                 }`}
               >
-                · Ống hàm dưới & Thần kinh răng dưới
+                · Ống hàm dưới & Thần kinh răng dưới (IAN)
+              </button>
+              <button
+                id="tree_item_nerve_lingual"
+                onClick={() => handleItemSelect('nerve_lingual')}
+                className={`w-full text-left px-2 py-0.5 rounded text-[10px] font-medium cursor-pointer ${
+                  selectedAnatomyId === 'nerve_lingual'
+                    ? 'bg-amber-600 text-white font-bold'
+                    : 'text-amber-600 dark:text-amber-300 hover:bg-amber-500/10'
+                }`}
+              >
+                · Thần kinh Lưỡi (Lingual Nerve)
               </button>
               <button
                 id="tree_item_mental_foramen"
@@ -713,7 +780,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                     : 'text-sky-600 dark:text-sky-300 hover:bg-sky-500/10'
                 }`}
               >
-                · Lỗ cằm & Thần kinh cằm
+                · Lỗ cằm & Thần kinh cằm (Mental)
               </button>
 
               <div className="pt-1.5 text-[9px] font-mono text-slate-400 px-2 uppercase">

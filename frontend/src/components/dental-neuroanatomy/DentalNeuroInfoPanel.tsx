@@ -18,6 +18,7 @@ import {
   X,
   PanelRightClose,
   ChevronRight,
+  ChevronLeft,
   Sparkles,
   CheckCircle2,
   ShieldAlert,
@@ -123,8 +124,14 @@ export const DentalNeuroInfoPanel: React.FC<DentalNeuroInfoPanelProps> = ({
   const wisdomWinterType = useDentalNeuroStore((s) => s.wisdomWinterType);
   const setWisdomWinterType = useDentalNeuroStore((s) => s.setWisdomWinterType);
   const wisdomPellGregoryClass = useDentalNeuroStore((s) => s.wisdomPellGregoryClass);
+  const setWisdomPellGregoryClass = useDentalNeuroStore((s) => s.setWisdomPellGregoryClass);
   const wisdomPellGregoryPos = useDentalNeuroStore((s) => s.wisdomPellGregoryPos);
+  const setWisdomPellGregoryPos = useDentalNeuroStore((s) => s.setWisdomPellGregoryPos);
   const wisdomSurgicalStep = useDentalNeuroStore((s) => s.wisdomSurgicalStep);
+  const setWisdomSurgicalStep = useDentalNeuroStore((s) => s.setWisdomSurgicalStep);
+  const wisdomStudyMode = useDentalNeuroStore((s) => s.wisdomStudyMode);
+  const setWisdomStudyMode = useDentalNeuroStore((s) => s.setWisdomStudyMode);
+  const focusAnatomy = useDentalNeuroStore((s) => s.focusAnatomy);
   const tmjJawState = useDentalNeuroStore((s) => s.tmjJawState);
   const tmjMotionMode = useDentalNeuroStore((s) => s.tmjMotionMode);
   const tmjPathology = useDentalNeuroStore((s) => s.tmjPathology);
@@ -376,14 +383,47 @@ export const DentalNeuroInfoPanel: React.FC<DentalNeuroInfoPanelProps> = ({
     );
   }
 
-  // 3. SPECIMEN MODE: WISDOM SURGERY & NERVE SAFETY DOSSIER
+  // 3. SPECIMEN MODE: WISDOM SURGERY & SURGICAL ANATOMY DOSSIER
   if (activeSpecimenMode === 'wisdom_surgery') {
     const currentWinter =
       WISDOM_SURGICAL_DATABASE.winterTypes.find((w) => w.id === wisdomWinterType) ||
       WISDOM_SURGICAL_DATABASE.winterTypes[0];
+    const currentPellClass =
+      WISDOM_SURGICAL_DATABASE.pellGregory.classes.find((c) => c.id === wisdomPellGregoryClass) ||
+      WISDOM_SURGICAL_DATABASE.pellGregory.classes[1];
+    const currentPellPos =
+      WISDOM_SURGICAL_DATABASE.pellGregory.positions.find((p) => p.id === wisdomPellGregoryPos) ||
+      WISDOM_SURGICAL_DATABASE.pellGregory.positions[1];
     const currentStep =
       WISDOM_SURGICAL_DATABASE.surgicalSteps.find((s) => s.stepNumber === wisdomSurgicalStep) ||
       WISDOM_SURGICAL_DATABASE.surgicalSteps[0];
+
+    // Simulated distance & risk score (DEMO / SIMULATED)
+    let simulatedDistMm = 2.5;
+    if (wisdomWinterType === 'mesioangular') simulatedDistMm = 1.1;
+    else if (wisdomWinterType === 'horizontal') simulatedDistMm = 0.5;
+    else if (wisdomWinterType === 'distoangular') simulatedDistMm = 1.8;
+    else simulatedDistMm = 3.2;
+
+    if (wisdomPellGregoryPos === 'B') simulatedDistMm = Math.max(0.4, Number((simulatedDistMm - 0.7).toFixed(1)));
+    else if (wisdomPellGregoryPos === 'C') simulatedDistMm = Math.max(0.2, Number((simulatedDistMm - 1.4).toFixed(1)));
+
+    let riskLevelText = 'Nguy cơ trung bình';
+    let riskBadgeColor = 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+    let riskProgress = 45;
+    if (simulatedDistMm <= 0.5) {
+      riskLevelText = 'Cực kỳ cao (Chạm ống thần kinh)';
+      riskBadgeColor = 'bg-rose-500/25 text-rose-300 border-rose-500/40';
+      riskProgress = 95;
+    } else if (simulatedDistMm <= 1.2) {
+      riskLevelText = 'Nguy cơ cao (Sát vách ống)';
+      riskBadgeColor = 'bg-rose-500/15 text-rose-400 border-rose-500/30';
+      riskProgress = 75;
+    } else if (simulatedDistMm >= 2.5) {
+      riskLevelText = 'Nguy cơ thấp (An toàn)';
+      riskBadgeColor = 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
+      riskProgress = 20;
+    }
 
     return (
       <aside
@@ -408,83 +448,428 @@ export const DentalNeuroInfoPanel: React.FC<DentalNeuroInfoPanelProps> = ({
               </button>
             )}
           </div>
-          <h2 className="text-base font-serif font-bold text-current mt-1.5 leading-snug">
-            Phẫu Thuật R.{wisdomToothId === 'tooth_48' ? '48 (Hàm dưới phải)' : '38 (Hàm dưới trái)'}
-          </h2>
-          <p className="text-xs font-serif italic text-slate-500 dark:text-slate-400">
-            Winter: {currentWinter.labelVi} • Pell-Gregory: Class {wisdomPellGregoryClass} Vị trí {wisdomPellGregoryPos}
-          </p>
+
+          {/* Tooth Specimen Selector (R.48 vs R.38) */}
+          <div className="mt-2.5 flex items-center justify-between gap-2">
+            <h2 className="text-sm font-serif font-bold text-current leading-tight">
+              Phẫu Thuật R.{wisdomToothId === 'tooth_48' ? '48' : '38'}
+            </h2>
+            <div className="flex rounded-lg p-0.5 bg-black/5 dark:bg-white/5 border border-inherit">
+              <button
+                onClick={() => setWisdomToothId('tooth_48')}
+                className={`px-2 py-0.5 rounded text-[10px] font-bold transition cursor-pointer ${
+                  wisdomToothId === 'tooth_48'
+                    ? 'bg-amber-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-current'
+                }`}
+              >
+                R.48 (Phải)
+              </button>
+              <button
+                onClick={() => setWisdomToothId('tooth_38')}
+                className={`px-2 py-0.5 rounded text-[10px] font-bold transition cursor-pointer ${
+                  wisdomToothId === 'tooth_38'
+                    ? 'bg-amber-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-current'
+                }`}
+              >
+                R.38 (Trái)
+              </button>
+            </div>
+          </div>
+
+          {/* Study vs Simulation Mode Switcher */}
+          <div className="mt-2 flex items-center justify-between gap-2">
+            <span className="text-[10px] font-mono text-slate-400">Chế độ trải nghiệm:</span>
+            <div className="flex rounded-lg p-0.5 bg-black/5 dark:bg-white/5 border border-inherit">
+              <button
+                onClick={() => setWisdomStudyMode('study')}
+                className={`px-2 py-0.5 rounded text-[9px] font-bold transition cursor-pointer ${
+                  wisdomStudyMode === 'study'
+                    ? 'bg-amber-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-current'
+                }`}
+              >
+                Học tập (Study)
+              </button>
+              <button
+                onClick={() => setWisdomStudyMode('simulation')}
+                className={`px-2 py-0.5 rounded text-[9px] font-bold transition cursor-pointer ${
+                  wisdomStudyMode === 'simulation'
+                    ? 'bg-purple-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-current'
+                }`}
+              >
+                Mô phỏng (Sim)
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-3.5 space-y-4 text-xs font-sans">
-          {/* Phân loại & Chiến lược cắt thân */}
-          <div className={`p-3 rounded-2xl border space-y-2 ${isDark ? 'bg-slate-900/40 border-slate-800' : 'bg-white/60 border-[#e7ded3]'}`}>
+          {/* SECTION 1: PHÂN LOẠI LÂM SÀNG (WINTER & PELL-GREGORY) */}
+          <div className={`p-3 rounded-2xl border space-y-3 ${isDark ? 'bg-slate-900/40 border-slate-800' : 'bg-white/60 border-[#e7ded3]'}`}>
             <div className="flex items-center justify-between">
               <span className="font-bold text-xs uppercase tracking-wider text-amber-500">
-                Chiến Lược Phẫu Thuật
+                1. Phân Loại Lâm Sàng
               </span>
-              <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-400">
+              <span className={`px-2 py-0.5 rounded text-[9px] font-bold border ${riskBadgeColor}`}>
                 Độ khó: {currentWinter.surgicalDifficulty}
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 leading-relaxed">{currentWinter.notesVi}</p>
-            <div className="p-2 rounded-lg bg-black/5 dark:bg-white/5 text-[11px] space-y-1">
-              <div className="font-bold text-current">Phương án cắt chia thân (Odontotomy):</div>
-              <p className="text-amber-400 leading-relaxed">{currentWinter.sectioningStrategyVi}</p>
+
+            {/* Winter Classification Buttons */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
+                <span>Phân loại Winter (Góc nghiêng trục răng):</span>
+                <span className="text-amber-400 font-bold">{currentWinter.angleDegrees}° ({currentWinter.frequencyPercent}%)</span>
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                {WISDOM_SURGICAL_DATABASE.winterTypes.map((w) => (
+                  <button
+                    key={w.id}
+                    onClick={() => setWisdomWinterType(w.id as any)}
+                    className={`px-2 py-1.5 rounded-xl text-[10px] font-medium transition cursor-pointer text-left border ${
+                      wisdomWinterType === w.id
+                        ? 'bg-amber-600 text-white border-amber-500 font-bold shadow-sm'
+                        : isDark
+                        ? 'bg-slate-800/60 border-slate-700/60 text-slate-300 hover:bg-slate-800'
+                        : 'bg-white border-[#e0d6c7] text-slate-700 hover:bg-[#f5eee3]'
+                    }`}
+                  >
+                    <div className="truncate">{w.labelVi.split('(')[0].trim()}</div>
+                    <div className="text-[8px] opacity-75 font-serif italic truncate">{w.labelEn}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Pell & Gregory Classification Buttons */}
+            <div className="space-y-1.5 pt-2 border-t border-inherit">
+              <div className="text-[10px] font-mono text-slate-400">
+                Phân loại Pell & Gregory (Cành lên & Mặt phẳng nhai):
+              </div>
+              
+              {/* Ramus Space (Class I, II, III) */}
+              <div className="space-y-1">
+                <div className="text-[9px] font-mono text-slate-500">Tương quan cành lên (Khoảng trống):</div>
+                <div className="grid grid-cols-3 gap-1">
+                  {(['I', 'II', 'III'] as const).map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => setWisdomPellGregoryClass(c)}
+                      className={`py-1 text-center rounded-lg text-[10px] font-bold transition cursor-pointer border ${
+                        wisdomPellGregoryClass === c
+                          ? 'bg-amber-600 text-white border-amber-500 shadow-sm'
+                          : isDark
+                          ? 'bg-slate-800/60 border-slate-700/60 text-slate-400 hover:text-white'
+                          : 'bg-white border-[#e0d6c7] text-slate-600 hover:bg-[#f5eee3]'
+                      }`}
+                    >
+                      Class {c}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[10px] text-slate-400 italic pl-1 leading-snug">{currentPellClass.spaceVi}</p>
+              </div>
+
+              {/* Occlusal Depth (Pos A, B, C) */}
+              <div className="space-y-1 pt-1.5">
+                <div className="text-[9px] font-mono text-slate-500">Độ sâu tương đối mặt phẳng nhai:</div>
+                <div className="grid grid-cols-3 gap-1">
+                  {(['A', 'B', 'C'] as const).map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => setWisdomPellGregoryPos(p)}
+                      className={`py-1 text-center rounded-lg text-[10px] font-bold transition cursor-pointer border ${
+                        wisdomPellGregoryPos === p
+                          ? 'bg-amber-600 text-white border-amber-500 shadow-sm'
+                          : isDark
+                          ? 'bg-slate-800/60 border-slate-700/60 text-slate-400 hover:text-white'
+                          : 'bg-white border-[#e0d6c7] text-slate-600 hover:bg-[#f5eee3]'
+                      }`}
+                    >
+                      Vị trí {p}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[10px] text-slate-400 italic pl-1 leading-snug">{currentPellPos.depthVi}</p>
+              </div>
+            </div>
+
+            {/* Chiến lược cắt thân (Odontotomy) */}
+            <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] space-y-1">
+              <div className="font-bold text-amber-500 flex items-center gap-1">
+                <Scissors className="w-3.5 h-3.5" />
+                <span>Phương án chia cắt thân (Odontotomy):</span>
+              </div>
+              <p className="text-slate-300 dark:text-slate-200 leading-relaxed font-sans">
+                {currentWinter.sectioningStrategyVi}
+              </p>
             </div>
           </div>
 
-          {/* An toàn thần kinh IAN */}
-          <div className="p-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 space-y-2">
-            <div className="font-bold text-xs flex items-center gap-1.5 text-rose-400">
-              <ShieldAlert className="w-3.5 h-3.5" />
-              <span>Đánh Giá Rủi Ro Thần Kinh IAN</span>
+          {/* SECTION 2: TƯƠNG QUAN GIẢI PHẪU QUAN TRỌNG (INTERACTIVE CAMERA FOCUS) */}
+          <div className={`p-3 rounded-2xl border space-y-2.5 ${isDark ? 'bg-slate-900/40 border-slate-800' : 'bg-white/60 border-[#e7ded3]'}`}>
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-xs uppercase tracking-wider text-sky-500">
+                2. Mốc Giải Phẫu Lân Cận
+              </span>
+              <span className="text-[9px] font-mono text-slate-400">Nhấp để xem 3D</span>
             </div>
-            <p className="text-[11px] text-slate-300 leading-relaxed">
-              Tổn thương thần kinh huyệt răng dưới (IAN) gây tê môi dưới và cằm cùng bên (triệu chứng Vincent).
-            </p>
+
+            <div className="space-y-1.5">
+              {/* Relationship 1: Mandibular Canal & IAN */}
+              <button
+                onClick={() => focusAnatomy('mandibular_canal')}
+                className={`w-full text-left p-2 rounded-xl border transition cursor-pointer flex items-center justify-between gap-2 ${
+                  isDark
+                    ? 'bg-slate-800/50 border-slate-700/60 hover:bg-slate-800 text-slate-200'
+                    : 'bg-white border-[#e0d6c7] hover:bg-[#f5eee3] text-slate-800'
+                }`}
+              >
+                <div>
+                  <div className="font-bold text-[11px] flex items-center gap-1.5 text-rose-400">
+                    <Zap className="w-3 h-3" />
+                    <span>Ống hàm dưới & Thần kinh IAN</span>
+                  </div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">
+                    Khoảng cách mô phỏng: <span className="text-amber-400 font-mono font-bold">{simulatedDistMm} mm</span> (DEMO)
+                  </div>
+                </div>
+                <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+              </button>
+
+              {/* Relationship 2: Lingual Nerve */}
+              <button
+                onClick={() => focusAnatomy('nerve_lingual')}
+                className={`w-full text-left p-2 rounded-xl border transition cursor-pointer flex items-center justify-between gap-2 ${
+                  isDark
+                    ? 'bg-slate-800/50 border-slate-700/60 hover:bg-slate-800 text-slate-200'
+                    : 'bg-white border-[#e0d6c7] hover:bg-[#f5eee3] text-slate-800'
+                }`}
+              >
+                <div>
+                  <div className="font-bold text-[11px] flex items-center gap-1.5 text-amber-400">
+                    <AlertTriangle className="w-3 h-3" />
+                    <span>Thần kinh Lưỡi (Lingual Nerve)</span>
+                  </div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">
+                    Sát bản xương trong (&lt; 1.5mm) • Nguy cơ mất vị giác & tê lưỡi
+                  </div>
+                </div>
+                <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+              </button>
+
+              {/* Relationship 3: Second Molar (R47 / R37) */}
+              <button
+                onClick={() => focusAnatomy(wisdomToothId === 'tooth_48' ? 'tooth_47' : 'tooth_37')}
+                className={`w-full text-left p-2 rounded-xl border transition cursor-pointer flex items-center justify-between gap-2 ${
+                  isDark
+                    ? 'bg-slate-800/50 border-slate-700/60 hover:bg-slate-800 text-slate-200'
+                    : 'bg-white border-[#e0d6c7] hover:bg-[#f5eee3] text-slate-800'
+                }`}
+              >
+                <div>
+                  <div className="font-bold text-[11px] flex items-center gap-1.5 text-sky-400">
+                    <Activity className="w-3 h-3" />
+                    <span>Răng cối số 7 (R.{wisdomToothId === 'tooth_48' ? '47' : '37'})</span>
+                  </div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">
+                    Điểm tựa bẩy • Nguy cơ tiêu ngót chân xa và sâu cổ răng
+                  </div>
+                </div>
+                <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+              </button>
+
+              {/* Relationship 4: Retromolar Trigone & Mandible */}
+              <button
+                onClick={() => focusAnatomy('bone_mandible')}
+                className={`w-full text-left p-2 rounded-xl border transition cursor-pointer flex items-center justify-between gap-2 ${
+                  isDark
+                    ? 'bg-slate-800/50 border-slate-700/60 hover:bg-slate-800 text-slate-200'
+                    : 'bg-white border-[#e0d6c7] hover:bg-[#f5eee3] text-slate-800'
+                }`}
+              >
+                <div>
+                  <div className="font-bold text-[11px] flex items-center gap-1.5 text-emerald-400">
+                    <Skull className="w-3 h-3" />
+                    <span>Tam giác sau hàm & Xương hàm dưới</span>
+                  </div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">
+                    Đường rạch mở vạt chếch mặt ngoài • Tránh tổn thương sàn miệng
+                  </div>
+                </div>
+                <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+              </button>
+            </div>
+          </div>
+
+          {/* SECTION 3: THƯỚC ĐO & ĐÁNH GIÁ RỦI RO THẦN KINH (DEMO / SIMULATED) */}
+          <div className="p-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <div className="font-bold text-xs flex items-center gap-1.5 text-rose-400">
+                <ShieldAlert className="w-3.5 h-3.5" />
+                <span>3. Thước Đo Rủi Ro Thần Kinh (IAN)</span>
+              </div>
+              <span className="text-[8px] font-mono px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 font-bold border border-rose-500/30">
+                DEMO / SIMULATED
+              </span>
+            </div>
+
+            {/* Distance & Level */}
             <div className="space-y-1">
-              {WISDOM_SURGICAL_DATABASE.ianRadiologicRiskSigns.slice(0, 3).map((sign, i) => (
-                <div key={i} className="text-[10px] p-1.5 rounded bg-black/20 text-rose-200">
-                  <div className="font-bold">{sign.signVi}</div>
-                  <div className="text-amber-300 font-mono">{sign.oddsRatioRisk}</div>
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-slate-300">Khoảng cách chóp răng - ống thần kinh:</span>
+                <span className="font-mono font-bold text-rose-300">{simulatedDistMm} mm</span>
+              </div>
+
+              {/* Progress bar */}
+              <div className="w-full h-2 rounded-full bg-black/30 overflow-hidden p-0.5 border border-white/10">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-amber-500 to-rose-500 transition-all duration-300"
+                  style={{ width: `${riskProgress}%` }}
+                />
+              </div>
+
+              <div className="flex items-center justify-between text-[10px] pt-0.5">
+                <span className="text-slate-400">Mức độ rủi ro:</span>
+                <span className={`px-1.5 py-0.2 rounded font-bold ${riskBadgeColor}`}>
+                  {riskLevelText}
+                </span>
+              </div>
+            </div>
+
+            <p className="text-[10px] text-slate-300 leading-relaxed">
+              Tổn thương IAN gây dị cảm hoặc tê bì vĩnh viễn vùng môi dưới và cằm (dấu hiệu Vincent).
+              {simulatedDistMm <= 1.2 && ' Khi khoảng cách ≤ 1.0mm, khuyến nghị chụp phim CBCT để khảo sát 3 chiều.'}
+            </p>
+          </div>
+
+          {/* SECTION 4: 7 DẤU HIỆU X-QUANG TOÀN CẢNH (PANORAMA SIGNS) */}
+          <div className={`p-3 rounded-2xl border space-y-2 ${isDark ? 'bg-slate-900/40 border-slate-800' : 'bg-white/60 border-[#e7ded3]'}`}>
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-xs uppercase tracking-wider text-amber-500">
+                4. 7 Dấu Hiệu X-Quang Toàn Cảnh
+              </span>
+              <span className="text-[8px] font-mono px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 font-bold border border-amber-500/25">
+                EDUCATIONAL SIMULATION
+              </span>
+            </div>
+            <p className="text-[10px] text-slate-400 italic">
+              Tiêu chuẩn Rood & Shehab (1990) đánh giá tương quan chóp răng khôn và thần kinh răng dưới:
+            </p>
+
+            <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+              {WISDOM_SURGICAL_DATABASE.ianRadiologicRiskSigns.map((sign, idx) => (
+                <div
+                  key={idx}
+                  className={`p-2 rounded-xl text-[10px] border ${
+                    idx === 0 || idx === 4
+                      ? 'bg-rose-500/10 border-rose-500/25 text-rose-200'
+                      : isDark
+                      ? 'bg-slate-800/40 border-slate-700/50 text-slate-300'
+                      : 'bg-white border-[#e0d6c7] text-slate-700'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-1.5">
+                    <span className="font-bold">
+                      {idx + 1}. {sign.signVi}
+                    </span>
+                    <span className="font-mono text-amber-400 flex-shrink-0 font-bold text-[9px] bg-amber-500/15 px-1 py-0.5 rounded">
+                      {sign.oddsRatioRisk.split('(')[0].trim()}
+                    </span>
+                  </div>
+                  <p className="text-[9px] text-slate-400 mt-1 font-serif italic">{sign.cbctIndicationVi}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* An toàn thần kinh Lưỡi (Lingual Nerve) */}
-          <div className="p-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 space-y-1.5">
-            <div className="font-bold text-xs flex items-center gap-1.5 text-amber-400">
-              <AlertTriangle className="w-3.5 h-3.5" />
-              <span>Bảo Vệ Thần Kinh Lưỡi (Lingual Nerve)</span>
+          {/* SECTION 5: QUY TRÌNH BÀI HỌC 6 BƯỚC TIỂU PHẪU */}
+          <div className={`p-3 rounded-2xl border space-y-2.5 ${isDark ? 'bg-slate-900/40 border-slate-800' : 'bg-white/60 border-[#e7ded3]'}`}>
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-xs uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>5. Bài Học Phẫu Thuật 6 Bước</span>
+              </span>
+              <span className="text-[9px] font-mono text-slate-400">
+                Bước {wisdomSurgicalStep} / 6
+              </span>
             </div>
-            <p className="text-[11px] text-slate-300 leading-relaxed">
-              Dây thần kinh lưỡi chạy áp sát mặt trong bản xương góc hàm (&lt; 1.5mm).
-            </p>
-            <ul className="text-[10px] space-y-1 text-slate-300 list-disc pl-4">
-              <li>Đường rạch vạt luôn lệch ra MẶT NGOÀI, không bao giờ rạch vào mặt lưỡi.</li>
-              <li>Đặt cây bóc tách bảo vệ màng xương phía lưỡi khi dùng mũi khoan mở xương.</li>
-              <li>Tránh kẹp hoặc bóc tách thô bạo vào sàn miệng.</li>
-            </ul>
+
+            {/* Step Pills & Prev/Next */}
+            <div className="flex items-center justify-between gap-1">
+              <button
+                onClick={() => setWisdomSurgicalStep(Math.max(1, wisdomSurgicalStep - 1))}
+                disabled={wisdomSurgicalStep <= 1}
+                className="p-1 rounded-lg border border-inherit text-slate-400 hover:text-current disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
+                title="Bước trước"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+
+              <div className="flex items-center gap-1 flex-1 justify-center">
+                {[1, 2, 3, 4, 5, 6].map((st) => (
+                  <button
+                    key={st}
+                    onClick={() => setWisdomSurgicalStep(st)}
+                    className={`w-6 h-6 rounded-lg text-[10px] font-bold font-mono transition cursor-pointer ${
+                      wisdomSurgicalStep === st
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : isDark
+                        ? 'bg-slate-800 text-slate-400 hover:text-white'
+                        : 'bg-black/5 text-slate-600 hover:bg-black/10'
+                    }`}
+                  >
+                    {st}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => setWisdomSurgicalStep(Math.min(6, wisdomSurgicalStep + 1))}
+                disabled={wisdomSurgicalStep >= 6}
+                className="p-1 rounded-lg border border-inherit text-slate-400 hover:text-current disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
+                title="Bước tiếp theo"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Current Step Detailed Card */}
+            <div className="p-2.5 rounded-xl bg-black/5 dark:bg-white/5 space-y-1.5 text-[11px]">
+              <div className="font-bold text-current text-xs">
+                Bước {currentStep.stepNumber}: {currentStep.titleVi}
+              </div>
+              <div className="text-[10px] font-serif italic text-slate-400">
+                {currentStep.titleEn}
+              </div>
+
+              <div className="pt-1 text-slate-300">
+                <span className="font-bold text-amber-400">Dụng cụ:</span> {currentStep.instrumentVi}
+              </div>
+
+              <div className="text-emerald-300">
+                <span className="font-bold">Thao tác an toàn:</span> {currentStep.keySafetyActionVi}
+              </div>
+
+              <div className="text-rose-400 pt-1 border-t border-inherit">
+                <span className="font-bold">Cạm bẫy giải phẫu:</span> {currentStep.anatomicalPitfallVi}
+              </div>
+            </div>
           </div>
 
-          {/* Bước phẫu thuật hiện tại */}
-          <div className={`p-3 rounded-2xl border space-y-1.5 ${isDark ? 'bg-slate-900/40 border-slate-800' : 'bg-white/60 border-[#e7ded3]'}`}>
-            <div className="font-bold text-xs uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Bước {currentStep.stepNumber}: {currentStep.titleVi}</span>
+          {/* SECTION 6: MANDATORY MEDICAL & LEGAL DISCLAIMER */}
+          <div className="p-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 space-y-1.5 text-[10px] text-amber-200">
+            <div className="font-bold flex items-center gap-1 text-amber-400 uppercase tracking-wider text-[9px]">
+              <AlertTriangle className="w-3 h-3 flex-shrink-0" />
+              <span>Cảnh Báo Đào Tạo Y Khoa</span>
             </div>
-            <div className="text-[11px] text-slate-300">
-              <span className="font-bold text-slate-400">Dụng cụ:</span> {currentStep.instrumentVi}
-            </div>
-            <div className="text-[11px] text-emerald-300">
-              <span className="font-bold">Thao tác an toàn:</span> {currentStep.keySafetyActionVi}
-            </div>
-            <div className="text-[10px] text-rose-400 pt-1 border-t border-inherit">
-              <span className="font-bold">Cạm bẫy:</span> {currentStep.anatomicalPitfallVi}
-            </div>
+            <p className="leading-relaxed text-slate-300">
+              Đây là học phần mô phỏng phục vụ mục đích đào tạo giải phẫu và lý thuyết phẫu thuật hàm mặt. Tuyệt đối không sử dụng làm chẩn đoán, kế hoạch điều trị hay chỉ dẫn thực hành lâm sàng thực tế trên bệnh nhân khi chưa có chứng chỉ hành nghề và hướng dẫn của bác sĩ chuyên khoa.
+            </p>
           </div>
         </div>
       </aside>

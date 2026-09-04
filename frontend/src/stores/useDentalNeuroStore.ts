@@ -158,6 +158,8 @@ interface DentalNeuroState {
   wisdomSurgicalStep: number; // 1 to 6
   wisdomShowNerves: boolean;
   wisdomBoneOpacity: number;
+  wisdomStudyMode: 'study' | 'simulation';
+  wisdomViewMode: 'standard' | 'bone_only' | 'neural' | 'deep';
 
   // Actions
   selectAnatomy: (id: string | null, side?: 'right' | 'left' | null) => void;
@@ -200,6 +202,8 @@ interface DentalNeuroState {
   setWisdomSurgicalStep: (step: number) => void;
   setWisdomShowNerves: (show: boolean) => void;
   setWisdomBoneOpacity: (opacity: number) => void;
+  setWisdomStudyMode: (mode: 'study' | 'simulation') => void;
+  setWisdomViewMode: (mode: 'standard' | 'bone_only' | 'neural' | 'deep') => void;
 
   // Tracing controls
   startTrace: (nerveId: string) => void;
@@ -289,7 +293,9 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
   wisdomPellGregoryPos: 'B',
   wisdomSurgicalStep: 1,
   wisdomShowNerves: true,
-  wisdomBoneOpacity: 0.45,
+  wisdomBoneOpacity: 0.85,
+  wisdomStudyMode: 'study',
+  wisdomViewMode: 'standard',
 
   lateralizationSide: 'bilateral',
   selectedSide: 'right',
@@ -332,9 +338,25 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
         tmjShowLigaments: true,
         selectedSide: 'right'
       };
-    } else if (id?.startsWith('cn_') || id?.startsWith('nerve_') || id?.includes('foramen')) {
-      // If user selected a cranial nerve or foramen, switch back to general neuro mode
-      if (get().activeSpecimenMode !== 'general') {
+    } else if (
+      id?.startsWith('cn_') ||
+      id?.startsWith('nerve_') ||
+      id?.includes('foramen') ||
+      id === 'mandibular_canal' ||
+      id === 'bone_mandible' ||
+      id === 'mandible'
+    ) {
+      // If user selected a cranial nerve or foramen, switch back to general neuro mode UNLESS already in wisdom_surgery and selecting mandibular structures
+      const isWisdomStructure = [
+        'nerve_ian',
+        'nerve_lingual',
+        'mental_foramen',
+        'mandibular_foramen',
+        'mandibular_canal',
+        'bone_mandible',
+        'mandible'
+      ].includes(id);
+      if (get().activeSpecimenMode !== 'general' && !(get().activeSpecimenMode === 'wisdom_surgery' && isWisdomStructure)) {
         updates.activeSpecimenMode = 'general';
       }
     }
@@ -355,6 +377,73 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
 
   focusAnatomy: (id) => {
     set({ focusedAnatomyId: id });
+
+    // Look for wisdom surgery specific mandibular landmarks
+    if (id === 'bone_mandible' || id === 'mandible') {
+      set({
+        cameraTarget: {
+          position: [0, 1.34, 0.28],
+          lookAt: [0, 1.33, 0.12],
+          distance: 0.28,
+          timestamp: Date.now()
+        }
+      });
+      return;
+    }
+
+    if (id === 'tooth_48') {
+      set({
+        wisdomToothId: 'tooth_48',
+        cameraTarget: {
+          position: [-0.09, 1.355, 0.16],
+          lookAt: [-0.034, 1.332, 0.124],
+          distance: 0.12,
+          timestamp: Date.now()
+        }
+      });
+      return;
+    }
+
+    if (id === 'tooth_38') {
+      set({
+        wisdomToothId: 'tooth_38',
+        cameraTarget: {
+          position: [0.09, 1.355, 0.16],
+          lookAt: [0.034, 1.332, 0.124],
+          distance: 0.12,
+          timestamp: Date.now()
+        }
+      });
+      return;
+    }
+
+    if (id === 'mandibular_canal') {
+      const isRight = get().wisdomToothId === 'tooth_48';
+      const sideSign = isRight ? -1 : 1;
+      set({
+        cameraTarget: {
+          position: [sideSign * 0.08, 1.34, 0.16],
+          lookAt: [sideSign * 0.034, 1.332, 0.124],
+          distance: 0.12,
+          timestamp: Date.now()
+        }
+      });
+      return;
+    }
+
+    if (id === 'nerve_lingual') {
+      const isRight = get().wisdomToothId === 'tooth_48';
+      const sideSign = isRight ? -1 : 1;
+      set({
+        cameraTarget: {
+          position: [sideSign * 0.06, 1.345, 0.14],
+          lookAt: [sideSign * 0.03, 1.335, 0.115],
+          distance: 0.10,
+          timestamp: Date.now()
+        }
+      });
+      return;
+    }
 
     // Look for structure in nerves
     const nerve = DENTAL_NERVE_STRUCTURES[id];
@@ -707,6 +796,20 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
   setWisdomSurgicalStep: (step) => set({ wisdomSurgicalStep: step }),
   setWisdomShowNerves: (show) => set({ wisdomShowNerves: show }),
   setWisdomBoneOpacity: (opacity) => set({ wisdomBoneOpacity: opacity }),
+  setWisdomStudyMode: (mode) => set({ wisdomStudyMode: mode }),
+  setWisdomViewMode: (mode) => {
+    set({ wisdomViewMode: mode });
+    if (mode === 'bone_only') {
+      set({ wisdomBoneOpacity: 1.0, wisdomShowNerves: false });
+    } else if (mode === 'neural') {
+      set({ wisdomBoneOpacity: 0.35, wisdomShowNerves: true });
+    } else if (mode === 'deep') {
+      set({ wisdomBoneOpacity: 0.15, wisdomShowNerves: true });
+    } else {
+      // standard
+      set({ wisdomBoneOpacity: 0.85, wisdomShowNerves: true });
+    }
+  },
 
   resetAll: () => {
     set({

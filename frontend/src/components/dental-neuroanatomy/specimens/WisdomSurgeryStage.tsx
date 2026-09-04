@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, useGLTF, Html } from '@react-three/drei';
 import {
   AlertTriangle,
@@ -279,7 +279,7 @@ const MandibularSurgicalSiteMesh: React.FC<{
             }}
           >
             <Activity className="w-2.5 h-2.5" />
-            <span>K/c IAN: {distToCanalMm.toFixed(1)} mm</span>
+            <span>K/c IAN: {distToCanalMm.toFixed(1)} mm (DEMO)</span>
           </div>
         </Html>
       </group>
@@ -448,11 +448,73 @@ const MandibularSurgicalSiteMesh: React.FC<{
 };
 
 // ============================================================================
-// 3. MAIN COMPONENT: WISDOM SURGERY STAGE
+// 3. SMOOTH CAMERA GLIDE CONTROLLER
+// ============================================================================
+const WisdomCameraController: React.FC<{ controlsRef: React.RefObject<any> }> = ({ controlsRef }) => {
+  const { camera } = useThree();
+  const cameraTarget = useDentalNeuroStore((s) => s.cameraTarget);
+
+  const animRef = useRef({
+    isAnimating: false,
+    startTime: 0,
+    duration: 750,
+    startPos: new THREE.Vector3(),
+    endPos: new THREE.Vector3(),
+    startTarget: new THREE.Vector3(),
+    endTarget: new THREE.Vector3(),
+    lastTimestamp: 0
+  });
+
+  React.useEffect(() => {
+    if (!cameraTarget || cameraTarget.timestamp === animRef.current.lastTimestamp) return;
+
+    animRef.current.lastTimestamp = cameraTarget.timestamp;
+    animRef.current.startPos.copy(camera.position);
+    animRef.current.endPos.set(...cameraTarget.position);
+
+    const controls = controlsRef.current;
+    if (controls) {
+      animRef.current.startTarget.copy(controls.target);
+      animRef.current.endTarget.set(...cameraTarget.lookAt);
+    }
+
+    animRef.current.startTime = performance.now();
+    animRef.current.isAnimating = true;
+  }, [cameraTarget, camera, controlsRef]);
+
+  useFrame(() => {
+    if (!animRef.current.isAnimating) return;
+
+    const elapsed = performance.now() - animRef.current.startTime;
+    const progress = Math.min(elapsed / animRef.current.duration, 1.0);
+    const t =
+      progress < 0.5
+        ? 4 * progress * progress * progress
+        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+    camera.position.lerpVectors(animRef.current.startPos, animRef.current.endPos, t);
+
+    const controls = controlsRef.current;
+    if (controls) {
+      controls.target.lerpVectors(animRef.current.startTarget, animRef.current.endTarget, t);
+      controls.update();
+    }
+
+    if (progress >= 1.0) {
+      animRef.current.isAnimating = false;
+    }
+  });
+
+  return null;
+};
+
+// ============================================================================
+// 4. MAIN COMPONENT: WISDOM SURGERY STAGE
 // ============================================================================
 export const WisdomSurgeryStage: React.FC = () => {
   const atelierTheme = useAnatomyStore((s) => s.atelierTheme);
   const isDark = atelierTheme === 'dark';
+  const controlsRef = useRef<any>(null);
 
   const [showFullSkull, setShowFullSkull] = useState(true);
 
@@ -460,22 +522,24 @@ export const WisdomSurgeryStage: React.FC = () => {
   const setWisdomToothId = useDentalNeuroStore((s) => s.setWisdomToothId);
 
   const wisdomWinterType = useDentalNeuroStore((s) => s.wisdomWinterType);
-  const setWisdomWinterType = useDentalNeuroStore((s) => s.setWisdomWinterType);
-
   const wisdomPellGregoryClass = useDentalNeuroStore((s) => s.wisdomPellGregoryClass);
-  const setWisdomPellGregoryClass = useDentalNeuroStore((s) => s.setWisdomPellGregoryClass);
-
   const wisdomPellGregoryPos = useDentalNeuroStore((s) => s.wisdomPellGregoryPos);
-  const setWisdomPellGregoryPos = useDentalNeuroStore((s) => s.setWisdomPellGregoryPos);
 
   const wisdomSurgicalStep = useDentalNeuroStore((s) => s.wisdomSurgicalStep);
   const setWisdomSurgicalStep = useDentalNeuroStore((s) => s.setWisdomSurgicalStep);
 
   const wisdomShowNerves = useDentalNeuroStore((s) => s.wisdomShowNerves);
-  const setWisdomShowNerves = useDentalNeuroStore((s) => s.setWisdomShowNerves);
-
   const wisdomBoneOpacity = useDentalNeuroStore((s) => s.wisdomBoneOpacity);
-  const setWisdomBoneOpacity = useDentalNeuroStore((s) => s.setWisdomBoneOpacity);
+
+  const wisdomStudyMode = useDentalNeuroStore((s) => s.wisdomStudyMode);
+  const setWisdomStudyMode = useDentalNeuroStore((s) => s.setWisdomStudyMode);
+
+  const wisdomViewMode = useDentalNeuroStore((s) => s.wisdomViewMode);
+  const setWisdomViewMode = useDentalNeuroStore((s) => s.setWisdomViewMode);
+
+  const selectedAnatomyId = useDentalNeuroStore((s) => s.selectedAnatomyId);
+  const selectAnatomy = useDentalNeuroStore((s) => s.selectAnatomy);
+  const focusAnatomy = useDentalNeuroStore((s) => s.focusAnatomy);
 
   const isRight = wisdomToothId === 'tooth_48';
   const sideSign = isRight ? -1 : 1;
@@ -484,184 +548,97 @@ export const WisdomSurgeryStage: React.FC = () => {
     WISDOM_SURGICAL_DATABASE.surgicalSteps.find((s) => s.stepNumber === wisdomSurgicalStep) ||
     WISDOM_SURGICAL_DATABASE.surgicalSteps[0];
 
-  const currentWinterInfo =
-    WISDOM_SURGICAL_DATABASE.winterTypes.find((w) => w.id === wisdomWinterType) ||
-    WISDOM_SURGICAL_DATABASE.winterTypes[0];
-
   return (
     <div className="relative w-full h-full select-none overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
-      {/* 1. TOP LEFT SURGICAL PARAMETERS & MORPHING CONTROLS */}
-      <div className="absolute top-4 left-4 z-20 flex flex-col gap-2 pointer-events-auto max-w-sm">
+      {/* 1. TOP FLOATING CONTROL BAR: QUICK ACTIONS, VIEW MODES & STUDY TOGGLE */}
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 w-[96%] max-w-4xl flex flex-wrap items-center justify-between gap-2 pointer-events-auto select-none">
+        {/* Left: Quick Anatomical Chips */}
         <div
-          className={`p-3 rounded-2xl border backdrop-blur-md shadow-xl ${
-            isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-[#f7f2ea]/90 border-[#dfd5c6]'
+          className={`flex items-center gap-1 p-1 rounded-2xl border backdrop-blur-md shadow-lg overflow-x-auto scrollbar-none ${
+            isDark ? 'bg-slate-900/85 border-slate-800' : 'bg-[#f7f2ea]/90 border-[#dfd5c6]'
           }`}
         >
-          <div className="flex items-center justify-between mb-2">
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-500 border border-amber-500/30">
-              PHẪU THUẬT RĂNG KHÔN
-            </span>
-            <div className="flex items-center gap-1">
+          {[
+            { id: 'tooth_48', label: 'R.48' },
+            { id: 'tooth_38', label: 'R.38' },
+            { id: 'bone_mandible', label: 'Mandible' },
+            { id: 'nerve_ian', label: 'IAN' },
+            { id: 'nerve_lingual', label: 'Lingual' },
+            { id: 'mandibular_canal', label: 'Canal' },
+            { id: 'mental_foramen', label: 'Mental' }
+          ].map((chip) => {
+            const isSelected =
+              selectedAnatomyId === chip.id ||
+              (chip.id === 'tooth_48' && wisdomToothId === 'tooth_48' && selectedAnatomyId?.startsWith('tooth_')) ||
+              (chip.id === 'tooth_38' && wisdomToothId === 'tooth_38' && selectedAnatomyId?.startsWith('tooth_'));
+            return (
               <button
-                onClick={() => setWisdomToothId('tooth_48')}
-                className={`px-2 py-0.5 rounded text-[10px] font-bold transition cursor-pointer ${
-                  wisdomToothId === 'tooth_48' ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-400'
+                key={chip.id}
+                onClick={() => {
+                  if (chip.id === 'tooth_48' || chip.id === 'tooth_38') {
+                    setWisdomToothId(chip.id as any);
+                  }
+                  selectAnatomy(chip.id);
+                  focusAnatomy(chip.id);
+                }}
+                className={`px-2.5 py-1 rounded-xl text-[10px] font-bold transition cursor-pointer whitespace-nowrap ${
+                  isSelected
+                    ? 'bg-amber-600 text-white shadow-sm'
+                    : isDark
+                    ? 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                    : 'text-slate-700 hover:bg-[#ede3d5] hover:text-[#28231d]'
                 }`}
               >
-                R.48 (Phải)
+                {chip.label}
               </button>
-              <button
-                onClick={() => setWisdomToothId('tooth_38')}
-                className={`px-2 py-0.5 rounded text-[10px] font-bold transition cursor-pointer ${
-                  wisdomToothId === 'tooth_38' ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-400'
-                }`}
-              >
-                R.38 (Trái)
-              </button>
-            </div>
-          </div>
-
-          {/* Phân loại Winter */}
-          <div className="mb-2">
-            <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 mb-1">
-              <span>Phân loại Winter:</span>
-              <span className="text-amber-400 font-bold">Độ khó: {currentWinterInfo.surgicalDifficulty}</span>
-            </div>
-            <div className="grid grid-cols-2 gap-1">
-              {WISDOM_SURGICAL_DATABASE.winterTypes.map((w) => (
-                <button
-                  key={w.id}
-                  onClick={() => setWisdomWinterType(w.id as any)}
-                  className={`px-2 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer truncate ${
-                    wisdomWinterType === w.id
-                      ? 'bg-amber-600 text-white shadow-sm'
-                      : 'bg-black/5 dark:bg-white/5 text-slate-400 hover:text-current'
-                  }`}
-                >
-                  {w.labelVi}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Phân loại Pell-Gregory */}
-          <div>
-            <div className="text-[10px] font-mono text-slate-400 mb-1">
-              Phân loại Pell-Gregory (Tương quan Cành lên & Mặt phẳng nhai):
-            </div>
-            <div className="grid grid-cols-2 gap-1">
-              {/* Class I, II, III */}
-              <div className="flex rounded-lg bg-black/5 dark:bg-white/5 p-0.5">
-                {(['I', 'II', 'III'] as const).map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => setWisdomPellGregoryClass(c)}
-                    className={`flex-1 py-0.5 text-[9px] font-bold rounded transition cursor-pointer ${
-                      wisdomPellGregoryClass === c
-                        ? 'bg-amber-600 text-white'
-                        : 'text-slate-400 hover:text-current'
-                    }`}
-                  >
-                    Class {c}
-                  </button>
-                ))}
-              </div>
-
-              {/* Position A, B, C */}
-              <div className="flex rounded-lg bg-black/5 dark:bg-white/5 p-0.5">
-                {(['A', 'B', 'C'] as const).map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setWisdomPellGregoryPos(p)}
-                    className={`flex-1 py-0.5 text-[9px] font-bold rounded transition cursor-pointer ${
-                      wisdomPellGregoryPos === p
-                        ? 'bg-amber-600 text-white'
-                        : 'text-slate-400 hover:text-current'
-                    }`}
-                  >
-                    Vị trí {p}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
+            );
+          })}
         </div>
-      </div>
 
-      {/* 2. TOP RIGHT NERVE SAFETY & BONE TRANSPARENCY CONTROLS */}
-      <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 pointer-events-auto max-w-xs">
-        {/* Skull Model Context Toggle */}
+        {/* Right: View Mode Selector & Context Toggles */}
         <div
-          className={`p-2.5 rounded-2xl border backdrop-blur-md shadow-xl flex items-center justify-between gap-3 ${
-            isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-[#f7f2ea]/90 border-[#dfd5c6]'
+          className={`flex items-center gap-1.5 p-1 rounded-2xl border backdrop-blur-md shadow-lg ${
+            isDark ? 'bg-slate-900/85 border-slate-800' : 'bg-[#f7f2ea]/90 border-[#dfd5c6]'
           }`}
         >
-          <div className="flex items-center gap-2">
-            <Layers className="w-3.5 h-3.5 text-amber-500" />
-            <span className="text-[11px] font-bold">Mô Hình Xương Hàm 3D</span>
+          {/* View Modes */}
+          <div className="flex rounded-xl p-0.5 bg-black/10 dark:bg-white/10">
+            {[
+              { id: 'standard', label: 'Chuẩn' },
+              { id: 'bone_only', label: 'Xương & Răng' },
+              { id: 'neural', label: 'Thần kinh' },
+              { id: 'deep', label: 'Cắt lớp' }
+            ].map((v) => (
+              <button
+                key={v.id}
+                onClick={() => setWisdomViewMode(v.id as any)}
+                className={`px-2 py-0.5 rounded-lg text-[9px] font-bold transition cursor-pointer ${
+                  wisdomViewMode === v.id
+                    ? 'bg-amber-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-current'
+                }`}
+              >
+                {v.label}
+              </button>
+            ))}
           </div>
+
+          {/* Skull context toggle */}
           <button
             onClick={() => setShowFullSkull(!showFullSkull)}
-            className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer ${
+            className={`px-2 py-0.5 rounded-lg text-[9px] font-bold transition cursor-pointer border ${
               showFullSkull
-                ? 'bg-amber-600 text-white'
-                : 'bg-slate-800 text-slate-400 hover:text-white'
+                ? 'bg-emerald-600/20 text-emerald-400 border-emerald-500/40'
+                : 'bg-slate-800 text-slate-400 border-slate-700'
             }`}
+            title="Bật/Tắt mô hình xương sọ nền"
           >
-            {showFullSkull ? 'ĐANG BẬT' : 'ĐÃ TẮT'}
+            {showFullSkull ? 'Xương: BẬT' : 'Xương: TẮT'}
           </button>
-        </div>
-
-        {/* Bone Transparency & Proximity Controls */}
-        <div
-          className={`p-3 rounded-2xl border backdrop-blur-md shadow-xl ${
-            isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-[#f7f2ea]/90 border-[#dfd5c6]'
-          }`}
-        >
-          <div className="flex items-center gap-1.5 text-xs font-bold text-rose-400 mb-2">
-            <ShieldAlert className="w-3.5 h-3.5" />
-            <span>THƯỚC ĐO RỦI RO THẦN KINH (IAN)</span>
-          </div>
-
-          {/* Bone Opacity Slider */}
-          <div className="space-y-1 mb-2.5">
-            <div className="flex items-center justify-between text-[10px]">
-              <span className="text-slate-400">Độ Trong Suốt Xương:</span>
-              <span className="font-mono font-bold text-amber-400">
-                {Math.round(wisdomBoneOpacity * 100)}%
-              </span>
-            </div>
-            <input
-              type="range"
-              min="0.1"
-              max="1.0"
-              step="0.05"
-              value={wisdomBoneOpacity}
-              onChange={(e) => setWisdomBoneOpacity(parseFloat(e.target.value))}
-              className="w-full accent-amber-500 cursor-pointer h-1.5 rounded-lg bg-slate-700"
-            />
-          </div>
-
-          {/* Dấu hiệu cảnh báo X-quang nguy cơ IAN */}
-          <div className="pt-2 border-t border-inherit">
-            <div className="text-[10px] font-mono text-slate-400 mb-1">
-              7 Dấu Hiệu X-Quang Toàn Cảnh (Panorama):
-            </div>
-            <div className="text-[10px] text-slate-300 dark:text-slate-300 space-y-1">
-              <div className="flex items-start gap-1 text-rose-400">
-                <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" />
-                <span>Thấu quang chóp răng (OR = 15.2)</span>
-              </div>
-              <div className="flex items-start gap-1 text-amber-400">
-                <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" />
-                <span>Lệch hướng / cong ống răng dưới (OR = 7.8)</span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
-      {/* 3. 3D WEBGL CANVAS STAGE */}
+      {/* 2. 3D WEBGL CANVAS STAGE (CLEAN & UNOBSTRUCTED) */}
       <Canvas
         shadows
         camera={{ position: [sideSign * 0.10, 1.355, 0.17], fov: 30 }}
@@ -688,58 +665,62 @@ export const WisdomSurgeryStage: React.FC = () => {
           showNerves={wisdomShowNerves}
         />
 
-        {/* Focused on Mandibular Angle and Retromolar Trigone */}
+        {/* Dynamic Camera Glide & Orbit Controls */}
+        <WisdomCameraController controlsRef={controlsRef} />
         <OrbitControls
-          key={wisdomToothId}
+          ref={controlsRef}
           enableDamping
           dampingFactor={0.06}
           minDistance={0.03}
-          maxDistance={0.4}
+          maxDistance={0.45}
           target={[sideSign * 0.034, 1.332, 0.124]}
         />
       </Canvas>
 
-      {/* 4. BOTTOM SURGICAL STEP SIMULATION BAR (6 STEPS) */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 w-[94%] max-w-2xl flex flex-col gap-2 p-3 rounded-2xl border backdrop-blur-md shadow-2xl pointer-events-auto bg-slate-900/95 border-slate-800 text-slate-100">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-5 h-5 rounded-full bg-amber-500 text-slate-950 font-mono font-bold text-xs flex items-center justify-center">
-              {currentStep.stepNumber}
-            </span>
-            <span className="font-serif font-bold text-xs sm:text-sm text-current">
-              {currentStep.titleVi}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setWisdomSurgicalStep(Math.max(1, wisdomSurgicalStep - 1))}
-              disabled={wisdomSurgicalStep <= 1}
-              className="p-1 rounded-lg border border-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-800 transition cursor-pointer"
-            >
-              <ChevronLeft className="w-3.5 h-3.5" />
-            </button>
-            <span className="text-[10px] font-mono text-slate-400 px-1">
-              Bước {wisdomSurgicalStep}/6
-            </span>
-            <button
-              onClick={() => setWisdomSurgicalStep(Math.min(6, wisdomSurgicalStep + 1))}
-              disabled={wisdomSurgicalStep >= 6}
-              className="p-1 rounded-lg border border-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-800 transition cursor-pointer"
-            >
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
+      {/* 3. BOTTOM SLEEK SURGICAL STEP CONTROLLER (Compact, Non-obtrusive) */}
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-3 py-1.5 rounded-full border backdrop-blur-md shadow-xl pointer-events-auto bg-slate-900/85 border-slate-800 text-slate-200">
+        <button
+          onClick={() => setWisdomSurgicalStep(Math.max(1, wisdomSurgicalStep - 1))}
+          disabled={wisdomSurgicalStep <= 1}
+          className="p-1 rounded-full text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
+          title="Bước trước"
+        >
+          <ChevronLeft className="w-3.5 h-3.5" />
+        </button>
+
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="w-4 h-4 rounded-full bg-amber-500 text-slate-950 font-mono font-bold text-[10px] flex items-center justify-center flex-shrink-0">
+            {wisdomSurgicalStep}
+          </span>
+          <span className="text-xs font-semibold text-slate-200 truncate max-w-[180px] sm:max-w-xs">
+            {currentStep.titleVi}
+          </span>
         </div>
 
-        <div className="text-[11px] text-slate-300 font-sans flex items-center gap-2">
-          <span className="font-bold text-amber-400">Dụng cụ:</span>
-          <span>{currentStep.instrumentVi}</span>
+        <div className="flex items-center gap-0.5">
+          {[1, 2, 3, 4, 5, 6].map((st) => (
+            <button
+              key={st}
+              onClick={() => setWisdomSurgicalStep(st)}
+              className={`w-4 h-4 rounded-full text-[9px] font-mono font-bold transition cursor-pointer ${
+                wisdomSurgicalStep === st
+                  ? 'bg-amber-500 text-slate-950'
+                  : 'text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              {st}
+            </button>
+          ))}
         </div>
 
-        <div className="text-[10px] text-emerald-400 font-mono flex items-center gap-1.5 bg-emerald-950/40 p-1.5 rounded-lg border border-emerald-500/30">
-          <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
-          <span>{currentStep.keySafetyActionVi}</span>
-        </div>
+        <button
+          onClick={() => setWisdomSurgicalStep(Math.min(6, wisdomSurgicalStep + 1))}
+          disabled={wisdomSurgicalStep >= 6}
+          className="p-1 rounded-full text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
+          title="Bước tiếp theo"
+        >
+          <ChevronRight className="w-3.5 h-3.5" />
+        </button>
       </div>
     </div>
   );

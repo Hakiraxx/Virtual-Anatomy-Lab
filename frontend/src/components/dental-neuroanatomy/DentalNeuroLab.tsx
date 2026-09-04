@@ -220,10 +220,18 @@ export const DentalNeuroLab: React.FC = () => {
 
     if (structureParam) {
       const clean = structureParam.toLowerCase();
-      if (clean === 'nerve.inferior-alveolar' || clean === 'ian') {
+      if (clean === 'nerve.inferior-alveolar' || clean === 'nerve.inferior_alveolar' || clean === 'nerve_ian' || clean === 'ian') {
         selectAnatomy('nerve_ian');
-      } else if (clean === 'foramen.mental' || clean === 'mental_foramen') {
+      } else if (clean === 'nerve.lingual' || clean === 'nerve_lingual' || clean === 'lingual') {
+        selectAnatomy('nerve_lingual');
+      } else if (clean === 'canal.mandibular' || clean === 'mandibular_canal' || clean === 'canal') {
+        selectAnatomy('mandibular_canal');
+      } else if (clean === 'bone.mandible' || clean === 'bone_mandible' || clean === 'mandible') {
+        selectAnatomy('bone_mandible');
+      } else if (clean === 'foramen.mental' || clean === 'mental_foramen' || clean === 'mental') {
         selectAnatomy('mental_foramen');
+      } else if (clean === 'foramen.mandibular' || clean === 'mandibular_foramen') {
+        selectAnatomy('mandibular_foramen');
       } else if (clean === 'foramen.ovale') {
         selectAnatomy('foramen_ovale');
       } else if (clean.startsWith('tooth.') || clean.startsWith('tooth_')) {
@@ -256,6 +264,9 @@ export const DentalNeuroLab: React.FC = () => {
     if (selectedAnatomyId) {
       let structureValue = selectedAnatomyId;
       if (selectedAnatomyId === 'nerve_ian') structureValue = 'nerve.inferior-alveolar';
+      else if (selectedAnatomyId === 'nerve_lingual') structureValue = 'nerve.lingual';
+      else if (selectedAnatomyId === 'mandibular_canal') structureValue = 'canal.mandibular';
+      else if (selectedAnatomyId === 'bone_mandible') structureValue = 'bone.mandible';
       else if (selectedAnatomyId === 'mental_foramen') structureValue = 'foramen.mental';
       else if (selectedAnatomyId.startsWith('tooth_')) structureValue = selectedAnatomyId.replace('_', '.');
       url.searchParams.set('structure', structureValue);
@@ -381,10 +392,28 @@ export const DentalNeuroLab: React.FC = () => {
         list.push({ label: 'Khớp Thái Dương Hàm (TMJ)' });
       }
     } else if (activeSpecimenMode === 'wisdom_surgery') {
-      list.push({ label: 'Phẫu Thuật Răng Khôn' });
       list.push({
-        label: wisdomToothId === 'tooth_48' ? 'Răng 48 (Hàm dưới Phải)' : 'Răng 38 (Hàm dưới Trái)'
+        label: 'Phẫu Thuật Răng Khôn',
+        action: () => selectAnatomy(wisdomToothId)
       });
+      list.push({
+        label: wisdomToothId === 'tooth_48' ? 'Răng 48' : 'Răng 38',
+        action: () => selectAnatomy(wisdomToothId)
+      });
+      if (selectedAnatomyId && selectedAnatomyId !== 'tooth_48' && selectedAnatomyId !== 'tooth_38') {
+        const itemLabels: Record<string, string> = {
+          bone_mandible: 'Xương hàm dưới',
+          mandible: 'Xương hàm dưới',
+          nerve_ian: 'Thần kinh IAN',
+          mandibular_canal: 'Ống hàm dưới',
+          nerve_lingual: 'Thần kinh Lưỡi',
+          mental_foramen: 'Lỗ cằm',
+          mandibular_foramen: 'Lỗ hàm dưới & Gai Spix'
+        };
+        if (itemLabels[selectedAnatomyId]) {
+          list.push({ label: itemLabels[selectedAnatomyId] });
+        }
+      }
     }
 
     return list;
