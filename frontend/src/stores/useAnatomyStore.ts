@@ -587,7 +587,7 @@ export const useAnatomyStore = create<AnatomyState>((set, get) => ({
   updateCurrentCamera: (pos, target) => set({ currentCameraPosition: pos, currentCameraTarget: target }),
 
   setActiveSpecimen: (id) => {
-    set({ activeSpecimenId: id, selectedOrganId: id });
+    set({ activeSpecimenId: id, selectedOrganId: id, isLayersActive: false });
     if (typeof window !== 'undefined') {
       const targetPath = `/tieubansau/${id}`;
       if (window.location.pathname !== targetPath) {

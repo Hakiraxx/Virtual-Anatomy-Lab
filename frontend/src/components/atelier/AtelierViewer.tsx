@@ -69,6 +69,16 @@ const SpecimenGroup: React.FC<SpecimenGroupProps> = ({
   // Mathematically robust centering & scaling: Guarantees (0, 0, 0) center for all models (including Brain & Skin)
   const { normalizedScene, scaleFactor, center, rawSize } = useMemo(() => {
     const cloned = scene.clone(true);
+
+    // Deeply preserve pristine original materials on each mesh before any runtime shaders touch them
+    cloned.traverse((child: any) => {
+      if (child.isMesh && child.material) {
+        child.userData.__origMaterial = Array.isArray(child.material)
+          ? child.material.map((m: any) => m.clone())
+          : child.material.clone();
+      }
+    });
+
     const box = new THREE.Box3().setFromObject(cloned);
     const size = new THREE.Vector3();
     box.getSize(size);
@@ -104,118 +114,144 @@ const SpecimenGroup: React.FC<SpecimenGroupProps> = ({
           child.geometry.computeVertexNormals();
         }
 
-        const origMat = child.material;
-        const mat = origMat.clone();
-        mat.clippingPlanes = clippingPlanes;
-        mat.clipShadows = true;
-        mat.side = THREE.DoubleSide; // Prevents back-face hollow clipping
-
-        if (isLayersActive) {
-          // Anatomical Dissection / Muscle Fiber & Deep Vasculature Shader (Exact match to Image 2)
-          mat.wireframe = true;
-          mat.wireframeLinewidth = 1.2;
-          mat.color = new THREE.Color(isBone ? '#8c7f73' : '#c95042');
-          mat.roughness = 0.5;
-          mat.metalness = 0.15;
-          mat.envMapIntensity = 0.6;
-        } else if (isBone) {
-          // Photorealistic Medical Osteological Bone Shader
-          mat.roughness = 0.52;
-          mat.metalness = 0.02;
-          mat.envMapIntensity = 0.8;
-          if (!origMat.map) {
-            mat.color = new THREE.Color('#f5eee4'); // Warm clinical bone ivory
-          }
-        } else if (specimenId === 'brain') {
-          // Neuroanatomical Lobe & Sub-structure Color Coding (Netter / Sobotta Atlas standard)
-          const nameLower = (child.name || '').toLowerCase();
-          let brainColor = '#eddcd2'; // Default cortical tissue
-
-          if (
-            nameLower.includes('frontal') ||
-            nameLower.includes('precentral') ||
-            nameLower.includes('rectus') ||
-            nameLower.includes('orbital') ||
-            nameLower.includes('subcallosal')
-          ) {
-            // Thùy trán (Frontal Lobe) - Warm Coral Rose
-            brainColor = '#e57373';
-          } else if (
-            nameLower.includes('temporal') ||
-            nameLower.includes('hippocamp') ||
-            nameLower.includes('parahippocamp') ||
-            nameLower.includes('fusiform') ||
-            nameLower.includes('amygdal')
-          ) {
-            // Thùy thái dương (Temporal Lobe) - Royal Medical Blue
-            brainColor = '#64b5f6';
-          } else if (
-            nameLower.includes('parietal') ||
-            nameLower.includes('postcentral') ||
-            nameLower.includes('precuneus') ||
-            nameLower.includes('supramarginal') ||
-            nameLower.includes('angular') ||
-            nameLower.includes('cingulate')
-          ) {
-            // Thùy đỉnh (Parietal Lobe) - Golden Amber
-            brainColor = '#ffb74d';
-          } else if (
-            nameLower.includes('occipital') ||
-            nameLower.includes('cuneus') ||
-            nameLower.includes('lingual') ||
-            nameLower.includes('calcarine')
-          ) {
-            // Thùy chẩm (Occipital Lobe) - Emerald / Jade Green
-            brainColor = '#81c784';
-          } else if (
-            nameLower.includes('cerebell') ||
-            nameLower.includes('lobule') ||
-            nameLower.includes('culmen') ||
-            nameLower.includes('declive') ||
-            nameLower.includes('folium') ||
-            nameLower.includes('tuber') ||
-            nameLower.includes('pyramis') ||
-            nameLower.includes('uvula') ||
-            nameLower.includes('nodule') ||
-            nameLower.includes('tonsil') ||
-            nameLower.includes('flocculus')
-          ) {
-            // Tiểu não (Cerebellum) - Royal Violet
-            brainColor = '#ba68c8';
-          } else if (
-            nameLower.includes('pons') ||
-            nameLower.includes('medulla') ||
-            nameLower.includes('midbrain') ||
-            nameLower.includes('colliculus') ||
-            nameLower.includes('peduncle') ||
-            nameLower.includes('olive') ||
-            nameLower.includes('nucleus') ||
-            nameLower.includes('nerve')
-          ) {
-            // Thân não (Brainstem: Cầu não, Hành não, Trung não) - Terracotta Ochre
-            brainColor = '#ff8a65';
-          } else {
-            // Thể chai, gian não & chất trắng - Ivory Cream
-            brainColor = '#fff3e0';
-          }
-
-          mat.color = new THREE.Color(brainColor);
-          mat.roughness = 0.38;
-          mat.metalness = 0.03;
-          mat.envMapIntensity = 1.1;
-        } else if (origMat.map) {
-          // Textured models like Skin (Da) - Preserve original textures, maps, and roughness!
-          mat.roughness = origMat.roughness ?? 0.7;
-          mat.metalness = origMat.metalness ?? 0.05;
-          mat.envMapIntensity = 0.8;
-        } else {
-          // Moist Visceral Organ Tissue Shader
-          mat.roughness = 0.35;
-          mat.metalness = 0.04;
-          mat.envMapIntensity = 1.0;
+        // Cache fallback if __origMaterial wasn't set yet
+        if (!child.userData.__origMaterial) {
+          child.userData.__origMaterial = Array.isArray(child.material)
+            ? child.material.map((m: any) => m.clone())
+            : child.material.clone();
         }
 
-        child.material = mat;
+        const origBase = child.userData.__origMaterial;
+
+        const processMaterial = (baseMat: any) => {
+          const mat = baseMat.clone();
+          mat.clippingPlanes = clippingPlanes;
+          mat.clipShadows = true;
+          mat.side = THREE.DoubleSide; // Prevents back-face hollow clipping
+
+          if (isLayersActive) {
+            // Anatomical Dissection / Muscle Fiber & Deep Vasculature Shader (Exact match to Image 2)
+            mat.wireframe = true;
+            mat.wireframeLinewidth = 1.2;
+            mat.color = new THREE.Color(isBone ? '#8c7f73' : '#c95042');
+            mat.roughness = 0.5;
+            mat.metalness = 0.15;
+            mat.envMapIntensity = 0.6;
+          } else {
+            // RESTORE TO NORMAL: Explicitly turn off wireframe and restore pristine colors & shaders
+            mat.wireframe = false;
+
+            if (isBone) {
+              // Photorealistic Medical Osteological Bone Shader
+              mat.roughness = 0.52;
+              mat.metalness = 0.02;
+              mat.envMapIntensity = 0.8;
+              if (!baseMat.map) {
+                mat.color = new THREE.Color('#f5eee4'); // Warm clinical bone ivory
+              } else if (baseMat.color) {
+                mat.color.copy(baseMat.color);
+              }
+            } else if (specimenId === 'brain') {
+              // Neuroanatomical Lobe & Sub-structure Color Coding (Netter / Sobotta Atlas standard)
+              const nameLower = (child.name || '').toLowerCase();
+              let brainColor = '#eddcd2'; // Default cortical tissue
+
+              if (
+                nameLower.includes('frontal') ||
+                nameLower.includes('precentral') ||
+                nameLower.includes('rectus') ||
+                nameLower.includes('orbital') ||
+                nameLower.includes('subcallosal')
+              ) {
+                // Thùy trán (Frontal Lobe) - Warm Coral Rose
+                brainColor = '#e57373';
+              } else if (
+                nameLower.includes('temporal') ||
+                nameLower.includes('hippocamp') ||
+                nameLower.includes('parahippocamp') ||
+                nameLower.includes('fusiform') ||
+                nameLower.includes('amygdal')
+              ) {
+                // Thùy thái dương (Temporal Lobe) - Royal Medical Blue
+                brainColor = '#64b5f6';
+              } else if (
+                nameLower.includes('parietal') ||
+                nameLower.includes('postcentral') ||
+                nameLower.includes('precuneus') ||
+                nameLower.includes('supramarginal') ||
+                nameLower.includes('angular') ||
+                nameLower.includes('cingulate')
+              ) {
+                // Thùy đỉnh (Parietal Lobe) - Golden Amber
+                brainColor = '#ffb74d';
+              } else if (
+                nameLower.includes('occipital') ||
+                nameLower.includes('cuneus') ||
+                nameLower.includes('lingual') ||
+                nameLower.includes('calcarine')
+              ) {
+                // Thùy chẩm (Occipital Lobe) - Emerald / Jade Green
+                brainColor = '#81c784';
+              } else if (
+                nameLower.includes('cerebell') ||
+                nameLower.includes('lobule') ||
+                nameLower.includes('culmen') ||
+                nameLower.includes('declive') ||
+                nameLower.includes('folium') ||
+                nameLower.includes('tuber') ||
+                nameLower.includes('pyramis') ||
+                nameLower.includes('uvula') ||
+                nameLower.includes('nodule') ||
+                nameLower.includes('tonsil') ||
+                nameLower.includes('flocculus')
+              ) {
+                // Tiểu não (Cerebellum) - Royal Violet
+                brainColor = '#ba68c8';
+              } else if (
+                nameLower.includes('pons') ||
+                nameLower.includes('medulla') ||
+                nameLower.includes('midbrain') ||
+                nameLower.includes('colliculus') ||
+                nameLower.includes('peduncle') ||
+                nameLower.includes('olive') ||
+                nameLower.includes('nucleus') ||
+                nameLower.includes('nerve')
+              ) {
+                // Thân não (Brainstem: Cầu não, Hành não, Trung não) - Terracotta Ochre
+                brainColor = '#ff8a65';
+              } else {
+                // Thể chai, gian não & chất trắng - Ivory Cream
+                brainColor = '#fff3e0';
+              }
+
+              mat.color = new THREE.Color(brainColor);
+              mat.roughness = 0.38;
+              mat.metalness = 0.03;
+              mat.envMapIntensity = 1.1;
+            } else if (baseMat.map) {
+              // Textured models like Skin (Da) - Preserve original textures, maps, and roughness!
+              if (baseMat.color) mat.color.copy(baseMat.color);
+              mat.roughness = baseMat.roughness ?? 0.7;
+              mat.metalness = baseMat.metalness ?? 0.05;
+              mat.envMapIntensity = 0.8;
+            } else {
+              // Moist Visceral Organ Tissue Shader - Restore original GLTF color!
+              if (baseMat.color) mat.color.copy(baseMat.color);
+              mat.roughness = 0.35;
+              mat.metalness = 0.04;
+              mat.envMapIntensity = 1.0;
+            }
+          }
+
+          mat.needsUpdate = true;
+          return mat;
+        };
+
+        if (Array.isArray(origBase)) {
+          child.material = origBase.map(processMaterial);
+        } else {
+          child.material = processMaterial(origBase);
+        }
       }
     });
   }, [normalizedScene, clippingPlanes, isBone, isLayersActive, specimenId]);
