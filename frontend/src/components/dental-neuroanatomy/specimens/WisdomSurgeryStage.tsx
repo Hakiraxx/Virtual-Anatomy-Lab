@@ -16,6 +16,16 @@ import { useDentalNeuroStore } from '../../../stores/useDentalNeuroStore';
 import { useAnatomyStore } from '../../../stores/useAnatomyStore';
 import { WISDOM_SURGICAL_DATABASE } from '../../../data/dentalSpecimensData';
 import { createCraniofacialOrganGroup } from '../DentalNeuro3DStage';
+import {
+  AnatomicalMolarMesh,
+  DentalSyringe3D,
+  PeriostealElevator3D,
+  SurgicalBurHandpiece3D,
+  CryerElevator3D,
+  SurgicalSutureStitch3D,
+  MucoperiostealFlap3D,
+  BoneGutteringTrough3D
+} from './AnatomicalDentalModels3D';
 
 // ============================================================================
 // 1. CANONICAL 3D SKULL BACKGROUND FOR MANDIBULAR SURGERY
@@ -276,128 +286,161 @@ const MandibularSurgicalSiteMesh: React.FC<{
         </Html>
       </group>
 
-      {/* 3. RĂNG KHÔN NGẦM (IMPACTED TOOTH WITH WINTER MORPHING) */}
-      {!isToothElevated && (
-        <group position={toothPos} rotation={toothRotation}>
-          {/* Thân răng (Crown) */}
-          <mesh castShadow position={[0, 0.004, 0]}>
-            <boxGeometry args={[0.008, 0.007, 0.008]} />
-            <meshStandardMaterial
-              color="#fbbf24"
-              emissive="#f59e0b"
-              emissiveIntensity={0.25}
-              roughness={0.25}
-            />
-          </mesh>
+      {/* 3. RĂNG KHÔN NGẦM GIẢI PHẪU 3D CHUẨN Y KHOA (ANATOMICAL MOLAR 3D) */}
+      <group>
+        <AnatomicalMolarMesh
+          position={toothPos}
+          rotation={toothRotation}
+          scale={1.08}
+          isRightSide={isRight}
+          isSectioned={isOdontotomyCut}
+          isSeparated={isToothElevated}
+          elevationOffset={isToothElevated ? [sideSign * -0.012, 0.018, 0.008] : [0, 0, 0]}
+        />
 
-          {/* Chân răng (Roots: Mesial & Distal) */}
-          <mesh position={[-0.002, -0.005, 0.002]}>
-            <coneGeometry args={[0.0022, 0.010, 12]} />
-            <meshStandardMaterial color="#fef08a" roughness={0.4} />
-          </mesh>
-          <mesh position={[0.002, -0.005, -0.002]}>
-            <coneGeometry args={[0.0022, 0.010, 12]} />
-            <meshStandardMaterial color="#fef08a" roughness={0.4} />
-          </mesh>
+        {/* Dynamic Tooth Clinical Status Badge */}
+        <Html position={[toothPos[0], toothPos[1] + 0.012, toothPos[2]]} center>
+          <div className="px-2 py-0.5 rounded bg-amber-500 text-slate-950 font-bold text-[8px] font-mono whitespace-nowrap shadow-md pointer-events-none">
+            {isRight ? 'R.48' : 'R.38'}{' '}
+            {isToothElevated
+              ? '(Đã Bẩy Rời)'
+              : isOdontotomyCut
+              ? '(Đã Cắt Thân)'
+              : '(Răng Khôn Ngầm)'}
+          </div>
+        </Html>
+      </group>
 
-          {/* Odontotomy sectioning cut plane at Step 4 */}
-          {isOdontotomyCut && (
-            <mesh position={[0, 0.002, 0]} rotation={[0, 0, Math.PI / 4]}>
-              <boxGeometry args={[0.011, 0.0006, 0.011]} />
-              <meshBasicMaterial color="#ef4444" wireframe />
-            </mesh>
-          )}
-
-          {/* Tooth Label Badge */}
-          <Html position={[0, 0.010, 0]} center>
-            <div className="px-1.5 py-0.5 rounded bg-amber-500 text-slate-950 font-bold text-[8px] font-mono whitespace-nowrap shadow-md pointer-events-none">
-              {isRight ? 'R.48' : 'R.38'} (Răng Khôn)
-            </div>
-          </Html>
-        </group>
-      )}
-
-      {/* Răng đã bẩy rời (Elevated Tooth fragment at Step 5) */}
-      {isToothElevated && !isSutured && (
-        <group position={[toothPos[0] + (isRight ? -0.012 : 0.012), toothPos[1] + 0.018, toothPos[2] + 0.008]}>
-          <mesh>
-            <boxGeometry args={[0.007, 0.006, 0.007]} />
-            <meshStandardMaterial color="#fbbf24" roughness={0.3} />
-          </mesh>
-          <Html position={[0, 0.008, 0]} center>
-            <div className="px-1.5 py-0.5 rounded bg-emerald-500 text-slate-950 font-bold text-[8px] font-mono whitespace-nowrap shadow-md pointer-events-none">
-              Đã bẩy rời khỏi ổ răng
-            </div>
-          </Html>
-        </group>
-      )}
-
-      {/* 4. GÂY TÊ VÙNG SPIX (Anesthesia Depot at Step 1) */}
+      {/* 4. GÂY TÊ VÙNG SPIX & THẦN KINH MÁ (Anesthesia Depot & 27G Syringe at Step 1) */}
       {isAnesthetized && (
         <group position={[sideSign * 0.038, 1.355, 0.095]}>
-          {/* Kim gây tê (27G Dental Needle) */}
-          <mesh position={[sideSign * -0.008, 0.012, -0.012]} rotation={[-0.8, sideSign * -0.5, 0.2]}>
-            <cylinderGeometry args={[0.0003, 0.0003, 0.028, 8]} />
-            <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.1} />
-          </mesh>
-          {/* Quầng thuốc tê phát quang (Anesthetic Depot) */}
+          {/* Bơm tiêm & Kim nha khoa 27G y tế */}
+          <DentalSyringe3D
+            position={[sideSign * -0.004, 0.008, -0.006]}
+            rotation={[-0.8, sideSign * -0.5, 0.2]}
+          />
+          {/* Quầng thuốc tê phát quang bao quanh gai Spix */}
           <mesh>
-            <sphereGeometry args={[0.006, 16, 16]} />
+            <sphereGeometry args={[0.0065, 16, 16]} />
             <meshStandardMaterial
               color="#06b6d4"
               emissive="#06b6d4"
-              emissiveIntensity={0.8}
+              emissiveIntensity={0.85}
               transparent
-              opacity={0.5}
+              opacity={0.45}
             />
           </mesh>
+          <Html position={[0, 0.010, 0]} center>
+            <div className="px-1.5 py-0.5 rounded bg-cyan-950/90 border border-cyan-500/50 text-cyan-300 text-[7px] font-mono whitespace-nowrap pointer-events-none">
+              Gây tê gai Spix (Lidocaine 2%)
+            </div>
+          </Html>
         </group>
       )}
 
-      {/* 5. ĐƯỜNG RẠCH VẠT & MỞ XƯƠNG (Flap Incision & Bone Window at Steps 2 & 3) */}
+      {/* 5. ĐƯỜNG RẠCH & VẠT MÀNG XƯƠNG (Mucoperiosteal Flap & Periosteal Elevator at Step 2) */}
       {isFlapReflected && (
         <group position={[sideSign * 0.035, 1.335, 0.126]}>
-          <mesh rotation={[0, sideSign * 0.5, 0]}>
-            <boxGeometry args={[0.0008, 0.008, 0.018]} />
-            <meshBasicMaterial color="#ef4444" />
-          </mesh>
-          <Html position={[sideSign * 0.004, 0.006, 0]} center>
+          {/* Vạt niêm mạc màng xương lật mở 3D */}
+          <MucoperiostealFlap3D position={[0, 0, 0]} isRightSide={isRight} />
+          {/* Cây bóc tách màng xương Molt #9 đang banh giữ vạt */}
+          <PeriostealElevator3D
+            position={[sideSign * 0.006, 0.006, 0.004]}
+            rotation={[0.3, sideSign * 0.5, 0.1]}
+          />
+          <Html position={[sideSign * 0.004, 0.010, 0]} center>
             <div className="px-1.5 py-0.5 rounded bg-rose-950/90 border border-rose-500/50 text-rose-300 text-[7px] font-mono whitespace-nowrap pointer-events-none">
-              Đường rạch vạt
+              Vạt tam giác Ward (Bóc tách toàn phần)
             </div>
           </Html>
         </group>
       )}
 
+      {/* 6. MỞ XƯƠNG TẠO RÃNH MÁ (Bone Guttering Trough & Lindemann Bur at Step 3) */}
       {isBoneGuttered && (
         <group position={[sideSign * 0.036, 1.332, 0.122]}>
-          <mesh rotation={[0, sideSign * 0.3, 0]}>
-            <boxGeometry args={[0.003, 0.009, 0.012]} />
-            <meshStandardMaterial
-              color="#0284c7"
-              wireframe
-              emissive="#0284c7"
-              emissiveIntensity={0.8}
+          {/* Cửa sổ mở xương rãnh má hình máng bộc lộ cổ răng */}
+          <BoneGutteringTrough3D position={[0, 0, 0]} isRightSide={isRight} />
+          {/* Mũi khoan Lindemann #702 và vòi phun sương làm mát ở Bước 3 */}
+          {surgicalStep === 3 && (
+            <SurgicalBurHandpiece3D
+              position={[sideSign * 0.003, 0.006, 0.003]}
+              rotation={[0.35, sideSign * 0.4, 0]}
             />
-          </mesh>
-          <Html position={[sideSign * 0.004, -0.006, 0]} center>
+          )}
+          <Html position={[sideSign * 0.004, -0.008, 0]} center>
             <div className="px-1.5 py-0.5 rounded bg-sky-950/90 border border-sky-500/50 text-sky-200 text-[7px] font-mono whitespace-nowrap pointer-events-none">
-              Cửa sổ mở xương
+              Rãnh mở xương má (Bone Guttering)
             </div>
           </Html>
         </group>
       )}
 
-      {/* 6. VẠT PHẪU THUẬT & ĐƯỜNG KHÂU (Vicryl Suture Lines at Step 6) */}
+      {/* 7. CHIA CẮT THÂN RĂNG (Odontotomy Handpiece at Step 4) */}
+      {isOdontotomyCut && surgicalStep === 4 && (
+        <group position={[toothPos[0] + (isRight ? -0.002 : 0.002), toothPos[1] + 0.004, toothPos[2]]}>
+          <SurgicalBurHandpiece3D
+            position={[0, 0.002, 0]}
+            rotation={[0.65, sideSign * 0.25, 0]}
+          />
+          <Html position={[0, 0.010, 0]} center>
+            <div className="px-2 py-0.5 rounded bg-rose-900/90 border border-rose-400 text-rose-200 text-[8px] font-mono whitespace-nowrap shadow-lg pointer-events-none">
+              Cắt thân răng 45° (Mũi #702)
+            </div>
+          </Html>
+        </group>
+      )}
+
+      {/* 8. BẨY RĂNG (Cryer Elevator & Leverage Vector at Step 5) */}
+      {isToothElevated && !isSutured && (
+        <group position={[sideSign * 0.036, 1.332, 0.124]}>
+          {/* Cây bẩy Cryer cắm vào điểm tựa rãnh xương má */}
+          <CryerElevator3D
+            position={[sideSign * 0.002, -0.002, 0.001]}
+            rotation={[0.35, sideSign * 0.45, 0.15]}
+            isRightSide={isRight}
+          />
+          {/* Mũi tên vector hướng lực bẩy nâng thân răng */}
+          <mesh position={[sideSign * -0.006, 0.012, 0.004]} rotation={[0.4, sideSign * -0.3, 0]}>
+            <cylinderGeometry args={[0.0004, 0.0004, 0.010, 8]} />
+            <meshStandardMaterial color="#10b981" emissive="#10b981" emissiveIntensity={0.8} />
+          </mesh>
+          <mesh position={[sideSign * -0.008, 0.017, 0.006]} rotation={[0.4, sideSign * -0.3, 0]}>
+            <coneGeometry args={[0.0012, 0.003, 8]} />
+            <meshStandardMaterial color="#10b981" emissive="#10b981" emissiveIntensity={0.8} />
+          </mesh>
+          <Html position={[0, 0.022, 0]} center>
+            <div className="px-2 py-0.5 rounded bg-emerald-900/90 border border-emerald-400 text-emerald-200 text-[8px] font-mono whitespace-nowrap shadow-xl pointer-events-none">
+              Điểm tựa bẩy (Đòn bẩy loại 1)
+            </div>
+          </Html>
+        </group>
+      )}
+
+      {/* 9. KHÂU ĐÓNG VẠT (3-0 Silk / 4-0 Vicryl Interrupted Sutures at Step 6) */}
       {isSutured && (
         <group position={[sideSign * 0.035, 1.336, 0.124]}>
-          <mesh rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.0008, 0.0008, 0.016, 8]} />
-            <meshBasicMaterial color="#0284c7" />
-          </mesh>
-          <Html position={[0, 0.006, 0]} center>
+          {/* Mũi #1: Sau cành ngang / Vùng tam giác sau hàm */}
+          <SurgicalSutureStitch3D
+            position={[0, 0.001, -0.006]}
+            rotation={[0, sideSign * 0.3, 0]}
+            scale={1.0}
+          />
+          {/* Mũi #2: Góc đường rạch giảm áp */}
+          <SurgicalSutureStitch3D
+            position={[sideSign * 0.002, -0.001, 0.003]}
+            rotation={[0, sideSign * -0.2, 0]}
+            scale={0.95}
+          />
+          {/* Mũi #3: Khe viền nướu R.47 */}
+          <SurgicalSutureStitch3D
+            position={[0, -0.003, 0.009]}
+            rotation={[0, sideSign * 0.1, 0]}
+            scale={0.9}
+          />
+          <Html position={[0, 0.008, 0]} center>
             <div className="px-2 py-0.5 rounded bg-sky-900 border border-sky-400 text-sky-200 text-[8px] font-mono whitespace-nowrap pointer-events-none shadow-lg">
-              Đường khâu kín (Vicryl 4-0)
+              3 Mũi Khâu Rời (Silk 3-0 / Vicryl 4-0)
             </div>
           </Html>
         </group>

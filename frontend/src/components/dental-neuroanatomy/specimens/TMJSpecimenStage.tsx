@@ -174,37 +174,49 @@ const TMJComplexMesh: React.FC<{
           kinematics.translationZ * 0.85 + kinematics.discOffsetZ
         ]}
       >
-        {/* Vùng trung gian mỏng (Intermediate Zone - 1mm) */}
-        <mesh position={[0, 0, 0]} scale={[1.1, 1, 1]}>
-          <cylinderGeometry args={[0.010, 0.011, 0.002, 24]} />
-          <meshStandardMaterial
+        {/* Vùng trung gian mỏng (Intermediate Zone - 1mm) - Biconcave Saddle */}
+        <mesh position={[0, 0, 0]} scale={[1.15, 0.7, 0.9]}>
+          <cylinderGeometry args={[0.010, 0.011, 0.0022, 32]} />
+          <meshPhysicalMaterial
             color="#38bdf8"
-            roughness={0.3}
-            metalness={0.1}
+            roughness={0.25}
+            transmission={0.3}
+            thickness={0.002}
             transparent
-            opacity={0.88}
+            opacity={0.92}
           />
         </mesh>
+
         {/* Băng trước dày (Anterior Band - 2mm) */}
-        <mesh position={[0, 0.0005, 0.008]}>
-          <cylinderGeometry args={[0.010, 0.010, 0.0035, 24, 1, false, 0, Math.PI]} />
-          <meshStandardMaterial color="#0284c7" roughness={0.35} />
+        <mesh position={[0, 0.0008, 0.008]} scale={[1.1, 1, 0.8]}>
+          <cylinderGeometry args={[0.010, 0.010, 0.0038, 24, 1, false, 0, Math.PI]} />
+          <meshStandardMaterial color="#0284c7" roughness={0.3} />
         </mesh>
+
         {/* Băng sau dày nhất (Posterior Band - 3mm) */}
-        <mesh position={[0, 0.001, -0.007]}>
-          <cylinderGeometry args={[0.010, 0.010, 0.0048, 24, 1, false, Math.PI, Math.PI]} />
-          <meshStandardMaterial color="#0369a1" roughness={0.35} />
+        <mesh position={[0, 0.0012, -0.007]} scale={[1.1, 1.2, 0.9]}>
+          <cylinderGeometry args={[0.010, 0.010, 0.0052, 24, 1, false, Math.PI, Math.PI]} />
+          <meshStandardMaterial color="#0369a1" roughness={0.3} />
         </mesh>
-        {/* Mô sau đĩa 2 lá (Bilaminar retrodiscal tissue) */}
-        <mesh position={[0, 0.0015, -0.014]}>
-          <boxGeometry args={[0.018, 0.005, 0.010]} />
-          <meshStandardMaterial
-            color="#fb7185"
-            roughness={0.5}
-            transparent
-            opacity={0.75}
-          />
-        </mesh>
+
+        {/* Mô sau đĩa 2 lá (Bilaminar retrodiscal tissue with elastic & collagen layers) */}
+        <group position={[0, 0.002, -0.014]}>
+          {/* Lá trên (Superior elastic lamina to squamotympanic fissure) */}
+          <mesh position={[0, 0.0015, 0]} rotation={[-0.1, 0, 0]}>
+            <boxGeometry args={[0.016, 0.002, 0.009]} />
+            <meshStandardMaterial color="#fda4af" roughness={0.4} transparent opacity={0.85} />
+          </mesh>
+          {/* Đám rối tĩnh mạch sau đĩa (Venous plexus vascular pad) */}
+          <mesh position={[0, 0, -0.001]}>
+            <sphereGeometry args={[0.0035, 12, 12]} />
+            <meshStandardMaterial color="#e11d48" roughness={0.5} transparent opacity={0.65} />
+          </mesh>
+          {/* Lá dưới (Inferior collagenous lamina to condylar neck) */}
+          <mesh position={[0, -0.0015, 0]} rotation={[0.1, 0, 0]}>
+            <boxGeometry args={[0.016, 0.002, 0.009]} />
+            <meshStandardMaterial color="#f43f5e" roughness={0.4} transparent opacity={0.85} />
+          </mesh>
+        </group>
 
         {/* Dynamic Click Alert Visualizer for DDwR */}
         {clickSoundTriggered && (
@@ -223,15 +235,28 @@ const TMJComplexMesh: React.FC<{
         position={[kinematics.translationX, -0.003 + kinematics.translationY, kinematics.translationZ]}
         rotation={[kinematics.rotationAngle, 0, 0]}
       >
-        {/* Chỏm lồi cầu (Condylar Head) */}
-        <mesh castShadow receiveShadow scale={[1.3, 0.65, 0.85]}>
+        {/* Chỏm lồi cầu (Condylar Head with Cartilage Cap) */}
+        <mesh castShadow receiveShadow scale={[1.35, 0.68, 0.88]}>
           <sphereGeometry args={[0.0095, 24, 16]} />
           <meshStandardMaterial
             color="#f5ede2"
             emissive="#fbbf24"
-            emissiveIntensity={0.15}
-            roughness={0.4}
+            emissiveIntensity={0.12}
+            roughness={0.35}
             metalness={0.05}
+          />
+        </mesh>
+
+        {/* Sụn khớp che phủ bề mặt lồi cầu (Articular Fibrocartilage) */}
+        <mesh position={[0, 0.004, 0]} scale={[1.32, 0.3, 0.85]}>
+          <sphereGeometry args={[0.0092, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
+          <meshPhysicalMaterial
+            color="#e0f2fe"
+            roughness={0.2}
+            transmission={0.4}
+            thickness={0.001}
+            transparent
+            opacity={0.8}
           />
         </mesh>
 
@@ -262,94 +287,177 @@ const TMJComplexMesh: React.FC<{
         </group>
       )}
 
-      {/* 5. HỆ THỐNG 4 CƠ NHAI (Masticatory Muscles) Mapped onto Right Skull Landmarks */}
+      {/* 5. HỆ THỐNG 4 CƠ NHAI GIẢI PHẪU VI THỂ (Multi-Bundle Striated Architecture) */}
       {showMuscles && (
         <group>
-          {/* CƠ CẮN (Masseter) - Bó Nông: Cung gò má -> Góc hàm */}
+          {/* CƠ CẮN (Masseter) - Bó Nông & Bó Sâu với thớ cơ vân */}
           {(!activeMuscleId || activeMuscleId === 'muscle_masseter') && (
-            <group position={[-0.003, -0.028, 0.018]}>
-              <mesh rotation={[0.45, -0.1, 0.1]}>
-                <boxGeometry args={[0.006, 0.038, 0.014]} />
-                <meshStandardMaterial
-                  color="#e11d48"
-                  roughness={0.4}
-                  transparent
-                  opacity={activeMuscleId === 'muscle_masseter' ? 0.92 : 0.65}
-                />
+            <group position={[-0.004, -0.028, 0.016]}>
+              {/* Bó nông (Superficial Masseter: 3 striated fiber bands, 45° angle) */}
+              <group rotation={[0.42, -0.1, 0.1]}>
+                {/* Fiber band 1 (Anterior) */}
+                <mesh position={[-0.002, 0, 0.004]}>
+                  <cylinderGeometry args={[0.0025, 0.0035, 0.038, 12]} />
+                  <meshStandardMaterial
+                    color="#e11d48"
+                    roughness={0.35}
+                    transparent
+                    opacity={activeMuscleId === 'muscle_masseter' ? 0.95 : 0.72}
+                  />
+                </mesh>
+                {/* Fiber band 2 (Middle) */}
+                <mesh position={[-0.002, 0, 0]}>
+                  <cylinderGeometry args={[0.0028, 0.0038, 0.038, 12]} />
+                  <meshStandardMaterial
+                    color="#be123c"
+                    roughness={0.35}
+                    transparent
+                    opacity={activeMuscleId === 'muscle_masseter' ? 0.95 : 0.72}
+                  />
+                </mesh>
+                {/* Fiber band 3 (Posterior) */}
+                <mesh position={[-0.002, 0, -0.004]}>
+                  <cylinderGeometry args={[0.0024, 0.0034, 0.036, 12]} />
+                  <meshStandardMaterial
+                    color="#e11d48"
+                    roughness={0.35}
+                    transparent
+                    opacity={activeMuscleId === 'muscle_masseter' ? 0.95 : 0.72}
+                  />
+                </mesh>
+              </group>
+
+              {/* Bó sâu (Deep Masseter: Vertical fibers to upper ramus) */}
+              <group position={[0.003, 0.004, -0.002]} rotation={[0.1, -0.05, 0.05]}>
+                <mesh position={[0, 0, 0]}>
+                  <cylinderGeometry args={[0.0025, 0.003, 0.028, 10]} />
+                  <meshStandardMaterial
+                    color="#9f1239"
+                    roughness={0.4}
+                    transparent
+                    opacity={activeMuscleId === 'muscle_masseter' ? 0.95 : 0.65}
+                  />
+                </mesh>
+              </group>
+
+              {/* Gân bám cung gò má (Zygomatic Tendon Aponeurosis) */}
+              <mesh position={[-0.003, 0.016, 0.006]}>
+                <boxGeometry args={[0.004, 0.004, 0.014]} />
+                <meshStandardMaterial color="#f8fafc" roughness={0.25} />
               </mesh>
-              <Html position={[-0.006, 0, 0]} center>
-                <div className="px-1.5 py-0.5 rounded bg-rose-950/80 border border-rose-500/40 text-rose-200 text-[7px] font-mono whitespace-nowrap pointer-events-none">
+
+              <Html position={[-0.008, 0, 0]} center>
+                <div className="px-1.5 py-0.5 rounded bg-rose-950/90 border border-rose-500/50 text-rose-200 text-[7px] font-mono whitespace-nowrap pointer-events-none shadow-md">
                   Cơ Cắn (Masseter)
                 </div>
               </Html>
             </group>
           )}
 
-          {/* CƠ THÁI DƯƠNG (Temporalis): Hố thái dương -> Mỏm vẹt */}
+          {/* CƠ THÁI DƯƠNG (Temporalis): Cấu trúc nan quạt hội tụ về Mỏm Vẹt */}
           {(!activeMuscleId || activeMuscleId === 'muscle_temporalis') && (
             <group position={[-0.004, 0.024, 0.012]}>
-              <mesh rotation={[-0.3, -0.15, 0.15]}>
-                <cylinderGeometry args={[0.016, 0.005, 0.042, 16, 1, false, 0, Math.PI]} />
+              {/* Bó trước thẳng đứng (Anterior vertical fibers) */}
+              <mesh position={[0, 0.008, 0.010]} rotation={[-0.15, -0.1, 0.1]}>
+                <cylinderGeometry args={[0.003, 0.002, 0.034, 10]} />
                 <meshStandardMaterial
                   color="#be123c"
-                  roughness={0.4}
+                  roughness={0.35}
                   transparent
-                  opacity={activeMuscleId === 'muscle_temporalis' ? 0.92 : 0.60}
+                  opacity={activeMuscleId === 'muscle_temporalis' ? 0.95 : 0.65}
                 />
               </mesh>
-              <Html position={[-0.008, 0.015, 0]} center>
-                <div className="px-1.5 py-0.5 rounded bg-rose-950/80 border border-rose-500/40 text-rose-200 text-[7px] font-mono whitespace-nowrap pointer-events-none">
+              {/* Bó giữa chạy xiên (Middle oblique fibers) */}
+              <mesh position={[0, 0.006, 0]} rotation={[-0.35, -0.12, 0.12]}>
+                <cylinderGeometry args={[0.0035, 0.0022, 0.036, 10]} />
+                <meshStandardMaterial
+                  color="#be123c"
+                  roughness={0.35}
+                  transparent
+                  opacity={activeMuscleId === 'muscle_temporalis' ? 0.95 : 0.65}
+                />
+              </mesh>
+              {/* Bó sau chạy ngang (Posterior horizontal retractor fibers) */}
+              <mesh position={[0, 0.002, -0.012]} rotation={[-0.7, -0.15, 0.15]}>
+                <cylinderGeometry args={[0.003, 0.002, 0.032, 10]} />
+                <meshStandardMaterial
+                  color="#9f1239"
+                  roughness={0.35}
+                  transparent
+                  opacity={activeMuscleId === 'muscle_temporalis' ? 0.95 : 0.65}
+                />
+              </mesh>
+
+              {/* Gân bám Mỏm Vẹt (Coronoid Tendon Insert) */}
+              <mesh position={[0.001, -0.012, 0.006]} rotation={[-0.2, 0, 0]}>
+                <coneGeometry args={[0.0025, 0.012, 8]} />
+                <meshStandardMaterial color="#f8fafc" roughness={0.2} />
+              </mesh>
+
+              <Html position={[-0.008, 0.016, 0]} center>
+                <div className="px-1.5 py-0.5 rounded bg-rose-950/90 border border-rose-500/50 text-rose-200 text-[7px] font-mono whitespace-nowrap pointer-events-none shadow-md">
                   Cơ Thái Dương (Temporalis)
                 </div>
               </Html>
             </group>
           )}
 
-          {/* CƠ CHÂN BƯỚM NGOÀI (Lateral Pterygoid) - Đi vào trong (medial = +X relative to Right TMJ) */}
+          {/* CƠ CHÂN BƯỚM NGOÀI (Lateral Pterygoid): 2 đầu cơ bám Đĩa khớp & Cổ lồi cầu */}
           {(!activeMuscleId || activeMuscleId === 'muscle_lateral_pterygoid') && (
             <group position={[0.015, -0.002, 0.014]}>
-              {/* Bó trên bám Đĩa khớp */}
+              {/* Bó trên (Superior head) bám bờ trước Đĩa khớp */}
               <mesh position={[0, 0.003, 0]} rotation={[0, -0.7, 0.15]}>
-                <cylinderGeometry args={[0.0025, 0.003, 0.022, 10]} />
+                <cylinderGeometry args={[0.0026, 0.0032, 0.024, 12]} />
                 <meshStandardMaterial
                   color="#f97316"
                   roughness={0.35}
                   transparent
-                  opacity={activeMuscleId === 'muscle_lateral_pterygoid' ? 0.95 : 0.75}
+                  opacity={activeMuscleId === 'muscle_lateral_pterygoid' ? 0.95 : 0.8}
                 />
               </mesh>
-              {/* Bó dưới bám Cổ lồi cầu */}
+              {/* Bó dưới (Inferior head) bám Hố chân bướm cổ lồi cầu */}
               <mesh position={[0, -0.004, -0.002]} rotation={[0, -0.7, 0.3]}>
-                <cylinderGeometry args={[0.003, 0.0035, 0.024, 10]} />
+                <cylinderGeometry args={[0.0032, 0.0038, 0.026, 12]} />
                 <meshStandardMaterial
                   color="#ea580c"
                   roughness={0.35}
                   transparent
-                  opacity={activeMuscleId === 'muscle_lateral_pterygoid' ? 0.95 : 0.75}
+                  opacity={activeMuscleId === 'muscle_lateral_pterygoid' ? 0.95 : 0.8}
                 />
               </mesh>
+
               <Html position={[0.005, 0, 0]} center>
-                <div className="px-1.5 py-0.5 rounded bg-orange-950/80 border border-orange-500/40 text-orange-200 text-[7px] font-mono whitespace-nowrap pointer-events-none">
+                <div className="px-1.5 py-0.5 rounded bg-orange-950/90 border border-orange-500/50 text-orange-200 text-[7px] font-mono whitespace-nowrap pointer-events-none shadow-md">
                   Cơ Chân Bướm Ngoài
                 </div>
               </Html>
             </group>
           )}
 
-          {/* CƠ CHÂN BƯỚM TRONG (Medial Pterygoid) - Đi vào trong */}
+          {/* CƠ CHÂN BƯỚM TRONG (Medial Pterygoid) - Tạo đai cơ nhai với cơ cắn */}
           {(!activeMuscleId || activeMuscleId === 'muscle_medial_pterygoid') && (
             <group position={[0.014, -0.026, 0.010]}>
-              <mesh rotation={[0.4, 0.2, -0.15]}>
-                <boxGeometry args={[0.006, 0.034, 0.010]} />
+              <mesh position={[0, 0, 0]} rotation={[0.42, 0.2, -0.15]}>
+                <cylinderGeometry args={[0.0035, 0.0045, 0.036, 12]} />
                 <meshStandardMaterial
                   color="#c2410c"
                   roughness={0.4}
                   transparent
-                  opacity={activeMuscleId === 'muscle_medial_pterygoid' ? 0.95 : 0.65}
+                  opacity={activeMuscleId === 'muscle_medial_pterygoid' ? 0.95 : 0.72}
                 />
               </mesh>
-              <Html position={[0.005, 0, 0]} center>
-                <div className="px-1.5 py-0.5 rounded bg-orange-950/80 border border-orange-500/40 text-orange-200 text-[7px] font-mono whitespace-nowrap pointer-events-none">
+              <mesh position={[0.003, 0, 0.002]} rotation={[0.42, 0.2, -0.15]}>
+                <cylinderGeometry args={[0.003, 0.0038, 0.034, 12]} />
+                <meshStandardMaterial
+                  color="#9a3412"
+                  roughness={0.4}
+                  transparent
+                  opacity={activeMuscleId === 'muscle_medial_pterygoid' ? 0.95 : 0.72}
+                />
+              </mesh>
+
+              <Html position={[0.006, 0, 0]} center>
+                <div className="px-1.5 py-0.5 rounded bg-orange-950/90 border border-orange-500/50 text-orange-200 text-[7px] font-mono whitespace-nowrap pointer-events-none shadow-md">
                   Cơ Chân Bướm Trong
                 </div>
               </Html>
