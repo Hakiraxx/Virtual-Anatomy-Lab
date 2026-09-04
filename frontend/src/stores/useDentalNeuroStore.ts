@@ -110,6 +110,9 @@ interface DentalNeuroState {
   isMandibularCanalMode: boolean;
   isAnesthesiaMode: boolean;
   activeAnesthesiaId: string | null;
+  // Clinical Lateralization & Marker Controls
+  lateralizationSide: 'bilateral' | 'right' | 'left';
+  selectedSide: 'right' | 'left' | null;
   showForaminaMarkers: boolean;
   showTeethMarkers: boolean;
   clippingPlane: {
@@ -130,9 +133,10 @@ interface DentalNeuroState {
   } | null;
 
   // Actions
-  selectAnatomy: (id: string | null) => void;
+  selectAnatomy: (id: string | null, side?: 'right' | 'left' | null) => void;
   focusAnatomy: (id: string) => void;
   setHoveredAnatomy: (id: string | null) => void;
+  setLateralizationSide: (side: 'bilateral' | 'right' | 'left') => void;
   setVisualizationDepth: (depth: VisualizationDepth) => void;
   setLayerVisibility: (layerIndex: number, visible: boolean) => void;
   setLayerOpacity: (layerIndex: number, opacity: number) => void;
@@ -193,7 +197,7 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
     6: true,  // Cranial nerves
     7: false, // Arteries
     8: false, // Veins
-    9: true,  // Salivary glands
+    9: false, // Salivary glands (disabled by default in neuro lab for crystal-clear visualization)
     10: true, // Teeth
     11: true, // Jaw bones
     12: true, // TMJ
@@ -203,24 +207,26 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
     1: 0.15,
     2: 0.20,
     3: 0.35,
-    4: 0.45,
+    4: 0.40,
     5: 0.50,
     6: 1.00,
     7: 0.85,
     8: 0.85,
-    9: 0.75,
-    10: 1.00,
-    11: 0.80,
-    12: 0.85,
-    13: 0.70
+    9: 0.60,
+    10: 0.90,
+    11: 0.50,
+    12: 0.70,
+    13: 0.75
   },
 
   isRadiographicView: false,
   isMandibularCanalMode: false,
   isAnesthesiaMode: false,
   activeAnesthesiaId: null,
-  showForaminaMarkers: true,
-  showTeethMarkers: true,
+  lateralizationSide: 'bilateral',
+  selectedSide: 'right',
+  showForaminaMarkers: false, // Default false: clinical view without artificial locator rings
+  showTeethMarkers: false, // Disabled by default to prevent floating spheres clutter
   clippingPlane: {
     enabled: false,
     axis: 'y',
@@ -233,11 +239,18 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
   quizAnswered: false,
   quizFeedback: null,
 
-  selectAnatomy: (id) => {
-    set({ selectedAnatomyId: id });
+  selectAnatomy: (id, side = null) => {
+    set({
+      selectedAnatomyId: id,
+      selectedSide: side || (id ? get().selectedSide || 'right' : null)
+    });
     if (id) {
       get().focusAnatomy(id);
     }
+  },
+
+  setLateralizationSide: (side) => {
+    set({ lateralizationSide: side });
   },
 
   focusAnatomy: (id) => {

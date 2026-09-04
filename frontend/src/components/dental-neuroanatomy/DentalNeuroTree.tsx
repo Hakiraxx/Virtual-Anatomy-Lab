@@ -7,7 +7,8 @@ import {
   Zap,
   Layers,
   Sparkles,
-  Activity
+  Activity,
+  PanelLeftClose
 } from 'lucide-react';
 import { useDentalNeuroStore } from '../../stores/useDentalNeuroStore';
 import { useAnatomyStore } from '../../stores/useAnatomyStore';
@@ -18,7 +19,19 @@ import {
   MUSCLES_OF_MASTICATION
 } from '../../data/dentalNeuroData';
 
-export const DentalNeuroTree: React.FC = () => {
+interface DentalNeuroTreeProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+  customWidth?: number;
+  isMobileDrawer?: boolean;
+}
+
+export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
+  isOpen = true,
+  onClose,
+  customWidth = 320,
+  isMobileDrawer = false
+}) => {
   const selectedAnatomyId = useDentalNeuroStore((s) => s.selectedAnatomyId);
   const selectAnatomy = useDentalNeuroStore((s) => s.selectAnatomy);
 
@@ -115,7 +128,14 @@ export const DentalNeuroTree: React.FC = () => {
 
   return (
     <aside
-      className={`w-80 h-full border-r flex flex-col z-20 select-none overflow-hidden transition-colors duration-200 ${
+      style={!isMobileDrawer ? { width: isOpen ? `${customWidth}px` : 0 } : undefined}
+      className={`h-full border-r flex flex-col z-20 select-none overflow-hidden ${
+        isMobileDrawer
+          ? 'w-full'
+          : isOpen
+          ? 'opacity-100'
+          : 'opacity-0 pointer-events-none border-r-0'
+      } ${
         isDark
           ? 'bg-[#0c121e]/95 border-slate-800 text-slate-200'
           : 'bg-[#fbf7f2]/95 border-[#e7ded3] text-[#28231d]'
@@ -123,25 +143,34 @@ export const DentalNeuroTree: React.FC = () => {
     >
       {/* Header */}
       <div
-        className={`p-3 border-b flex items-center justify-between ${
+        className={`p-3 border-b flex items-center justify-between flex-shrink-0 ${
           isDark
             ? 'bg-slate-950/60 border-slate-800/80'
             : 'bg-[#f3ece2]/60 border-[#e7ded3]'
         }`}
       >
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-500">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-6 h-6 rounded bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-500 flex-shrink-0">
             <Zap className="w-3.5 h-3.5" />
           </div>
-          <div>
-            <h2 className="text-xs font-serif font-bold uppercase tracking-wider text-current">
+          <div className="min-w-0">
+            <h2 className="text-xs font-serif font-bold uppercase tracking-wider text-current truncate">
               Cây Giải Phẫu Sọ Mặt
             </h2>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+            <p className="text-[9px] text-slate-500 dark:text-slate-400 font-mono truncate">
               CRANIOFACIAL HIERARCHY
             </p>
           </div>
         </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="p-1 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 transition cursor-pointer flex-shrink-0"
+            title="Thu gọn cây giải phẫu"
+          >
+            <PanelLeftClose className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {/* Scrollable Tree */}

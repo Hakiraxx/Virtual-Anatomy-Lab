@@ -14,7 +14,11 @@ import {
   ArrowDownLeft,
   Syringe,
   Stethoscope,
-  Info
+  Info,
+  X,
+  PanelRightClose,
+  ChevronRight,
+  Sparkles
 } from 'lucide-react';
 import { useDentalNeuroStore } from '../../stores/useDentalNeuroStore';
 import { useAnatomyStore } from '../../stores/useAnatomyStore';
@@ -27,9 +31,22 @@ import {
   ANATOMICAL_RELATIONS
 } from '../../data/dentalNeuroData';
 
-export const DentalNeuroInfoPanel: React.FC = () => {
+interface DentalNeuroInfoPanelProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+  customWidth?: number;
+  isMobileDrawer?: boolean;
+}
+
+export const DentalNeuroInfoPanel: React.FC<DentalNeuroInfoPanelProps> = ({
+  isOpen = true,
+  onClose,
+  customWidth = 360,
+  isMobileDrawer = false
+}) => {
   const selectedAnatomyId = useDentalNeuroStore((s) => s.selectedAnatomyId);
   const selectAnatomy = useDentalNeuroStore((s) => s.selectAnatomy);
+  const selectedSide = useDentalNeuroStore((s) => s.selectedSide);
 
   const activeNerveTraceId = useDentalNeuroStore((s) => s.activeNerveTraceId);
   const tracePlaybackState = useDentalNeuroStore((s) => s.tracePlaybackState);
@@ -37,6 +54,7 @@ export const DentalNeuroInfoPanel: React.FC = () => {
   const pauseTrace = useDentalNeuroStore((s) => s.pauseTrace);
   const resumeTrace = useDentalNeuroStore((s) => s.resumeTrace);
   const resetTrace = useDentalNeuroStore((s) => s.resetTrace);
+  const toggleAnesthesiaMode = useDentalNeuroStore((s) => s.toggleAnesthesiaMode);
 
   const atelierTheme = useAnatomyStore((s) => s.atelierTheme);
   const isDark = atelierTheme === 'dark';
@@ -81,29 +99,172 @@ export const DentalNeuroInfoPanel: React.FC = () => {
     }
   };
 
+  const handleDeselect = () => {
+    selectAnatomy(null);
+  };
+
+  // When nothing is selected, show an engaging, high-yield overview navigator
   if (!selectedAnatomyId) {
     return (
       <aside
-        className={`w-88 h-full border-l flex flex-col items-center justify-center p-6 text-center select-none transition-colors duration-200 ${
+        style={!isMobileDrawer ? { width: isOpen ? `${customWidth}px` : 0 } : undefined}
+        className={`h-full border-l flex flex-col z-20 select-none overflow-hidden ${
+          isMobileDrawer
+            ? 'w-full'
+            : isOpen
+            ? 'opacity-100'
+            : 'opacity-0 pointer-events-none border-l-0'
+        } ${
           isDark
-            ? 'bg-[#0c121e]/95 border-slate-800 text-slate-400'
-            : 'bg-[#fbf7f2]/95 border-[#e7ded3] text-slate-600'
+            ? 'bg-[#0c121e]/95 border-slate-800 text-slate-200'
+            : 'bg-[#fbf7f2]/95 border-[#e7ded3] text-[#28231d]'
         }`}
       >
-        <div className="w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 mb-3 animate-pulse">
-          <Brain className="w-6 h-6" />
+        {/* Header */}
+        <div
+          className={`p-3 border-b flex items-center justify-between flex-shrink-0 ${
+            isDark ? 'bg-slate-950/60 border-slate-800/80' : 'bg-[#f3ece2]/60 border-[#e7ded3]'
+          }`}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-6 h-6 rounded bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-500 flex-shrink-0">
+              <Brain className="w-3.5 h-3.5" />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-xs font-serif font-bold uppercase tracking-wider text-current truncate">
+                Hồ Sơ Sọ Mặt & Thần Kinh
+              </h2>
+              <p className="text-[9px] text-slate-500 dark:text-slate-400 font-mono truncate">
+                HIGH-YIELD OVERVIEW
+              </p>
+            </div>
+          </div>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="p-1 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 transition cursor-pointer flex-shrink-0"
+              title="Thu gọn hồ sơ"
+            >
+              <PanelRightClose className="w-4 h-4" />
+            </button>
+          )}
         </div>
-        <p className="text-sm font-serif font-bold text-current">Hồ Sơ Giải Phẫu Sọ Mặt</p>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed max-w-xs">
-          Nhấp vào bất kỳ dây thần kinh, lỗ sọ hoặc răng trên mô hình 3D để xem chi tiết đường đi giải phẫu, chi phối cảm giác và mốc gây tê lâm sàng.
-        </p>
+
+        {/* High-yield Quick Cards */}
+        <div className="flex-1 overflow-y-auto p-3.5 space-y-3 text-xs font-sans">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+            Chọn một cấu trúc trên mô hình 3D hoặc bấm thẻ bên dưới để xem đường đi chi tiết và ứng dụng lâm sàng:
+          </p>
+
+          {/* Card 1: CN V */}
+          <div
+            onClick={() => selectAnatomy('cn_5')}
+            className={`p-3 rounded-xl border transition cursor-pointer group ${
+              isDark
+                ? 'bg-slate-900/60 border-slate-800 hover:border-amber-500/60 hover:bg-slate-900'
+                : 'bg-white/80 border-[#e7ded3] hover:border-amber-600/60 hover:bg-white'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400 uppercase">
+                CN V • Tam thoa
+              </span>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition" />
+            </div>
+            <h4 className="font-serif font-bold text-sm text-current">Dây V & 3 Phân nhánh</h4>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+              Trục thần kinh cảm giác trung tâm sọ mặt: V1 (Mắt), V2 (Hàm trên), V3 (Hàm dưới & cơ nhai).
+            </p>
+          </div>
+
+          {/* Card 2: IAN */}
+          <div
+            onClick={() => selectAnatomy('nerve_ian')}
+            className={`p-3 rounded-xl border transition cursor-pointer group ${
+              isDark
+                ? 'bg-slate-900/60 border-slate-800 hover:border-rose-500/60 hover:bg-slate-900'
+                : 'bg-white/80 border-[#e7ded3] hover:border-rose-600/60 hover:bg-white'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[10px] font-mono font-bold text-rose-500 uppercase">
+                Gây tê lâm sàng
+              </span>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition" />
+            </div>
+            <h4 className="font-serif font-bold text-sm text-current">Thần kinh IAN & Gai Spix</h4>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+              Đường đi trong ống hàm dưới, chi phối cảm giác toàn bộ răng hàm dưới và mốc gây tê gai Spix.
+            </p>
+          </div>
+
+          {/* Card 3: CN VII */}
+          <div
+            onClick={() => selectAnatomy('cn_7')}
+            className={`p-3 rounded-xl border transition cursor-pointer group ${
+              isDark
+                ? 'bg-slate-900/60 border-slate-800 hover:border-emerald-500/60 hover:bg-slate-900'
+                : 'bg-white/80 border-[#e7ded3] hover:border-emerald-600/60 hover:bg-white'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[10px] font-mono font-bold text-emerald-500 uppercase">
+                CN VII • Thần kinh Mặt
+              </span>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition" />
+            </div>
+            <h4 className="font-serif font-bold text-sm text-current">5 Nhánh Vận Động Biểu Cảm</h4>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+              Thoát ra khỏi sọ qua lỗ trâm chũm, xuyên tuyến mang tai chi phối cơ mặt (Thái dương, Gò má, Má, Bờ hàm, Cổ).
+            </p>
+          </div>
+
+          {/* Card 4: Foramina */}
+          <div
+            onClick={() => selectAnatomy('foramen_ovale')}
+            className={`p-3 rounded-xl border transition cursor-pointer group ${
+              isDark
+                ? 'bg-slate-900/60 border-slate-800 hover:border-sky-500/60 hover:bg-slate-900'
+                : 'bg-white/80 border-[#e7ded3] hover:border-sky-600/60 hover:bg-white'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[10px] font-mono font-bold text-sky-500 uppercase">
+                Nền sọ & Lỗ sọ
+              </span>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition" />
+            </div>
+            <h4 className="font-serif font-bold text-sm text-current">Lỗ Bầu Dục, Lỗ Tròn, Lỗ Cằm</h4>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+              17 lỗ và ống xương then chốt dẫn truyền các dây thần kinh sọ và bó mạch hàm mặt.
+            </p>
+          </div>
+
+          {/* Quick Anesthesia launch */}
+          <div className="pt-2">
+            <button
+              onClick={toggleAnesthesiaMode}
+              className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow cursor-pointer transition"
+            >
+              <Syringe className="w-3.5 h-3.5" />
+              <span>Chế độ Học Gây Tê Nha Khoa</span>
+            </button>
+          </div>
+        </div>
       </aside>
     );
   }
 
   return (
     <aside
-      className={`w-88 h-full border-l flex flex-col z-20 select-none overflow-hidden transition-colors duration-200 ${
+      style={!isMobileDrawer ? { width: isOpen ? `${customWidth}px` : 0 } : undefined}
+      className={`h-full border-l flex flex-col z-20 select-none overflow-hidden ${
+        isMobileDrawer
+          ? 'w-full'
+          : isOpen
+          ? 'opacity-100'
+          : 'opacity-0 pointer-events-none border-l-0'
+      } ${
         isDark
           ? 'bg-[#0c121e]/95 border-slate-800 text-slate-200'
           : 'bg-[#fbf7f2]/95 border-[#e7ded3] text-[#28231d]'
@@ -111,43 +272,74 @@ export const DentalNeuroInfoPanel: React.FC = () => {
     >
       {/* 1. Header Banner */}
       <div
-        className={`p-4 border-b ${
+        className={`p-3.5 border-b flex-shrink-0 ${
           isDark
             ? 'bg-slate-950/70 border-slate-800/80'
             : 'bg-[#f3ece2]/70 border-[#e7ded3]'
         }`}
       >
         <div className="flex items-center justify-between gap-2">
-          <span className="text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-            {nerve ? 'DÂY THẦN KINH SỌ' : foramen ? 'LỖ NỀN SỌ' : tooth ? 'RĂNG & HUYỆT RĂNG' : 'CƠ NHAI'}
-          </span>
-          {nerve && (
-            <div className="flex items-center gap-1">
-              <button
-                onClick={handleGoProximal}
-                disabled={!nerve.parentNerveId}
-                className={`px-2 py-0.5 rounded text-[9px] font-medium border transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed ${
-                  isDark
-                    ? 'border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700'
-                    : 'border-[#dfd5c7] bg-[#ede3d5] text-slate-700 hover:bg-[#e4d6c4]'
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+              {nerve ? 'DÂY THẦN KINH SỌ' : foramen ? 'LỖ NỀN SỌ' : tooth ? 'RĂNG & HUYỆT RĂNG' : 'CƠ NHAI'}
+            </span>
+            {selectedSide && (
+              <span
+                className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border ${
+                  selectedSide === 'right'
+                    ? 'bg-amber-600/20 text-amber-600 dark:text-amber-400 border-amber-500/40'
+                    : 'bg-sky-600/20 text-sky-600 dark:text-sky-400 border-sky-500/40'
                 }`}
-                title="Đi về phía gốc thần kinh (Parent nerve)"
               >
-                ← Gốc
-              </button>
+                {selectedSide === 'right' ? '◧ Bên Phải (R)' : '◨ Bên Trái (L)'}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-1">
+            {nerve && (
+              <>
+                <button
+                  onClick={handleGoProximal}
+                  disabled={!nerve.parentNerveId}
+                  className={`px-1.5 py-0.5 rounded text-[9px] font-medium border transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed ${
+                    isDark
+                      ? 'border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700'
+                      : 'border-[#dfd5c7] bg-[#ede3d5] text-slate-700 hover:bg-[#e4d6c4]'
+                  }`}
+                  title="Đi về phía gốc thần kinh (Parent nerve)"
+                >
+                  ← Gốc
+                </button>
+                <button
+                  onClick={handleGoDistal}
+                  className={`px-1.5 py-0.5 rounded text-[9px] font-medium border transition cursor-pointer ${
+                    isDark
+                      ? 'border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700'
+                      : 'border-[#dfd5c7] bg-[#ede3d5] text-slate-700 hover:bg-[#e4d6c4]'
+                  }`}
+                  title="Đi về phía nhánh ngoại vi (Distal branch)"
+                >
+                  Ngọn →
+                </button>
+              </>
+            )}
+            <button
+              onClick={handleDeselect}
+              className="p-1 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 transition cursor-pointer ml-1"
+              title="Bỏ chọn / Đóng chi tiết"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            {onClose && (
               <button
-                onClick={handleGoDistal}
-                className={`px-2 py-0.5 rounded text-[9px] font-medium border transition cursor-pointer ${
-                  isDark
-                    ? 'border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700'
-                    : 'border-[#dfd5c7] bg-[#ede3d5] text-slate-700 hover:bg-[#e4d6c4]'
-                }`}
-                title="Đi về phía nhánh ngoại vi (Distal branch)"
+                onClick={onClose}
+                className="p-1 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 transition cursor-pointer"
+                title="Thu gọn panel"
               >
-                Ngọn →
+                <PanelRightClose className="w-4 h-4" />
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         <h1 className="font-serif text-lg font-bold text-current mt-2 leading-tight">
@@ -328,28 +520,40 @@ export const DentalNeuroInfoPanel: React.FC = () => {
         {/* TOOTH SPECIFIC INFORMATION */}
         {tooth && (
           <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-2 text-center">
+            <div className="grid grid-cols-3 gap-1.5 text-center">
               <div
-                className={`p-2.5 rounded-xl border ${
+                className={`p-2 rounded-xl border ${
                   isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white/80 border-[#e7ded3]'
                 }`}
               >
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-mono uppercase">
-                  SỐ RĂNG FDI
+                <span className="text-[9px] text-slate-500 dark:text-slate-400 block font-mono uppercase">
+                  RĂNG FDI
                 </span>
-                <span className="font-serif text-lg font-bold text-amber-600 dark:text-amber-400">
+                <span className="font-serif text-base font-bold text-amber-600 dark:text-amber-400">
                   {tooth.fdi}
                 </span>
               </div>
               <div
-                className={`p-2.5 rounded-xl border ${
+                className={`p-2 rounded-xl border ${
                   isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white/80 border-[#e7ded3]'
                 }`}
               >
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-mono uppercase">
+                <span className="text-[9px] text-slate-500 dark:text-slate-400 block font-mono uppercase">
+                  PHÂN CUNG
+                </span>
+                <span className="font-serif text-xs font-bold text-emerald-600 dark:text-emerald-400 block truncate" title={`Cung ${tooth.quadrant}: ${tooth.quadrant === 1 ? 'Hàm trên Phải' : tooth.quadrant === 2 ? 'Hàm trên Trái' : tooth.quadrant === 3 ? 'Hàm dưới Trái' : 'Hàm dưới Phải'}`}>
+                  Cung {tooth.quadrant}
+                </span>
+              </div>
+              <div
+                className={`p-2 rounded-xl border ${
+                  isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white/80 border-[#e7ded3]'
+                }`}
+              >
+                <span className="text-[9px] text-slate-500 dark:text-slate-400 block font-mono uppercase">
                   SỐ ỐNG TỦY
                 </span>
-                <span className="font-serif text-lg font-bold text-sky-600 dark:text-sky-400">
+                <span className="font-serif text-xs font-bold text-sky-600 dark:text-sky-400 block truncate" title={tooth.canalCount}>
                   {tooth.canalCount}
                 </span>
               </div>

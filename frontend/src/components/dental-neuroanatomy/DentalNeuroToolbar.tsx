@@ -15,10 +15,31 @@ import {
 } from 'lucide-react';
 import { useDentalNeuroStore } from '../../stores/useDentalNeuroStore';
 import { useAnatomyStore } from '../../stores/useAnatomyStore';
+import { DENTAL_INNERVATION_DATABASE } from '../../data/dentalNeuroData';
+
+const ToothIcon: React.FC<{ className?: string }> = ({ className = 'w-3.5 h-3.5' }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M12 2C7.5 2 4 4.5 4 8c0 4.5 2 8 3 13 1 1 2.5 1 3.5 0l1.5-3 1.5 3c1 1 2.5 1 3.5 0 1-5 3-8.5 3-13 0-3.5-3.5-6-8-6z" />
+  </svg>
+);
 
 export const DentalNeuroToolbar: React.FC = () => {
   const selectedAnatomyId = useDentalNeuroStore((s) => s.selectedAnatomyId);
   const selectAnatomy = useDentalNeuroStore((s) => s.selectAnatomy);
+  const lateralizationSide = useDentalNeuroStore((s) => s.lateralizationSide);
+  const setLateralizationSide = useDentalNeuroStore((s) => s.setLateralizationSide);
+  const showForaminaMarkers = useDentalNeuroStore((s) => s.showForaminaMarkers);
+  const toggleForaminaMarkers = useDentalNeuroStore((s) => s.toggleForaminaMarkers);
+  const showTeethMarkers = useDentalNeuroStore((s) => s.showTeethMarkers);
+  const toggleTeethMarkers = useDentalNeuroStore((s) => s.toggleTeethMarkers);
   const isRadiographicView = useDentalNeuroStore((s) => s.isRadiographicView);
   const toggleRadiographicView = useDentalNeuroStore((s) => s.toggleRadiographicView);
   const isMandibularCanalMode = useDentalNeuroStore((s) => s.isMandibularCanalMode);
@@ -33,6 +54,7 @@ export const DentalNeuroToolbar: React.FC = () => {
 
   const [showAnglesMenu, setShowAnglesMenu] = useState(false);
   const [showSectionControls, setShowSectionControls] = useState(false);
+  const [showToothChart, setShowToothChart] = useState(false);
   const [isIsolated, setIsIsolated] = useState(false);
 
   // Anatomical camera angle presets focused on Craniofacial Root
@@ -93,7 +115,7 @@ export const DentalNeuroToolbar: React.FC = () => {
   ];
 
   return (
-    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 select-none pointer-events-auto max-w-[95vw]">
+    <div className="absolute bottom-2 sm:bottom-4 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 select-none pointer-events-auto max-w-[96vw] pb-[env(safe-area-inset-bottom,0px)]">
       {/* 1. Pop-up Panel: 3D Cross-Section Sliders */}
       {showSectionControls && (
         <div
@@ -211,25 +233,199 @@ export const DentalNeuroToolbar: React.FC = () => {
         </div>
       )}
 
-      {/* 3. Secondary Quick Filter Strip */}
-      <div className="hidden md:flex items-center gap-1 px-3 py-1 rounded-full bg-slate-950/80 border border-slate-800/80 backdrop-blur-md text-[11px] shadow-lg">
-        <span className="text-[10px] font-mono uppercase text-amber-500 font-bold mr-1">
-          Lối tắt:
-        </span>
-        {quickFilters.map((qf) => (
-          <button
-            key={qf.id}
-            onClick={() => selectAnatomy(qf.id)}
-            className={`px-2 py-0.5 rounded-full transition cursor-pointer ${
-              selectedAnatomyId === qf.id
-                ? 'bg-amber-600 text-white font-bold shadow'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-            }`}
-          >
-            {qf.label}
-          </button>
-        ))}
-      </div>
+      {/* 3. Pop-up Panel: Interactive 32-Tooth FDI Odontogram */}
+      {showToothChart && (
+        <div
+          className={`flex flex-col gap-2 p-3 sm:p-4 rounded-2xl border shadow-2xl backdrop-blur-xl animate-fade-in text-xs max-w-[96vw] sm:max-w-xl w-full ${
+            isDark
+              ? 'bg-slate-950/95 border-slate-800 text-slate-200'
+              : 'bg-white/95 border-[#e7ded3] text-slate-800'
+          }`}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between border-b pb-2 border-slate-200 dark:border-slate-800">
+            <div className="flex items-center gap-2">
+              <span className="p-1 rounded-lg bg-amber-500/10 text-amber-500">
+                <ToothIcon className="w-4 h-4" />
+              </span>
+              <div>
+                <span className="font-serif font-bold text-xs sm:text-sm text-amber-600 dark:text-amber-400 block">
+                  Sơ Đồ 32 Răng FDI (World Dental Federation)
+                </span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+                  Chọn răng để định vị 3D & kích hoạt mạng lưới thần kinh chi phối
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={toggleTeethMarkers}
+                className={`px-2 py-1 rounded-md text-[10px] font-bold border transition cursor-pointer flex items-center gap-1 ${
+                  showTeethMarkers
+                    ? 'bg-amber-600 text-white border-amber-500 shadow-sm'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-transparent hover:border-slate-400'
+                }`}
+                title="Bật/Tắt hiển thị mốc tất cả răng trên mô hình sọ 3D"
+              >
+                {showTeethMarkers ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                <span>Mốc 3D {showTeethMarkers ? 'BẬT' : 'TẮT'}</span>
+              </button>
+              <button
+                onClick={() => setShowToothChart(false)}
+                className="text-slate-400 hover:text-current px-1.5 py-0.5 text-xs font-bold rounded hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          {/* Legend */}
+          <div className="flex items-center justify-center gap-2 sm:gap-5 py-1 text-[10px] flex-wrap border-b border-slate-100 dark:border-slate-900 font-medium">
+            <span className="flex items-center gap-1 text-cyan-600 dark:text-cyan-400">
+              <span className="w-2 h-2 rounded-full bg-cyan-500 inline-block" />
+              Răng Cửa (Incisors)
+            </span>
+            <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+              Răng Nanh (Canines)
+            </span>
+            <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+              <span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />
+              Cối Nhỏ (Premolars)
+            </span>
+            <span className="flex items-center gap-1 text-rose-600 dark:text-rose-400">
+              <span className="w-2 h-2 rounded-full bg-rose-500 inline-block" />
+              Cối Lớn (Molars)
+            </span>
+          </div>
+
+          {/* Odontogram FDI Grid */}
+          <div className="flex flex-col gap-1.5 py-1">
+            {/* Upper Jaw Label */}
+            <div className="flex items-center justify-between text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">
+              <span>PHẢI (R) — CUNG 1</span>
+              <span className="text-amber-600 dark:text-amber-400 font-serif">HÀM TRÊN (MAXILLA)</span>
+              <span>CUNG 2 — TRÁI (L)</span>
+            </div>
+
+            {/* Upper Row: Q1 (18->11) | Q2 (21->28) */}
+            <div
+              className="gap-0.5 sm:gap-1"
+              style={{ display: 'grid', gridTemplateColumns: 'repeat(16, minmax(0, 1fr))' }}
+            >
+              {[18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28].map((fdi) => {
+                const tooth = DENTAL_INNERVATION_DATABASE.find((t) => t.fdi === fdi);
+                if (!tooth) return null;
+                const isSelected = selectedAnatomyId === `tooth_${fdi}`;
+                const side = tooth.quadrant === 1 || tooth.quadrant === 4 ? 'right' : 'left';
+
+                let badgeColor = 'border-rose-500/50 text-rose-600 dark:text-rose-400';
+                let dotColor = 'bg-rose-500';
+                if (tooth.toothType === 'incisor') {
+                  badgeColor = 'border-cyan-500/50 text-cyan-600 dark:text-cyan-400';
+                  dotColor = 'bg-cyan-500';
+                } else if (tooth.toothType === 'canine') {
+                  badgeColor = 'border-emerald-500/50 text-emerald-600 dark:text-emerald-400';
+                  dotColor = 'bg-emerald-500';
+                } else if (tooth.toothType === 'premolar') {
+                  badgeColor = 'border-amber-500/50 text-amber-600 dark:text-amber-400';
+                  dotColor = 'bg-amber-500';
+                }
+
+                return (
+                  <button
+                    key={fdi}
+                    onClick={() => {
+                      if (isSelected) {
+                        selectAnatomy(null);
+                      } else {
+                        selectAnatomy(`tooth_${fdi}`, side);
+                      }
+                    }}
+                    title={`${tooth.nameVi} (${tooth.toothType})`}
+                    className={`relative flex flex-col items-center justify-center py-1 sm:py-1.5 px-0.5 rounded-md border text-center transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-amber-500 text-slate-950 font-black border-amber-300 shadow-md ring-2 ring-amber-400 scale-105 z-10'
+                        : `bg-slate-50 dark:bg-slate-900/60 hover:bg-amber-500/15 ${badgeColor}`
+                    }`}
+                  >
+                    <span className="text-[10px] sm:text-[11px] font-mono font-bold leading-none">{fdi}</span>
+                    <span
+                      className={`w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full mt-1 ${isSelected ? 'bg-slate-950' : dotColor}`}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Midline / Occlusal Plane divider */}
+            <div className="relative my-0.5 flex items-center justify-center">
+              <div className="w-full border-t border-dashed border-slate-300 dark:border-slate-700" />
+              <span className="absolute bg-white dark:bg-slate-950 px-2 text-[8px] sm:text-[9px] font-mono text-slate-400 uppercase">
+                Khớp Cắn (Occlusal Plane)
+              </span>
+            </div>
+
+            {/* Lower Row: Q4 (48->41) | Q3 (31->38) */}
+            <div
+              className="gap-0.5 sm:gap-1"
+              style={{ display: 'grid', gridTemplateColumns: 'repeat(16, minmax(0, 1fr))' }}
+            >
+              {[48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38].map((fdi) => {
+                const tooth = DENTAL_INNERVATION_DATABASE.find((t) => t.fdi === fdi);
+                if (!tooth) return null;
+                const isSelected = selectedAnatomyId === `tooth_${fdi}`;
+                const side = tooth.quadrant === 1 || tooth.quadrant === 4 ? 'right' : 'left';
+
+                let badgeColor = 'border-rose-500/50 text-rose-600 dark:text-rose-400';
+                let dotColor = 'bg-rose-500';
+                if (tooth.toothType === 'incisor') {
+                  badgeColor = 'border-cyan-500/50 text-cyan-600 dark:text-cyan-400';
+                  dotColor = 'bg-cyan-500';
+                } else if (tooth.toothType === 'canine') {
+                  badgeColor = 'border-emerald-500/50 text-emerald-600 dark:text-emerald-400';
+                  dotColor = 'bg-emerald-500';
+                } else if (tooth.toothType === 'premolar') {
+                  badgeColor = 'border-amber-500/50 text-amber-600 dark:text-amber-400';
+                  dotColor = 'bg-amber-500';
+                }
+
+                return (
+                  <button
+                    key={fdi}
+                    onClick={() => {
+                      if (isSelected) {
+                        selectAnatomy(null);
+                      } else {
+                        selectAnatomy(`tooth_${fdi}`, side);
+                      }
+                    }}
+                    title={`${tooth.nameVi} (${tooth.toothType})`}
+                    className={`relative flex flex-col items-center justify-center py-1 sm:py-1.5 px-0.5 rounded-md border text-center transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-amber-500 text-slate-950 font-black border-amber-300 shadow-md ring-2 ring-amber-400 scale-105 z-10'
+                        : `bg-slate-50 dark:bg-slate-900/60 hover:bg-amber-500/15 ${badgeColor}`
+                    }`}
+                  >
+                    <span className="text-[10px] sm:text-[11px] font-mono font-bold leading-none">{fdi}</span>
+                    <span
+                      className={`w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full mt-1 ${isSelected ? 'bg-slate-950' : dotColor}`}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Lower Jaw Label */}
+            <div className="flex items-center justify-between text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">
+              <span>PHẢI (R) — CUNG 4</span>
+              <span className="text-amber-600 dark:text-amber-400 font-serif">HÀM DƯỚI (MANDIBLE)</span>
+              <span>CUNG 3 — TRÁI (L)</span>
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {/* 4. Main Shared-Token Bottom Toolbar */}
       <nav
@@ -239,6 +435,45 @@ export const DentalNeuroToolbar: React.FC = () => {
             : 'bg-white/90 border-[#e7ded3] text-slate-800'
         }`}
       >
+        {/* Phân bên Lateralization: Bilateral | Phải (R) | Trái (L) */}
+        <div className="flex items-center p-0.5 rounded-full bg-black/5 dark:bg-white/5 border border-inherit">
+          <button
+            onClick={() => setLateralizationSide('bilateral')}
+            className={`px-2.5 py-1 rounded-full text-[11px] transition cursor-pointer ${
+              lateralizationSide === 'bilateral'
+                ? 'bg-amber-600 text-white font-bold shadow-sm'
+                : 'text-slate-500 hover:text-current'
+            }`}
+            title="Hiển thị giải phẫu cả 2 bên (Bilateral)"
+          >
+            ⚯ Cả hai bên
+          </button>
+          <button
+            onClick={() => setLateralizationSide('right')}
+            className={`px-2.5 py-1 rounded-full text-[11px] transition cursor-pointer ${
+              lateralizationSide === 'right'
+                ? 'bg-amber-600 text-white font-bold shadow-sm'
+                : 'text-slate-500 hover:text-current'
+            }`}
+            title="Chỉ hiển thị nửa mặt bên Phải (Right - Cung 1 & 4)"
+          >
+            ◧ Phải (R)
+          </button>
+          <button
+            onClick={() => setLateralizationSide('left')}
+            className={`px-2.5 py-1 rounded-full text-[11px] transition cursor-pointer ${
+              lateralizationSide === 'left'
+                ? 'bg-amber-600 text-white font-bold shadow-sm'
+                : 'text-slate-500 hover:text-current'
+            }`}
+            title="Chỉ hiển thị nửa mặt bên Trái (Left - Cung 2 & 3)"
+          >
+            ◨ Trái (L)
+          </button>
+        </div>
+
+        <div className="w-px h-4 bg-slate-300 dark:bg-slate-700 mx-0.5" />
+
         {/* Tiêu điểm (Focus) vs Tách biệt (Isolate) */}
         <div className="flex items-center p-0.5 rounded-full bg-black/5 dark:bg-white/5 border border-inherit">
           <button
@@ -296,6 +531,40 @@ export const DentalNeuroToolbar: React.FC = () => {
         >
           <Sparkles className="w-3 h-3 text-sky-400" />
           <span>X-Ray</span>
+        </button>
+
+        {/* Mốc Lỗ Sọ (Foramina Rings) Toggle */}
+        <button
+          onClick={toggleForaminaMarkers}
+          className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] border transition cursor-pointer ${
+            showForaminaMarkers
+              ? 'bg-amber-600/20 border-amber-500 text-amber-600 dark:text-amber-400 font-bold'
+              : 'border-transparent text-slate-500 hover:text-current'
+          }`}
+          title="Bật/Tắt hiển thị các vòng tròn định vị lỗ sọ"
+        >
+          <span>Mốc Lỗ sọ</span>
+        </button>
+
+        {/* Sơ đồ 32 Răng FDI & Mốc Răng */}
+        <button
+          onClick={() => {
+            setShowToothChart(!showToothChart);
+            setShowAnglesMenu(false);
+            setShowSectionControls(false);
+          }}
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] border transition cursor-pointer ${
+            showToothChart || selectedAnatomyId?.startsWith('tooth_')
+              ? 'bg-amber-500 text-slate-950 font-bold border-amber-400 shadow-sm'
+              : 'border-transparent text-slate-500 hover:text-current'
+          }`}
+          title="Mở Sơ đồ 32 Răng FDI và định vị giải phẫu thần kinh"
+        >
+          <ToothIcon className="w-3.5 h-3.5" />
+          <span>Sơ đồ Răng FDI</span>
+          {selectedAnatomyId?.startsWith('tooth_') && (
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          )}
         </button>
 
         <div className="w-px h-4 bg-slate-300 dark:bg-slate-700 mx-0.5" />

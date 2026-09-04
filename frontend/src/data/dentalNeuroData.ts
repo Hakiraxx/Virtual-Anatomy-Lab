@@ -279,12 +279,13 @@ export const DENTAL_NERVE_STRUCTURES: Record<string, DentalNerveStructure> = {
     clinicalAnatomyEn: 'Trigeminal neuralgia causes excruciating electric-shock paroxysms triggered by chewing, speaking, or touching facial trigger points.',
     color: '#eab308',
     path3D: [
-      [-0.015, 1.40, 0.02],
-      [-0.025, 1.41, 0.05],
-      [-0.038, 1.415, 0.08],
-      [-0.048, 1.42, 0.105] // Trigeminal ganglion location
+      [-0.010, 1.372, 0.068], // Root emergence at anterolateral surface of pons
+      [-0.014, 1.378, 0.067], // Prepontine cisternal segment
+      [-0.018, 1.388, 0.066], // Crossing petrous ridge (porus trigeminus)
+      [-0.022, 1.398, 0.065], // Meckel cave entrance
+      [-0.026, 1.405, 0.065]  // Trigeminal ganglion (Gasser) center
     ],
-    cameraFocus: { position: [-0.08, 1.44, 0.35], lookAt: [-0.035, 1.415, 0.08], distance: 0.32 },
+    cameraFocus: { position: [-0.15, 1.46, 0.32], lookAt: [-0.025, 1.39, 0.08], distance: 0.28 },
     references: {
       terminologiaAnatomica: 'A14.2.01.012',
       netterPlate: 124,
@@ -316,12 +317,15 @@ export const DENTAL_NERVE_STRUCTURES: Record<string, DentalNerveStructure> = {
     clinicalAnatomyEn: 'Herpes zoster ophthalmicus: risk of corneal ulceration when Hutchinson sign is present.',
     color: '#38bdf8',
     path3D: [
-      [-0.048, 1.42, 0.105],
-      [-0.045, 1.43, 0.130],
-      [-0.040, 1.435, 0.155], // Superior orbital fissure
-      [-0.035, 1.44, 0.185]
+      [-0.026, 1.405, 0.065], // Trigeminal ganglion
+      [-0.025, 1.408, 0.075], // Cavernous sinus postero-lateral
+      [-0.025, 1.411, 0.088], // Cavernous sinus below CN IV
+      [-0.024, 1.413, 0.098], // Annulus of Zinn proximity
+      [-0.024, 1.415, 0.105], // Superior orbital fissure (SOF)
+      [-0.025, 1.420, 0.115], // Retro-orbital cone
+      [-0.026, 1.425, 0.125]  // Intra-orbital bifurcation
     ],
-    cameraFocus: { position: [-0.07, 1.46, 0.38], lookAt: [-0.035, 1.435, 0.15], distance: 0.30 },
+    cameraFocus: { position: [-0.07, 1.44, 0.30], lookAt: [-0.025, 1.420, 0.110], distance: 0.26 },
     references: {
       terminologiaAnatomica: 'A14.2.01.013',
       netterPlate: 125,
@@ -350,11 +354,13 @@ export const DENTAL_NERVE_STRUCTURES: Record<string, DentalNerveStructure> = {
     clinicalAnatomyEn: 'Supraorbital nerve block utilized for forehead lacerations and upper blepharoplasty.',
     color: '#0ea5e9',
     path3D: [
-      [-0.035, 1.44, 0.185],
-      [-0.032, 1.45, 0.215],
-      [-0.028, 1.46, 0.245]
+      [-0.026, 1.425, 0.125], // Division from V1 in orbit
+      [-0.026, 1.430, 0.130], // Runs above levator palpebrae
+      [-0.025, 1.436, 0.136], // Under orbital roof
+      [-0.025, 1.442, 0.141], // Pre-septal course
+      [-0.025, 1.445, 0.145]  // Supraorbital notch on frontal bone
     ],
-    cameraFocus: { position: [-0.05, 1.48, 0.38], lookAt: [-0.028, 1.46, 0.245], distance: 0.25 },
+    cameraFocus: { position: [-0.05, 1.48, 0.38], lookAt: [-0.025, 1.445, 0.145], distance: 0.25 },
     references: {
       terminologiaAnatomica: 'A14.2.01.014',
       reviewStatus: 'VERIFIED',
@@ -382,11 +388,15 @@ export const DENTAL_NERVE_STRUCTURES: Record<string, DentalNerveStructure> = {
     clinicalAnatomyEn: 'Supraorbital notch is palpable ~2.5 cm lateral to midline on orbital rim.',
     color: '#38bdf8',
     path3D: [
-      [-0.028, 1.46, 0.245],
-      [-0.028, 1.47, 0.265], // Passes supraorbital notch
-      [-0.028, 1.50, 0.270]  // Ascends forehead
+      [-0.025, 1.445, 0.145], // Supraorbital notch on orbital rim
+      [-0.025, 1.454, 0.144], // Exits onto supraorbital rim
+      [-0.024, 1.466, 0.141], // Ascends beneath frontalis muscle
+      [-0.023, 1.478, 0.134], // Hugs frontal bone curvature
+      [-0.022, 1.490, 0.124], // Coronal suture approach
+      [-0.020, 1.502, 0.108], // Vertex epicranial aponeurosis
+      [-0.018, 1.510, 0.090]  // Scalp vertex (parietal distribution)
     ],
-    cameraFocus: { position: [-0.05, 1.49, 0.40], lookAt: [-0.028, 1.47, 0.265], distance: 0.22 },
+    cameraFocus: { position: [-0.06, 1.47, 0.30], lookAt: [-0.024, 1.465, 0.140], distance: 0.22 },
     references: {
       terminologiaAnatomica: 'A14.2.01.015',
       reviewStatus: 'VERIFIED',
@@ -416,12 +426,15 @@ export const DENTAL_NERVE_STRUCTURES: Record<string, DentalNerveStructure> = {
     clinicalAnatomyEn: 'Maxillary block at pterygopalatine fossa anesthetizes entire hemimaxilla for extensive oral and maxillofacial surgeries.',
     color: '#f97316',
     path3D: [
-      [-0.048, 1.42, 0.105], // Ganglion
-      [-0.042, 1.405, 0.130], // Foramen rotundum
-      [-0.038, 1.395, 0.155], // Pterygopalatine fossa
-      [-0.032, 1.385, 0.185]  // Enters infraorbital groove
+      [-0.026, 1.405, 0.065], // Trigeminal ganglion anterior border
+      [-0.025, 1.400, 0.072], // Middle cranial fossa floor
+      [-0.024, 1.395, 0.080], // Foramen Rotundum
+      [-0.024, 1.390, 0.090], // Enters Pterygopalatine fossa
+      [-0.025, 1.385, 0.100], // Pterygopalatine fossa center (ganglion relay)
+      [-0.026, 1.382, 0.110], // Inferior orbital fissure entrance
+      [-0.028, 1.380, 0.120]  // Enters infraorbital groove
     ],
-    cameraFocus: { position: [-0.08, 1.41, 0.38], lookAt: [-0.038, 1.395, 0.155], distance: 0.28 },
+    cameraFocus: { position: [-0.07, 1.40, 0.28], lookAt: [-0.026, 1.385, 0.100], distance: 0.24 },
     references: {
       terminologiaAnatomica: 'A14.2.01.018',
       netterPlate: 126,
@@ -452,12 +465,15 @@ export const DENTAL_NERVE_STRUCTURES: Record<string, DentalNerveStructure> = {
     clinicalAnatomyEn: 'Infraorbital block provides anesthesia to anterior superior alveolar nerve, numbing incisors, canine, and upper lip.',
     color: '#fb923c',
     path3D: [
-      [-0.032, 1.385, 0.185],
-      [-0.028, 1.375, 0.215], // Inside infraorbital canal
-      [-0.025, 1.365, 0.245], // Exits infraorbital foramen
-      [-0.022, 1.350, 0.260]  // Branches to upper lip & nose
+      [-0.028, 1.380, 0.120], // Infraorbital groove on orbital floor
+      [-0.028, 1.378, 0.128], // Mid-groove
+      [-0.029, 1.374, 0.136], // Enters infraorbital canal
+      [-0.030, 1.370, 0.145], // Exits Infraorbital Foramen on anterior maxilla
+      [-0.029, 1.365, 0.149], // Pes anserinus minor (terminal branches)
+      [-0.027, 1.358, 0.153], // Superior labial branches to upper lip
+      [-0.025, 1.352, 0.155]  // Philtrum & labial commissure
     ],
-    cameraFocus: { position: [-0.06, 1.38, 0.38], lookAt: [-0.025, 1.365, 0.245], distance: 0.22 },
+    cameraFocus: { position: [-0.06, 1.38, 0.30], lookAt: [-0.030, 1.370, 0.145], distance: 0.20 },
     references: {
       terminologiaAnatomica: 'A14.2.01.026',
       netterPlate: 126,
@@ -487,12 +503,15 @@ export const DENTAL_NERVE_STRUCTURES: Record<string, DentalNerveStructure> = {
     clinicalAnatomyEn: 'PSA block carries risk of pterygoid venous plexus or maxillary artery puncture causing extensive cheek hematoma.',
     color: '#fdba74',
     path3D: [
-      [-0.038, 1.395, 0.155],
-      [-0.035, 1.380, 0.170],
-      [-0.032, 1.365, 0.185], // Enters posterior alveolar foramina at maxillary tuberosity
-      [-0.030, 1.340, 0.200]  // Reaches maxillary molar roots
+      [-0.025, 1.385, 0.100], // Branching from V2 in pterygopalatine fossa
+      [-0.029, 1.380, 0.106], // Crosses infratemporal surface of maxilla
+      [-0.033, 1.374, 0.114], // Descends along maxillary tuberosity
+      [-0.035, 1.365, 0.122], // Posterior superior alveolar foramina
+      [-0.035, 1.355, 0.130], // Alveolar bone above tooth 18/28 (3rd molar)
+      [-0.032, 1.346, 0.136], // Alveolar bone above tooth 17/27 (2nd molar)
+      [-0.029, 1.342, 0.142]  // Alveolar bone above tooth 16/26 (1st molar, DB/palatal roots)
     ],
-    cameraFocus: { position: [-0.07, 1.38, 0.35], lookAt: [-0.032, 1.365, 0.185], distance: 0.22 },
+    cameraFocus: { position: [-0.07, 1.36, 0.28], lookAt: [-0.035, 1.360, 0.120], distance: 0.20 },
     references: {
       terminologiaAnatomica: 'A14.2.01.028',
       netterPlate: 126,
@@ -520,11 +539,14 @@ export const DENTAL_NERVE_STRUCTURES: Record<string, DentalNerveStructure> = {
     clinicalAnatomyEn: 'When MSA is absent, its innervation territory is shared between PSA and ASA branches.',
     color: '#fed7aa',
     path3D: [
-      [-0.028, 1.375, 0.215],
-      [-0.026, 1.360, 0.225],
-      [-0.024, 1.340, 0.230] // Maxillary premolar roots
+      [-0.029, 1.375, 0.132], // Branches from infraorbital canal (posterior section)
+      [-0.030, 1.368, 0.136], // Enters lateral wall of maxillary sinus
+      [-0.030, 1.360, 0.140], // Descends through canalis sinuosus branch
+      [-0.028, 1.352, 0.144], // Alveolar bone above tooth 16 MB root
+      [-0.025, 1.346, 0.147], // Alveolar bone above tooth 15/25 (2nd premolar)
+      [-0.022, 1.342, 0.150]  // Alveolar bone above tooth 14/24 (1st premolar)
     ],
-    cameraFocus: { position: [-0.06, 1.37, 0.35], lookAt: [-0.026, 1.360, 0.225], distance: 0.20 },
+    cameraFocus: { position: [-0.06, 1.36, 0.28], lookAt: [-0.029, 1.355, 0.140], distance: 0.20 },
     references: {
       terminologiaAnatomica: 'A14.2.01.029',
       reviewStatus: 'VERIFIED',
@@ -551,11 +573,15 @@ export const DENTAL_NERVE_STRUCTURES: Record<string, DentalNerveStructure> = {
     clinicalAnatomyEn: 'Infiltration at the mucobuccal fold above canine/incisor apex blocks ASA.',
     color: '#ffedd5',
     path3D: [
-      [-0.026, 1.370, 0.235],
-      [-0.020, 1.355, 0.245],
-      [-0.012, 1.335, 0.250] // Maxillary incisor roots
+      [-0.030, 1.370, 0.143], // Branches from infraorbital canal ~5mm before foramen
+      [-0.028, 1.365, 0.148], // Travels through anterior maxilla bone
+      [-0.024, 1.358, 0.152], // Canalis sinuosus course
+      [-0.019, 1.352, 0.155], // Alveolar bone above tooth 13/23 (canine)
+      [-0.014, 1.346, 0.157], // Alveolar bone above tooth 12/22 (lateral incisor)
+      [-0.007, 1.342, 0.158], // Alveolar bone above tooth 11/21 (central incisor)
+      [-0.002, 1.341, 0.159]  // Nasal septal branch near anterior nasal spine
     ],
-    cameraFocus: { position: [-0.04, 1.37, 0.38], lookAt: [-0.015, 1.345, 0.250], distance: 0.20 },
+    cameraFocus: { position: [-0.05, 1.36, 0.30], lookAt: [-0.020, 1.350, 0.150], distance: 0.20 },
     references: {
       terminologiaAnatomica: 'A14.2.01.030',
       reviewStatus: 'VERIFIED',
@@ -583,12 +609,16 @@ export const DENTAL_NERVE_STRUCTURES: Record<string, DentalNerveStructure> = {
     clinicalAnatomyEn: 'Greater palatine block numbs palatal soft tissues of posterior teeth for extractions and periodontal surgery.',
     color: '#fbbf24',
     path3D: [
-      [-0.038, 1.395, 0.155],
-      [-0.032, 1.370, 0.165],
-      [-0.024, 1.340, 0.180], // Greater palatine foramen
-      [-0.018, 1.338, 0.210]  // Hard palate mucosa
+      [-0.025, 1.385, 0.100], // Pterygopalatine ganglion in fossa
+      [-0.024, 1.376, 0.104], // Descends into greater palatine canal
+      [-0.022, 1.365, 0.110], // Within pterygopalatine canal
+      [-0.020, 1.354, 0.114], // Approaching hard palate
+      [-0.018, 1.345, 0.118], // Exits Greater Palatine Foramen near 2nd/3rd molar
+      [-0.017, 1.345, 0.126], // Runs anteriorly in palatal groove
+      [-0.015, 1.345, 0.136], // Lingual gingival plexus of premolars
+      [-0.012, 1.345, 0.144]  // Anastomoses with nasopalatine nerve behind canine
     ],
-    cameraFocus: { position: [-0.05, 1.36, 0.32], lookAt: [-0.024, 1.340, 0.180], distance: 0.20 },
+    cameraFocus: { position: [-0.05, 1.35, 0.25], lookAt: [-0.018, 1.345, 0.125], distance: 0.20 },
     references: {
       terminologiaAnatomica: 'A14.2.01.024',
       reviewStatus: 'VERIFIED',
@@ -617,12 +647,15 @@ export const DENTAL_NERVE_STRUCTURES: Record<string, DentalNerveStructure> = {
     clinicalAnatomyEn: 'Nasopalatine block at incisive papilla is notoriously painful due to tightly bound mucoperiosteum.',
     color: '#fde047',
     path3D: [
-      [-0.038, 1.395, 0.155],
-      [-0.015, 1.385, 0.175], // Septal course
-      [0.000, 1.360, 0.210],  // Incisive canal
-      [0.000, 1.340, 0.235]   // Palatal surface at incisive papilla
+      [-0.025, 1.385, 0.100], // Sphenopalatine foramen from pterygopalatine fossa
+      [-0.020, 1.382, 0.108], // Roof of nasal cavity
+      [-0.015, 1.378, 0.118], // Slants anteroinferiorly along vomer/septum
+      [-0.009, 1.370, 0.128], // Medial wall of nasal cavity
+      [-0.004, 1.360, 0.138], // Approaches floor of nasal cavity
+      [0.000, 1.352, 0.144],  // Enters incisive canal (foramen of Stenson)
+      [0.000, 1.345, 0.148]   // Exits Incisive Foramen onto premaxillary palate
     ],
-    cameraFocus: { position: [0.00, 1.36, 0.35], lookAt: [0.000, 1.340, 0.235], distance: 0.18 },
+    cameraFocus: { position: [0.00, 1.35, 0.28], lookAt: [0.000, 1.345, 0.148], distance: 0.18 },
     references: {
       terminologiaAnatomica: 'A14.2.01.023',
       reviewStatus: 'VERIFIED',
@@ -652,11 +685,13 @@ export const DENTAL_NERVE_STRUCTURES: Record<string, DentalNerveStructure> = {
     clinicalAnatomyEn: 'High mandibular block (Gow-Gates or Akinosi) achieves complete unilateral mandibular anesthesia.',
     color: '#e11d48',
     path3D: [
-      [-0.048, 1.42, 0.105], // Ganglion
-      [-0.045, 1.395, 0.095], // Foramen ovale at skull base
-      [-0.045, 1.370, 0.105]  // Infratemporal fossa trunk
+      [-0.026, 1.405, 0.065], // Trigeminal ganglion (postero-inferior border)
+      [-0.026, 1.395, 0.065], // Passes through Foramen Ovale
+      [-0.027, 1.385, 0.066], // Immediately beneath skull base
+      [-0.030, 1.378, 0.070], // Infratemporal fossa trunk
+      [-0.035, 1.370, 0.075]  // Bifurcation into anterior and posterior trunks
     ],
-    cameraFocus: { position: [-0.09, 1.39, 0.35], lookAt: [-0.045, 1.370, 0.105], distance: 0.28 },
+    cameraFocus: { position: [-0.08, 1.39, 0.28], lookAt: [-0.030, 1.375, 0.070], distance: 0.25 },
     references: {
       terminologiaAnatomica: 'A14.2.01.031',
       netterPlate: 127,
@@ -688,14 +723,18 @@ export const DENTAL_NERVE_STRUCTURES: Record<string, DentalNerveStructure> = {
     clinicalAnatomyEn: 'IAN Block (Halsted) is the most common dental block. Impacted 3rd molar roots intimate with mandibular canal risk neuropraxia or permanent lip paresthesia.',
     color: '#dc2626',
     path3D: [
-      [-0.045, 1.370, 0.105], // Origin from V3
-      [-0.046, 1.345, 0.118], // Pterygomandibular space
-      [-0.044, 1.320, 0.135], // Mandibular foramen at lingula
-      [-0.040, 1.300, 0.155], // Enters mandibular canal below molars
-      [-0.035, 1.285, 0.180], // Canal under premolars
-      [-0.028, 1.280, 0.205]  // Bifurcation at mental foramen
+      [-0.035, 1.370, 0.075], // Origin from V3 posterior trunk
+      [-0.036, 1.365, 0.080], // Pterygomandibular space medial to ramus
+      [-0.037, 1.360, 0.088], // Descends behind lingula (gai Spix)
+      [-0.038, 1.355, 0.095], // Enters Mandibular Foramen
+      [-0.037, 1.346, 0.106], // Enters mandibular canal in ramus
+      [-0.036, 1.336, 0.118], // Angle of mandible, inferior to 3rd molar (38/48)
+      [-0.034, 1.330, 0.130], // Inferior to 2nd molar (37/47)
+      [-0.033, 1.325, 0.138], // Inferior to 1st molar (36/46)
+      [-0.032, 1.322, 0.144], // Beneath 2nd premolar (35/45)
+      [-0.030, 1.320, 0.150]  // Mental bifurcation zone
     ],
-    cameraFocus: { position: [-0.08, 1.32, 0.35], lookAt: [-0.044, 1.320, 0.135], distance: 0.26 },
+    cameraFocus: { position: [-0.07, 1.34, 0.28], lookAt: [-0.036, 1.335, 0.115], distance: 0.22 },
     references: {
       terminologiaAnatomica: 'A14.2.01.042',
       netterPlate: 127,
@@ -725,11 +764,15 @@ export const DENTAL_NERVE_STRUCTURES: Record<string, DentalNerveStructure> = {
     clinicalAnatomyEn: 'Mental block provides profound lip/chin anesthesia. Implant placement requires CBCT to avoid damaging mental foramen and anterior loop.',
     color: '#ef4444',
     path3D: [
-      [-0.028, 1.280, 0.205], // Mental foramen
-      [-0.026, 1.285, 0.225], // Exits anterosuperiorly
-      [-0.020, 1.290, 0.245]  // Soft tissue of lower lip and chin
+      [-0.030, 1.320, 0.150], // Pre-bifurcation in mandibular canal
+      [-0.028, 1.319, 0.153], // Anterior loop: extends forward past foramen
+      [-0.029, 1.321, 0.152], // Loops backwards and superiorly
+      [-0.030, 1.322, 0.150], // Exits Mental Foramen on lateral cortex
+      [-0.032, 1.324, 0.153], // Curves onto buccal periosteum
+      [-0.028, 1.322, 0.160], // Mental soft tissue branch to chin
+      [-0.022, 1.318, 0.166]  // Inferior labial branch to lower lip
     ],
-    cameraFocus: { position: [-0.06, 1.29, 0.38], lookAt: [-0.028, 1.280, 0.205], distance: 0.20 },
+    cameraFocus: { position: [-0.06, 1.32, 0.28], lookAt: [-0.030, 1.320, 0.155], distance: 0.18 },
     references: {
       terminologiaAnatomica: 'A14.2.01.045',
       reviewStatus: 'VERIFIED',
@@ -757,12 +800,14 @@ export const DENTAL_NERVE_STRUCTURES: Record<string, DentalNerveStructure> = {
     clinicalAnatomyEn: 'Applying digital pressure over mental foramen during injection pushes anesthetic into incisive canal to numb anterior teeth.',
     color: '#f87171',
     path3D: [
-      [-0.028, 1.280, 0.205], // Mandibular canal continuation
-      [-0.020, 1.278, 0.220],
-      [-0.008, 1.275, 0.230], // Mandibular symphysis
-      [0.000, 1.274, 0.235]
+      [-0.030, 1.320, 0.150], // Mandibular canal continuation at mental foramen
+      [-0.026, 1.319, 0.154], // Incisive canal beneath 1st premolar (34/44)
+      [-0.020, 1.318, 0.158], // Beneath canine apex (33/43)
+      [-0.014, 1.316, 0.162], // Beneath lateral incisor apex (32/42)
+      [-0.007, 1.315, 0.164], // Beneath central incisor apex (31/41)
+      [0.000, 1.315, 0.166]   // Mandibular symphysis decussation
     ],
-    cameraFocus: { position: [-0.04, 1.28, 0.38], lookAt: [-0.010, 1.276, 0.225], distance: 0.20 },
+    cameraFocus: { position: [-0.04, 1.32, 0.28], lookAt: [-0.010, 1.316, 0.160], distance: 0.18 },
     references: {
       terminologiaAnatomica: 'A14.2.01.046',
       reviewStatus: 'VERIFIED',
@@ -789,14 +834,18 @@ export const DENTAL_NERVE_STRUCTURES: Record<string, DentalNerveStructure> = {
     clinicalAnatomyEn: 'Extremely vulnerable during mandibular 3rd molar extractions due to close proximity to lingual cortical plate (sometimes <1mm).',
     color: '#e879f9',
     path3D: [
-      [-0.045, 1.370, 0.105],
-      [-0.042, 1.340, 0.125],
-      [-0.038, 1.315, 0.150], // Lingual plate of 3rd molar
-      [-0.030, 1.300, 0.180], // Submandibular floor of mouth
-      [-0.015, 1.295, 0.210], // Anterior 2/3 of tongue
-      [-0.005, 1.295, 0.230]
+      [-0.035, 1.370, 0.075], // Posterior trunk of V3 in infratemporal fossa
+      [-0.036, 1.362, 0.082], // Descends anteromedial to IAN
+      [-0.036, 1.355, 0.090], // Joined by Chorda Tympani (dây VII)
+      [-0.034, 1.346, 0.100], // Crosses medial pterygoid muscle
+      [-0.033, 1.338, 0.112], // Hugs medial lingual plate near 3rd molar (38/48) subperiosteally
+      [-0.030, 1.332, 0.124], // Lingual surface of mandibular body
+      [-0.026, 1.327, 0.136], // Loops lateral & inferior to Wharton duct
+      [-0.020, 1.325, 0.146], // Deep to sublingual gland in floor of mouth
+      [-0.014, 1.327, 0.154], // Enters lateral side of tongue
+      [-0.008, 1.330, 0.160]  // Submucosal terminal branches to tongue apex
     ],
-    cameraFocus: { position: [-0.07, 1.32, 0.35], lookAt: [-0.035, 1.305, 0.165], distance: 0.24 },
+    cameraFocus: { position: [-0.06, 1.34, 0.28], lookAt: [-0.028, 1.330, 0.120], distance: 0.22 },
     references: {
       terminologiaAnatomica: 'A14.2.01.037',
       netterPlate: 127,
@@ -825,12 +874,15 @@ export const DENTAL_NERVE_STRUCTURES: Record<string, DentalNerveStructure> = {
     clinicalAnatomyEn: 'Long buccal block anesthetizes buccal soft tissues adjacent to mandibular molars.',
     color: '#c084fc',
     path3D: [
-      [-0.045, 1.370, 0.105],
-      [-0.040, 1.350, 0.135],
-      [-0.038, 1.320, 0.170], // Crosses anterior border of mandibular ramus
-      [-0.035, 1.300, 0.205]  // Buccal gingiva & mucosa
+      [-0.035, 1.370, 0.075], // Anterior trunk of V3
+      [-0.037, 1.362, 0.085], // Passes between two heads of lateral pterygoid
+      [-0.039, 1.352, 0.098], // Crosses tendon of temporalis muscle
+      [-0.041, 1.342, 0.112], // Crosses anterior border of coronoid process/ramus
+      [-0.040, 1.334, 0.126], // Onto lateral surface of buccinator muscle
+      [-0.037, 1.330, 0.138], // Enters buccal fat pad
+      [-0.034, 1.328, 0.148]  // Buccal gingiva and cheek mucosa of molars
     ],
-    cameraFocus: { position: [-0.07, 1.33, 0.35], lookAt: [-0.038, 1.320, 0.170], distance: 0.22 },
+    cameraFocus: { position: [-0.07, 1.34, 0.28], lookAt: [-0.038, 1.335, 0.120], distance: 0.20 },
     references: {
       terminologiaAnatomica: 'A14.2.01.034',
       reviewStatus: 'VERIFIED',
@@ -857,12 +909,16 @@ export const DENTAL_NERVE_STRUCTURES: Record<string, DentalNerveStructure> = {
     clinicalAnatomyEn: 'Frey syndrome: aberrant regeneration of auriculotemporal parasympathetics to sweat glands causing gustatory sweating.',
     color: '#a855f7',
     path3D: [
-      [-0.045, 1.370, 0.105],
-      [-0.048, 1.375, 0.085], // Encircles neck of mandibular condyle
-      [-0.052, 1.390, 0.075], // Through upper parotid
-      [-0.050, 1.450, 0.080]  // Ascends temporal region
+      [-0.035, 1.370, 0.075], // Posterior trunk of V3
+      [-0.038, 1.372, 0.072], // Two roots encircling middle meningeal artery
+      [-0.042, 1.376, 0.068], // Passes medial to condylar neck of mandible
+      [-0.045, 1.385, 0.064], // Curves behind TMJ capsule
+      [-0.047, 1.400, 0.062], // Upper part of parotid gland
+      [-0.048, 1.420, 0.060], // Anterior to tragus of ear
+      [-0.047, 1.442, 0.062], // Accompanies superficial temporal artery
+      [-0.043, 1.465, 0.066]  // Posterior temporal fossa skin
     ],
-    cameraFocus: { position: [-0.09, 1.40, 0.32], lookAt: [-0.048, 1.385, 0.080], distance: 0.25 },
+    cameraFocus: { position: [-0.08, 1.40, 0.28], lookAt: [-0.044, 1.380, 0.065], distance: 0.24 },
     references: {
       terminologiaAnatomica: 'A14.2.01.036',
       reviewStatus: 'VERIFIED',
@@ -891,13 +947,15 @@ export const DENTAL_NERVE_STRUCTURES: Record<string, DentalNerveStructure> = {
     clinicalAnatomyEn: 'Bell palsy causes unilateral facial weakness. In IAN block, inserting needle too far posteriorly penetrates parotid capsule, causing transient facial paralysis.',
     color: '#10b981',
     path3D: [
-      [-0.020, 1.38, 0.03],
-      [-0.035, 1.38, 0.05], // Internal acoustic meatus
-      [-0.045, 1.37, 0.06], // Stylomastoid foramen
-      [-0.050, 1.35, 0.09], // Inside parotid gland
-      [-0.045, 1.34, 0.12]  // Pes anserinus bifurcation
+      [-0.014, 1.365, 0.055], // Pontomedullary sulcus
+      [-0.020, 1.370, 0.048], // Enters Internal Acoustic Meatus
+      [-0.028, 1.372, 0.044], // Labyrinthine & tympanic segments in petrous bone
+      [-0.034, 1.370, 0.044], // Mastoid descending segment
+      [-0.038, 1.368, 0.048], // Exits Stylomastoid Foramen
+      [-0.042, 1.358, 0.060], // Posterior belly of digastric
+      [-0.045, 1.345, 0.076]  // Pes anserinus in parotid gland
     ],
-    cameraFocus: { position: [-0.09, 1.37, 0.35], lookAt: [-0.045, 1.36, 0.07], distance: 0.28 },
+    cameraFocus: { position: [-0.08, 1.36, 0.28], lookAt: [-0.040, 1.360, 0.060], distance: 0.25 },
     references: {
       terminologiaAnatomica: 'A14.2.01.047',
       netterPlate: 128,
@@ -926,11 +984,13 @@ export const DENTAL_NERVE_STRUCTURES: Record<string, DentalNerveStructure> = {
     clinicalAnatomyEn: 'Injury impairs forehead wrinkling and eye closure.',
     color: '#34d399',
     path3D: [
-      [-0.045, 1.34, 0.12],
-      [-0.048, 1.38, 0.14],
-      [-0.042, 1.44, 0.16]
+      [-0.045, 1.345, 0.076], // From pes anserinus in parotid
+      [-0.046, 1.375, 0.085], // Crosses zygomatic arch
+      [-0.044, 1.410, 0.098], // Temporal fossa superficial fascia
+      [-0.040, 1.445, 0.115], // Frontalis muscle lateral border
+      [-0.035, 1.470, 0.125]  // Corrugator supercilii & upper orbicularis
     ],
-    cameraFocus: { position: [-0.08, 1.40, 0.35], lookAt: [-0.045, 1.38, 0.14], distance: 0.24 },
+    cameraFocus: { position: [-0.08, 1.40, 0.28], lookAt: [-0.042, 1.390, 0.095], distance: 0.22 },
     references: { terminologiaAnatomica: 'A14.2.01.050', reviewStatus: 'VERIFIED', reviewedBy: 'Bộ môn Giải phẫu', reviewedAt: '2026-09-04' }
   },
 
@@ -951,11 +1011,12 @@ export const DENTAL_NERVE_STRUCTURES: Record<string, DentalNerveStructure> = {
     clinicalAnatomyEn: 'Crucial for complete eye closure; injury risks corneal exposure keratitis.',
     color: '#6ee7b7',
     path3D: [
-      [-0.045, 1.34, 0.12],
-      [-0.040, 1.36, 0.15],
-      [-0.035, 1.38, 0.18]
+      [-0.045, 1.345, 0.076], // From pes anserinus
+      [-0.043, 1.355, 0.095], // Passes over zygomatic bone
+      [-0.039, 1.368, 0.118], // Inferior orbital margin approach
+      [-0.035, 1.378, 0.138]  // Lower orbicularis oculi muscle
     ],
-    cameraFocus: { position: [-0.07, 1.37, 0.35], lookAt: [-0.040, 1.36, 0.15], distance: 0.22 },
+    cameraFocus: { position: [-0.07, 1.37, 0.28], lookAt: [-0.040, 1.375, 0.105], distance: 0.20 },
     references: { terminologiaAnatomica: 'A14.2.01.051', reviewStatus: 'VERIFIED', reviewedBy: 'Bộ môn Giải phẫu', reviewedAt: '2026-09-04' }
   },
 
@@ -976,11 +1037,12 @@ export const DENTAL_NERVE_STRUCTURES: Record<string, DentalNerveStructure> = {
     clinicalAnatomyEn: 'Injury causes food impaction in buccal vestibule due to flaccid buccinator.',
     color: '#059669',
     path3D: [
-      [-0.045, 1.34, 0.12],
-      [-0.038, 1.33, 0.16],
-      [-0.030, 1.32, 0.20]
+      [-0.045, 1.345, 0.076], // From pes anserinus
+      [-0.042, 1.342, 0.098], // Runs beneath parotid duct (Stensen)
+      [-0.038, 1.338, 0.120], // Crosses buccinator muscle surface
+      [-0.032, 1.332, 0.142]  // Modiolus and orbicularis oris
     ],
-    cameraFocus: { position: [-0.06, 1.33, 0.35], lookAt: [-0.038, 1.33, 0.16], distance: 0.22 },
+    cameraFocus: { position: [-0.06, 1.33, 0.28], lookAt: [-0.038, 1.345, 0.110], distance: 0.20 },
     references: { terminologiaAnatomica: 'A14.2.01.052', reviewStatus: 'VERIFIED', reviewedBy: 'Bộ môn Giải phẫu', reviewedAt: '2026-09-04' }
   },
 
@@ -1001,11 +1063,13 @@ export const DENTAL_NERVE_STRUCTURES: Record<string, DentalNerveStructure> = {
     clinicalAnatomyEn: 'Submandibular incisions (Risdon approach) must be placed ≥2 cm below mandibular border to protect this nerve.',
     color: '#047857',
     path3D: [
-      [-0.045, 1.34, 0.12],
-      [-0.040, 1.28, 0.14],
-      [-0.030, 1.27, 0.18]
+      [-0.045, 1.345, 0.076], // From parotid inferior pole
+      [-0.043, 1.328, 0.088], // Descends near angle of mandible
+      [-0.038, 1.315, 0.108], // Runs along inferior border of mandible
+      [-0.032, 1.312, 0.130], // Crosses facial artery and anterior border of masseter
+      [-0.025, 1.315, 0.145]  // Depressor anguli oris / depressor labii inferioris
     ],
-    cameraFocus: { position: [-0.06, 1.28, 0.35], lookAt: [-0.038, 1.28, 0.15], distance: 0.22 },
+    cameraFocus: { position: [-0.06, 1.30, 0.28], lookAt: [-0.038, 1.315, 0.100], distance: 0.20 },
     references: { terminologiaAnatomica: 'A14.2.01.053', reviewStatus: 'VERIFIED', reviewedBy: 'Bộ môn Giải phẫu', reviewedAt: '2026-09-04' }
   },
 
@@ -1026,11 +1090,12 @@ export const DENTAL_NERVE_STRUCTURES: Record<string, DentalNerveStructure> = {
     clinicalAnatomyEn: 'Tenses neck skin.',
     color: '#065f46',
     path3D: [
-      [-0.045, 1.34, 0.12],
-      [-0.042, 1.25, 0.12],
-      [-0.038, 1.20, 0.11]
+      [-0.045, 1.345, 0.076], // From lower pole of parotid
+      [-0.042, 1.320, 0.072], // Descends behind angle of mandible
+      [-0.038, 1.295, 0.070], // Into carotid triangle deep to platysma
+      [-0.032, 1.270, 0.072]  // Cervical subcutaneous supply
     ],
-    cameraFocus: { position: [-0.07, 1.24, 0.35], lookAt: [-0.040, 1.23, 0.12], distance: 0.24 },
+    cameraFocus: { position: [-0.07, 1.25, 0.28], lookAt: [-0.040, 1.280, 0.075], distance: 0.22 },
     references: { terminologiaAnatomica: 'A14.2.01.054', reviewStatus: 'VERIFIED', reviewedBy: 'Bộ môn Giải phẫu', reviewedAt: '2026-09-04' }
   },
 
@@ -1053,12 +1118,12 @@ export const DENTAL_NERVE_STRUCTURES: Record<string, DentalNerveStructure> = {
     clinicalAnatomyEn: 'Loss of afferent limb of gag reflex upon unilateral damage; glossopharyngeal neuralgia triggers throat pain on swallowing.',
     color: '#0284c7',
     path3D: [
-      [-0.018, 1.35, 0.02],
-      [-0.032, 1.34, 0.04], // Jugular foramen
-      [-0.035, 1.31, 0.08], // Along stylopharyngeus
-      [-0.025, 1.30, 0.14]  // Posterior 1/3 of tongue
+      [-0.015, 1.360, 0.025],
+      [-0.026, 1.350, 0.040], // Jugular foramen
+      [-0.028, 1.325, 0.070], // Along stylopharyngeus
+      [-0.016, 1.320, 0.115]  // Posterior 1/3 of tongue
     ],
-    cameraFocus: { position: [-0.07, 1.33, 0.35], lookAt: [-0.028, 1.31, 0.09], distance: 0.26 },
+    cameraFocus: { position: [-0.07, 1.33, 0.28], lookAt: [-0.026, 1.335, 0.070], distance: 0.22 },
     references: { terminologiaAnatomica: 'A14.2.01.055', netterPlate: 129, reviewStatus: 'VERIFIED', reviewedBy: 'Bộ môn Giải phẫu', reviewedAt: '2026-09-04' }
   },
 
@@ -1126,12 +1191,12 @@ export const DENTAL_NERVE_STRUCTURES: Record<string, DentalNerveStructure> = {
     clinicalAnatomyEn: 'Unilateral CN XII palsy causes the tongue to deviate toward the paralyzed side on protrusion.',
     color: '#64748b',
     path3D: [
-      [-0.015, 1.34, 0.02],
-      [-0.025, 1.33, 0.04], // Hypoglossal canal
-      [-0.035, 1.29, 0.08], // Submandibular curve
-      [-0.015, 1.28, 0.16]  // Intrinsic muscles of tongue
+      [-0.015, 1.350, 0.025],
+      [-0.022, 1.340, 0.040], // Hypoglossal canal
+      [-0.026, 1.310, 0.070], // Submandibular curve
+      [-0.012, 1.310, 0.125]  // Intrinsic muscles of tongue
     ],
-    cameraFocus: { position: [-0.06, 1.30, 0.35], lookAt: [-0.022, 1.29, 0.10], distance: 0.25 },
+    cameraFocus: { position: [-0.07, 1.32, 0.30], lookAt: [-0.022, 1.325, 0.070], distance: 0.22 },
     references: { terminologiaAnatomica: 'A14.2.01.091', netterPlate: 132, reviewStatus: 'VERIFIED', reviewedBy: 'Bộ môn Giải phẫu', reviewedAt: '2026-09-04' }
   }
 };
@@ -1148,7 +1213,7 @@ export const CRANIAL_FORAMINA: Record<string, CranialForamen> = {
     latinName: 'Foramen ovale',
     boneVi: 'Cánh lớn xương bướm',
     boneEn: 'Greater wing of sphenoid bone',
-    position: [-0.045, 1.395, 0.095],
+    position: [-0.026, 1.385, 0.065],
     structuresPassingThroughVi: [
       'Thần kinh hàm dưới (CN V3)',
       'Động mạch màng não phụ',
@@ -1164,7 +1229,7 @@ export const CRANIAL_FORAMINA: Record<string, CranialForamen> = {
     relatedNerveIds: ['cn_5_v3'],
     clinicalSignificanceVi: 'Lỗ sọ then chốt để dây V3 thoát ra hố dưới thái dương. Đường chọc kim tiếp cận hạch Gasser qua da để điều trị đau dây V kịch phát bằng nhiệt đông cao tần (Percutaneous radiofrequency rhizotomy).',
     clinicalSignificanceEn: 'Direct route for percutaneous cannulation of the trigeminal ganglion in treating refractory trigeminal neuralgia.',
-    cameraFocus: { position: [-0.08, 1.42, 0.25], lookAt: [-0.045, 1.395, 0.095] }
+    cameraFocus: { position: [-0.07, 1.41, 0.22], lookAt: [-0.026, 1.385, 0.065] }
   },
 
   'foramen_rotundum': {
@@ -1174,7 +1239,7 @@ export const CRANIAL_FORAMINA: Record<string, CranialForamen> = {
     latinName: 'Foramen rotundum',
     boneVi: 'Cánh lớn xương bướm',
     boneEn: 'Greater wing of sphenoid bone',
-    position: [-0.042, 1.405, 0.130],
+    position: [-0.024, 1.395, 0.080],
     structuresPassingThroughVi: [
       'Thần kinh hàm trên (CN V2)'
     ],
@@ -1184,7 +1249,7 @@ export const CRANIAL_FORAMINA: Record<string, CranialForamen> = {
     relatedNerveIds: ['cn_5_v2'],
     clinicalSignificanceVi: 'Đưa dây V2 từ hố sọ giữa vào hố chân bướm khẩu cái. Gãy xương nền sọ giữa liên quan lỗ tròn gây tê bì vùng má, mi dưới và răng hàm trên.',
     clinicalSignificanceEn: 'Passageway for V2 into pterygopalatine fossa; trauma causes midfacial numbness.',
-    cameraFocus: { position: [-0.07, 1.43, 0.28], lookAt: [-0.042, 1.405, 0.130] }
+    cameraFocus: { position: [-0.06, 1.41, 0.24], lookAt: [-0.024, 1.395, 0.080] }
   },
 
   'foramen_spinosum': {
@@ -1194,7 +1259,7 @@ export const CRANIAL_FORAMINA: Record<string, CranialForamen> = {
     latinName: 'Foramen spinosum',
     boneVi: 'Cánh lớn xương bướm (gần gai xương bướm)',
     boneEn: 'Greater wing of sphenoid near sphenoidal spine',
-    position: [-0.048, 1.392, 0.080],
+    position: [-0.030, 1.385, 0.055],
     structuresPassingThroughVi: [
       'Động mạch màng não giữa',
       'Tĩnh mạch màng não giữa',
@@ -1208,7 +1273,7 @@ export const CRANIAL_FORAMINA: Record<string, CranialForamen> = {
     relatedNerveIds: ['cn_5_v3'],
     clinicalSignificanceVi: 'Chấn thương vùng thái dương (điểm Pterion) làm vỡ động mạch màng não giữa tại lỗ gai gây tụ máu ngoài màng cứng (Epidural hematoma) cấp tính nguy kịch.',
     clinicalSignificanceEn: 'Fracture of pterion ruptures middle meningeal artery causing life-threatening epidural hematoma.',
-    cameraFocus: { position: [-0.08, 1.41, 0.22], lookAt: [-0.048, 1.392, 0.080] }
+    cameraFocus: { position: [-0.07, 1.40, 0.20], lookAt: [-0.030, 1.385, 0.055] }
   },
 
   'superior_orbital_fissure': {
@@ -1218,7 +1283,7 @@ export const CRANIAL_FORAMINA: Record<string, CranialForamen> = {
     latinName: 'Fissura orbitalis superior',
     boneVi: 'Giữa cánh nhỏ và cánh lớn xương bướm',
     boneEn: 'Between lesser and greater wings of sphenoid',
-    position: [-0.040, 1.435, 0.155],
+    position: [-0.024, 1.415, 0.105],
     structuresPassingThroughVi: [
       'Thần kinh vận nhãn (CN III)',
       'Thần kinh ròng rọc (CN IV)',
@@ -1236,7 +1301,7 @@ export const CRANIAL_FORAMINA: Record<string, CranialForamen> = {
     relatedNerveIds: ['cn_3', 'cn_4', 'cn_5_v1'],
     clinicalSignificanceVi: 'Hội chứng khe ổ mắt trên: Gãy xương hoặc chèn ép tại khe gây liệt nhãn cầu toàn bộ (dây III, IV, VI), mất cảm giác trán mi mắt (dây V1) và giãn đồng tử.',
     clinicalSignificanceEn: 'Superior orbital fissure syndrome presents with complete ophthalmoplegia, ptosis, fixed pupil, and upper facial sensory loss.',
-    cameraFocus: { position: [-0.07, 1.46, 0.30], lookAt: [-0.040, 1.435, 0.155] }
+    cameraFocus: { position: [-0.06, 1.44, 0.25], lookAt: [-0.024, 1.415, 0.105] }
   },
 
   'mandibular_foramen': {
@@ -1246,7 +1311,7 @@ export const CRANIAL_FORAMINA: Record<string, CranialForamen> = {
     latinName: 'Foramen mandibulae',
     boneVi: 'Mặt trong cành lên xương hàm dưới (Ramus of mandible)',
     boneEn: 'Medial surface of mandibular ramus',
-    position: [-0.044, 1.320, 0.135],
+    position: [-0.038, 1.355, 0.095],
     structuresPassingThroughVi: [
       'Thần kinh huyệt răng dưới (IAN)',
       'Động mạch huyệt răng dưới',
@@ -1260,7 +1325,7 @@ export const CRANIAL_FORAMINA: Record<string, CranialForamen> = {
     relatedNerveIds: ['nerve_ian'],
     clinicalSignificanceVi: 'Điểm mốc quan trọng nhất trong gây tê vùng nha khoa. Lỗ được che chắn ở phía trước bởi Gai Spix (Lingula). Mục tiêu kim tiêm trong kỹ thuật Halsted đặt ngay phía trên gai Spix.',
     clinicalSignificanceEn: 'Primary anatomical target for Inferior Alveolar Nerve Block (Halsted technique); guarded anteriorly by the lingula.',
-    cameraFocus: { position: [-0.08, 1.34, 0.28], lookAt: [-0.044, 1.320, 0.135] }
+    cameraFocus: { position: [-0.07, 1.36, 0.24], lookAt: [-0.038, 1.355, 0.095] }
   },
 
   'mental_foramen': {
@@ -1270,7 +1335,7 @@ export const CRANIAL_FORAMINA: Record<string, CranialForamen> = {
     latinName: 'Foramen mentale',
     boneVi: 'Mặt ngoài thân xương hàm dưới (dưới chóp răng cối nhỏ)',
     boneEn: 'Anterolateral surface of mandibular body below premolars',
-    position: [-0.028, 1.280, 0.205],
+    position: [-0.030, 1.320, 0.150],
     structuresPassingThroughVi: [
       'Thần kinh cằm (Mental nerve)',
       'Mạch máu cằm (Mental vessels)'
@@ -1282,7 +1347,7 @@ export const CRANIAL_FORAMINA: Record<string, CranialForamen> = {
     relatedNerveIds: ['nerve_mental', 'nerve_ian'],
     clinicalSignificanceVi: 'Nơi thần kinh cằm thoát ra chi phối môi dưới và cằm. Cần bảo tồn tuyệt đối khi phẫu thuật đặt implant, phẫu thuật cắt chóp hoặc gọt hàm.',
     clinicalSignificanceEn: 'Exit of mental nerve supplying lower lip and chin. Strict surgical safety zone for dental implantology.',
-    cameraFocus: { position: [-0.06, 1.29, 0.32], lookAt: [-0.028, 1.280, 0.205] }
+    cameraFocus: { position: [-0.06, 1.32, 0.28], lookAt: [-0.030, 1.320, 0.150] }
   },
 
   'infraorbital_foramen': {
@@ -1292,7 +1357,7 @@ export const CRANIAL_FORAMINA: Record<string, CranialForamen> = {
     latinName: 'Foramen infraorbitale',
     boneVi: 'Mặt trước xương hàm trên, cách bờ dưới ổ mắt 5–8mm',
     boneEn: 'Anterior surface of maxilla, 5-8mm inferior to infraorbital margin',
-    position: [-0.025, 1.365, 0.245],
+    position: [-0.030, 1.370, 0.145],
     structuresPassingThroughVi: [
       'Thần kinh dưới ổ mắt (nhánh tận của V2)',
       'Động mạch dưới ổ mắt',
@@ -1305,7 +1370,7 @@ export const CRANIAL_FORAMINA: Record<string, CranialForamen> = {
     relatedNerveIds: ['nerve_infraorbital', 'cn_5_v2'],
     clinicalSignificanceVi: 'Điểm chọc kim gây tê thần kinh dưới ổ mắt. Tổn thương do gãy khối gò má - hàm trên (Le Fort II hoặc ZMC fracture) gây tê bì má, cánh mũi và môi trên.',
     clinicalSignificanceEn: 'Target for infraorbital block; trauma to zygomaticomaxillary complex causes midfacial numbness.',
-    cameraFocus: { position: [-0.06, 1.38, 0.35], lookAt: [-0.025, 1.365, 0.245] }
+    cameraFocus: { position: [-0.06, 1.38, 0.28], lookAt: [-0.030, 1.370, 0.145] }
   },
 
   'stylomastoid_foramen': {
@@ -1315,7 +1380,7 @@ export const CRANIAL_FORAMINA: Record<string, CranialForamen> = {
     latinName: 'Foramen stylomastoideum',
     boneVi: 'Nền sọ, giữa mỏm trâm và mỏm chũm xương thái dương',
     boneEn: 'Inferior petrous temporal bone between styloid and mastoid processes',
-    position: [-0.045, 1.370, 0.060],
+    position: [-0.038, 1.370, 0.050],
     structuresPassingThroughVi: [
       'Thần kinh mặt (CN VII)',
       'Động mạch trâm chũm'
@@ -1327,7 +1392,7 @@ export const CRANIAL_FORAMINA: Record<string, CranialForamen> = {
     relatedNerveIds: ['cn_7'],
     clinicalSignificanceVi: 'Điểm thoát ra ngoài sọ của dây VII trước khi phân nhánh vào tuyến mang tai. Viêm phù nề dây VII tại đây gây liệt Bell.',
     clinicalSignificanceEn: 'Exit point of CN VII from skull; entrapment/edema here leads to Bell palsy.',
-    cameraFocus: { position: [-0.08, 1.38, 0.20], lookAt: [-0.045, 1.370, 0.060] }
+    cameraFocus: { position: [-0.07, 1.37, 0.20], lookAt: [-0.038, 1.370, 0.050] }
   },
 
   'greater_palatine_foramen': {
@@ -1337,7 +1402,7 @@ export const CRANIAL_FORAMINA: Record<string, CranialForamen> = {
     latinName: 'Foramen palatinum majus',
     boneVi: 'Mảnh ngang xương khẩu cái (ngang răng cối lớn 2-3 hàm trên)',
     boneEn: 'Horizontal plate of palatine bone near maxillary 2nd/3rd molar',
-    position: [-0.024, 1.340, 0.180],
+    position: [-0.018, 1.345, 0.118],
     structuresPassingThroughVi: [
       'Thần kinh khẩu cái lớn',
       'Động mạch khẩu cái lớn'
@@ -1349,7 +1414,7 @@ export const CRANIAL_FORAMINA: Record<string, CranialForamen> = {
     relatedNerveIds: ['nerve_greater_palatine', 'cn_5_v2'],
     clinicalSignificanceVi: 'Điểm gây tê niêm mạc vòm miệng phía sau trong nhổ răng cối lớn trên hoặc phẫu thuật vòm.',
     clinicalSignificanceEn: 'Target for greater palatine nerve block in palatal surgery.',
-    cameraFocus: { position: [-0.05, 1.35, 0.28], lookAt: [-0.024, 1.340, 0.180] }
+    cameraFocus: { position: [-0.05, 1.35, 0.25], lookAt: [-0.018, 1.345, 0.118] }
   },
 
   'incisive_foramen': {
@@ -1359,7 +1424,7 @@ export const CRANIAL_FORAMINA: Record<string, CranialForamen> = {
     latinName: 'Foramen incisivum',
     boneVi: 'Mỏm khẩu cái xương hàm trên, ngay sau các răng cửa giữa',
     boneEn: 'Palatine process of maxilla, posterior to central incisors',
-    position: [0.000, 1.340, 0.235],
+    position: [0.000, 1.345, 0.148],
     structuresPassingThroughVi: [
       'Thần kinh mũi khẩu cái (dây V2)',
       'Động mạch bướm khẩu cái tận cùng'
@@ -1371,7 +1436,7 @@ export const CRANIAL_FORAMINA: Record<string, CranialForamen> = {
     relatedNerveIds: ['nerve_nasopalatine', 'cn_5_v2'],
     clinicalSignificanceVi: 'Vị trí nang ống răng cửa (Incisive canal cyst / Nasopalatine duct cyst) - tổn thương nang lành tính phổ biến nhất vùng hàm trên.',
     clinicalSignificanceEn: 'Site of nasopalatine duct cysts, the most common non-odontogenic cyst of the maxilla.',
-    cameraFocus: { position: [0.00, 1.36, 0.32], lookAt: [0.000, 1.340, 0.235] }
+    cameraFocus: { position: [0.00, 1.35, 0.28], lookAt: [0.000, 1.345, 0.148] }
   },
 
   'optic_canal': {
@@ -1381,7 +1446,7 @@ export const CRANIAL_FORAMINA: Record<string, CranialForamen> = {
     latinName: 'Canalis opticus',
     boneVi: 'Cánh nhỏ xương bướm',
     boneEn: 'Lesser wing of sphenoid bone',
-    position: [-0.025, 1.435, 0.135],
+    position: [-0.015, 1.420, 0.095],
     structuresPassingThroughVi: [
       'Thần kinh thị giác (CN II)',
       'Động mạch mắt (Ophthalmic artery)'
@@ -1393,7 +1458,7 @@ export const CRANIAL_FORAMINA: Record<string, CranialForamen> = {
     relatedNerveIds: ['cn_2'],
     clinicalSignificanceVi: 'Chấn thương gãy ống thị giác chèn ép gây mù mắt nhanh chóng, cần phẫu thuật giải áp ống thị giác khẩn cấp.',
     clinicalSignificanceEn: 'Optic canal fractures risk compressive optic neuropathy requiring urgent decompression.',
-    cameraFocus: { position: [-0.06, 1.45, 0.25], lookAt: [-0.025, 1.435, 0.135] }
+    cameraFocus: { position: [-0.05, 1.43, 0.22], lookAt: [-0.015, 1.420, 0.095] }
   },
 
   'jugular_foramen': {
@@ -1403,7 +1468,7 @@ export const CRANIAL_FORAMINA: Record<string, CranialForamen> = {
     latinName: 'Foramen jugulare',
     boneVi: 'Giữa xương đá (thái dương) và xương chẩm',
     boneEn: 'Between petrous temporal and occipital bones',
-    position: [-0.032, 1.340, 0.040],
+    position: [-0.026, 1.350, 0.040],
     structuresPassingThroughVi: [
       'Dây thần kinh thiệt hầu (CN IX)',
       'Dây thần kinh lang thang (CN X)',
@@ -1421,7 +1486,7 @@ export const CRANIAL_FORAMINA: Record<string, CranialForamen> = {
     relatedNerveIds: ['cn_9', 'cn_10', 'cn_11'],
     clinicalSignificanceVi: 'Hội chứng lỗ rách sau (Vernet syndrome): Tổn thương đồng thời dây IX, X, XI do u cuộn cảnh (Glomus jugulare tumor) hoặc gãy xương nền sọ.',
     clinicalSignificanceEn: 'Vernet syndrome: concurrent paresis of CN IX, X, XI caused by glomus tumors or skull base fractures.',
-    cameraFocus: { position: [-0.07, 1.36, 0.18], lookAt: [-0.032, 1.340, 0.040] }
+    cameraFocus: { position: [-0.06, 1.36, 0.16], lookAt: [-0.026, 1.350, 0.040] }
   },
 
   'hypoglossal_canal': {
@@ -1431,7 +1496,7 @@ export const CRANIAL_FORAMINA: Record<string, CranialForamen> = {
     latinName: 'Canalis nervi hypoglossi',
     boneVi: 'Phần bên xương chẩm (ngang trên lồi cầu chẩm)',
     boneEn: 'Lateral part of occipital bone above occipital condyle',
-    position: [-0.025, 1.330, 0.040],
+    position: [-0.022, 1.340, 0.040],
     structuresPassingThroughVi: [
       'Thần kinh hạ thiệt (CN XII)',
       'Nhánh màng não của động mạch hầu lên'
@@ -1443,7 +1508,7 @@ export const CRANIAL_FORAMINA: Record<string, CranialForamen> = {
     relatedNerveIds: ['cn_12'],
     clinicalSignificanceVi: 'U bao dây thần kinh hoặc gãy lồi cầu chẩm làm tổn thương dây XII gây teo cơ và lệch lưỡi.',
     clinicalSignificanceEn: 'Schwannomas or occipital condyle fractures affect CN XII, manifesting as tongue atrophy and deviation.',
-    cameraFocus: { position: [-0.06, 1.35, 0.18], lookAt: [-0.025, 1.330, 0.040] }
+    cameraFocus: { position: [-0.05, 1.35, 0.16], lookAt: [-0.022, 1.340, 0.040] }
   },
 
   'foramen_magnum': {
@@ -1480,7 +1545,9 @@ export const CRANIAL_FORAMINA: Record<string, CranialForamen> = {
 // ============================================================================
 
 export const DENTAL_INNERVATION_DATABASE: ToothInnervation[] = [
-  // --- QUADRANT 1: MAXILLARY RIGHT (11 - 18) ---
+  // ==========================================================================
+  // --- CUNG 1: HÀM TRÊN PHẢI (MAXILLARY RIGHT - FDI 11 - 18) ---
+  // ==========================================================================
   {
     fdi: 18,
     universalNumber: 1,
@@ -1495,7 +1562,7 @@ export const DENTAL_INNERVATION_DATABASE: ToothInnervation[] = [
     periodontalInnervationId: 'nerve_psa',
     buccalGingivaInnervationId: 'nerve_psa',
     lingualGingivaInnervationId: 'nerve_greater_palatine',
-    position3D: [0.032, 1.340, 0.180],
+    position3D: [-0.032, 1.344, 0.124],
     anesthesiaTechniqueVi: 'Gây tê PSA kết hợp gây tê thần kinh khẩu cái lớn (Greater Palatine block)',
     anesthesiaTechniqueEn: 'PSA nerve block + Greater palatine block'
   },
@@ -1513,8 +1580,8 @@ export const DENTAL_INNERVATION_DATABASE: ToothInnervation[] = [
     periodontalInnervationId: 'nerve_psa',
     buccalGingivaInnervationId: 'nerve_psa',
     lingualGingivaInnervationId: 'nerve_greater_palatine',
-    position3D: [0.030, 1.340, 0.195],
-    anesthesiaTechniqueVi: 'Gây tê PSA kết hợp gây tê vòm miệng',
+    position3D: [-0.030, 1.344, 0.132],
+    anesthesiaTechniqueVi: 'Gây tê PSA kết hợp gây tê vòm miệng khẩu cái lớn',
     anesthesiaTechniqueEn: 'PSA nerve block + Greater palatine block'
   },
   {
@@ -1527,11 +1594,11 @@ export const DENTAL_INNERVATION_DATABASE: ToothInnervation[] = [
     toothType: 'molar',
     rootCount: 3,
     canalCount: '3-4 (MB1, MB2, DB, Palatal)',
-    pulpInnervationId: 'nerve_psa', // and MSA for MB root
+    pulpInnervationId: 'nerve_psa', // Chân gần ngoài chi phối bởi MSA
     periodontalInnervationId: 'nerve_psa',
     buccalGingivaInnervationId: 'nerve_psa',
     lingualGingivaInnervationId: 'nerve_greater_palatine',
-    position3D: [0.028, 1.340, 0.210],
+    position3D: [-0.028, 1.343, 0.140],
     anesthesiaTechniqueVi: 'Gây tê PSA + Tiêm ngấm bổ sung chân gần ngoài (nhánh MSA) + Gây tê khẩu cái lớn',
     anesthesiaTechniqueEn: 'PSA block + local infiltration over mesiobuccal root (MSA) + Greater palatine block'
   },
@@ -1549,7 +1616,7 @@ export const DENTAL_INNERVATION_DATABASE: ToothInnervation[] = [
     periodontalInnervationId: 'nerve_msa',
     buccalGingivaInnervationId: 'nerve_msa',
     lingualGingivaInnervationId: 'nerve_greater_palatine',
-    position3D: [0.024, 1.340, 0.225],
+    position3D: [-0.024, 1.342, 0.147],
     anesthesiaTechniqueVi: 'Gây tê ngấm tại chỗ ngách tiền đình + Gây tê niêm mạc vòm',
     anesthesiaTechniqueEn: 'Supraperiosteal infiltration + palatal infiltration'
   },
@@ -1567,8 +1634,8 @@ export const DENTAL_INNERVATION_DATABASE: ToothInnervation[] = [
     periodontalInnervationId: 'nerve_msa',
     buccalGingivaInnervationId: 'nerve_msa',
     lingualGingivaInnervationId: 'nerve_greater_palatine',
-    position3D: [0.020, 1.340, 0.235],
-    anesthesiaTechniqueVi: 'Gây tê ngấm tại chỗ ngách tiền đình',
+    position3D: [-0.020, 1.342, 0.151],
+    anesthesiaTechniqueVi: 'Gây tê ngấm tại chỗ ngách tiền đình (MSA)',
     anesthesiaTechniqueEn: 'Supraperiosteal infiltration'
   },
   {
@@ -1585,7 +1652,7 @@ export const DENTAL_INNERVATION_DATABASE: ToothInnervation[] = [
     periodontalInnervationId: 'nerve_asa',
     buccalGingivaInnervationId: 'nerve_asa',
     lingualGingivaInnervationId: 'nerve_nasopalatine',
-    position3D: [0.016, 1.340, 0.245],
+    position3D: [-0.016, 1.342, 0.154],
     anesthesiaTechniqueVi: 'Gây tê ASA hoặc gây tê lỗ dưới ổ mắt + Gây tê lỗ răng cửa',
     anesthesiaTechniqueEn: 'ASA infiltration or Infraorbital block + Nasopalatine block'
   },
@@ -1603,7 +1670,7 @@ export const DENTAL_INNERVATION_DATABASE: ToothInnervation[] = [
     periodontalInnervationId: 'nerve_asa',
     buccalGingivaInnervationId: 'nerve_asa',
     lingualGingivaInnervationId: 'nerve_nasopalatine',
-    position3D: [0.010, 1.340, 0.252],
+    position3D: [-0.010, 1.342, 0.157],
     anesthesiaTechniqueVi: 'Gây tê ngấm tại chỗ chóp răng 12 + Gây tê vòm răng cửa',
     anesthesiaTechniqueEn: 'Supraperiosteal infiltration + Nasopalatine block'
   },
@@ -1621,118 +1688,178 @@ export const DENTAL_INNERVATION_DATABASE: ToothInnervation[] = [
     periodontalInnervationId: 'nerve_asa',
     buccalGingivaInnervationId: 'nerve_asa',
     lingualGingivaInnervationId: 'nerve_nasopalatine',
-    position3D: [0.004, 1.340, 0.255],
+    position3D: [-0.004, 1.342, 0.158],
     anesthesiaTechniqueVi: 'Gây tê ngấm tại chỗ ngách tiền đình + Gây tê lỗ răng cửa',
     anesthesiaTechniqueEn: 'Supraperiosteal infiltration + Nasopalatine block'
   },
 
-  // --- QUADRANT 3: MANDIBULAR LEFT (31 - 38) ---
+  // ==========================================================================
+  // --- CUNG 2: HÀM TRÊN TRÁI (MAXILLARY LEFT - FDI 21 - 28) ---
+  // ==========================================================================
   {
-    fdi: 38,
-    universalNumber: 17,
-    nameVi: 'Răng khôn dưới trái (Răng 38)',
-    nameEn: 'Mandibular Left 3rd Molar (#38)',
-    arch: 'mandibular',
-    quadrant: 3,
-    toothType: 'molar',
-    rootCount: 2,
-    canalCount: '2-3',
-    pulpInnervationId: 'nerve_ian',
-    periodontalInnervationId: 'nerve_ian',
-    buccalGingivaInnervationId: 'nerve_buccal',
-    lingualGingivaInnervationId: 'nerve_lingual',
-    position3D: [-0.038, 1.285, 0.160],
-    anesthesiaTechniqueVi: 'Gây tê gai Spix (IAN block) + Gây tê thần kinh má (Buccal block) + Gây tê thần kinh lưỡi',
-    anesthesiaTechniqueEn: 'Inferior alveolar nerve block + Long buccal block + Lingual block'
-  },
-  {
-    fdi: 37,
-    universalNumber: 18,
-    nameVi: 'Răng cối lớn 2 dưới trái (Răng 37)',
-    nameEn: 'Mandibular Left 2nd Molar (#37)',
-    arch: 'mandibular',
-    quadrant: 3,
-    toothType: 'molar',
-    rootCount: 2,
-    canalCount: '3 (Mesial x2, Distal x1)',
-    pulpInnervationId: 'nerve_ian',
-    periodontalInnervationId: 'nerve_ian',
-    buccalGingivaInnervationId: 'nerve_buccal',
-    lingualGingivaInnervationId: 'nerve_lingual',
-    position3D: [-0.036, 1.285, 0.175],
-    anesthesiaTechniqueVi: 'Gây tê gai Spix (IAN block) + Gây tê thần kinh má',
-    anesthesiaTechniqueEn: 'IAN block + Long buccal block'
-  },
-  {
-    fdi: 36,
-    universalNumber: 19,
-    nameVi: 'Răng cối lớn 1 dưới trái (Răng 36)',
-    nameEn: 'Mandibular Left 1st Molar (#36)',
-    arch: 'mandibular',
-    quadrant: 3,
-    toothType: 'molar',
-    rootCount: 2,
-    canalCount: '3-4 (MB, ML, Distal / DB, DL)',
-    pulpInnervationId: 'nerve_ian',
-    periodontalInnervationId: 'nerve_ian',
-    buccalGingivaInnervationId: 'nerve_buccal',
-    lingualGingivaInnervationId: 'nerve_lingual',
-    position3D: [-0.033, 1.285, 0.190],
-    anesthesiaTechniqueVi: 'Gây tê gai Spix (IAN block) + Gây tê thần kinh má',
-    anesthesiaTechniqueEn: 'IAN block + Long buccal block'
-  },
-  {
-    fdi: 35,
-    universalNumber: 20,
-    nameVi: 'Răng cối nhỏ 2 dưới trái (Răng 35)',
-    nameEn: 'Mandibular Left 2nd Premolar (#35)',
-    arch: 'mandibular',
-    quadrant: 3,
-    toothType: 'premolar',
+    fdi: 21,
+    universalNumber: 9,
+    nameVi: 'Răng cửa giữa trên trái (Răng 21)',
+    nameEn: 'Maxillary Left Central Incisor (#21)',
+    arch: 'maxillary',
+    quadrant: 2,
+    toothType: 'incisor',
     rootCount: 1,
-    canalCount: '1-2',
-    pulpInnervationId: 'nerve_ian',
-    periodontalInnervationId: 'nerve_ian',
-    buccalGingivaInnervationId: 'nerve_mental',
-    lingualGingivaInnervationId: 'nerve_lingual',
-    position3D: [-0.029, 1.285, 0.205],
-    anesthesiaTechniqueVi: 'Gây tê gai Spix hoặc gây tê lỗ cằm/răng cửa (Mental/Incisive block)',
-    anesthesiaTechniqueEn: 'IAN block or Mental/Incisive nerve block'
+    canalCount: '1',
+    pulpInnervationId: 'nerve_asa',
+    periodontalInnervationId: 'nerve_asa',
+    buccalGingivaInnervationId: 'nerve_asa',
+    lingualGingivaInnervationId: 'nerve_nasopalatine',
+    position3D: [0.004, 1.342, 0.158],
+    anesthesiaTechniqueVi: 'Gây tê ngấm tại chỗ ngách tiền đình + Gây tê lỗ răng cửa',
+    anesthesiaTechniqueEn: 'Supraperiosteal infiltration + Nasopalatine block'
   },
   {
-    fdi: 34,
-    universalNumber: 21,
-    nameVi: 'Răng cối nhỏ 1 dưới trái (Răng 34)',
-    nameEn: 'Mandibular Left 1st Premolar (#34)',
-    arch: 'mandibular',
-    quadrant: 3,
-    toothType: 'premolar',
+    fdi: 22,
+    universalNumber: 10,
+    nameVi: 'Răng cửa bên trên trái (Răng 22)',
+    nameEn: 'Maxillary Left Lateral Incisor (#22)',
+    arch: 'maxillary',
+    quadrant: 2,
+    toothType: 'incisor',
     rootCount: 1,
-    canalCount: '1-2',
-    pulpInnervationId: 'nerve_ian',
-    periodontalInnervationId: 'nerve_ian',
-    buccalGingivaInnervationId: 'nerve_mental',
-    lingualGingivaInnervationId: 'nerve_lingual',
-    position3D: [-0.024, 1.285, 0.218],
-    anesthesiaTechniqueVi: 'Gây tê lỗ cằm/răng cửa hoặc gây tê gai Spix',
-    anesthesiaTechniqueEn: 'Mental/Incisive block or IAN block'
+    canalCount: '1',
+    pulpInnervationId: 'nerve_asa',
+    periodontalInnervationId: 'nerve_asa',
+    buccalGingivaInnervationId: 'nerve_asa',
+    lingualGingivaInnervationId: 'nerve_nasopalatine',
+    position3D: [0.010, 1.342, 0.157],
+    anesthesiaTechniqueVi: 'Gây tê ngấm tại chỗ chóp răng 22 + Gây tê vòm răng cửa',
+    anesthesiaTechniqueEn: 'Supraperiosteal infiltration + Nasopalatine block'
   },
   {
-    fdi: 33,
-    universalNumber: 22,
-    nameVi: 'Răng nanh dưới trái (Răng 33)',
-    nameEn: 'Mandibular Left Canine (#33)',
-    arch: 'mandibular',
-    quadrant: 3,
+    fdi: 23,
+    universalNumber: 11,
+    nameVi: 'Răng nanh trên trái (Răng 23)',
+    nameEn: 'Maxillary Left Canine (#23)',
+    arch: 'maxillary',
+    quadrant: 2,
     toothType: 'canine',
     rootCount: 1,
+    canalCount: '1',
+    pulpInnervationId: 'nerve_asa',
+    periodontalInnervationId: 'nerve_asa',
+    buccalGingivaInnervationId: 'nerve_asa',
+    lingualGingivaInnervationId: 'nerve_nasopalatine',
+    position3D: [0.016, 1.342, 0.154],
+    anesthesiaTechniqueVi: 'Gây tê ASA hoặc gây tê lỗ dưới ổ mắt + Gây tê lỗ răng cửa',
+    anesthesiaTechniqueEn: 'ASA infiltration or Infraorbital block + Nasopalatine block'
+  },
+  {
+    fdi: 24,
+    universalNumber: 12,
+    nameVi: 'Răng cối nhỏ 1 trên trái (Răng 24)',
+    nameEn: 'Maxillary Left 1st Premolar (#24)',
+    arch: 'maxillary',
+    quadrant: 2,
+    toothType: 'premolar',
+    rootCount: 2,
+    canalCount: '2 (Buccal, Palatal)',
+    pulpInnervationId: 'nerve_msa',
+    periodontalInnervationId: 'nerve_msa',
+    buccalGingivaInnervationId: 'nerve_msa',
+    lingualGingivaInnervationId: 'nerve_greater_palatine',
+    position3D: [0.020, 1.342, 0.151],
+    anesthesiaTechniqueVi: 'Gây tê ngấm tại chỗ ngách tiền đình (MSA)',
+    anesthesiaTechniqueEn: 'Supraperiosteal infiltration'
+  },
+  {
+    fdi: 25,
+    universalNumber: 13,
+    nameVi: 'Răng cối nhỏ 2 trên trái (Răng 25)',
+    nameEn: 'Maxillary Left 2nd Premolar (#25)',
+    arch: 'maxillary',
+    quadrant: 2,
+    toothType: 'premolar',
+    rootCount: 1,
     canalCount: '1-2',
+    pulpInnervationId: 'nerve_msa',
+    periodontalInnervationId: 'nerve_msa',
+    buccalGingivaInnervationId: 'nerve_msa',
+    lingualGingivaInnervationId: 'nerve_greater_palatine',
+    position3D: [0.024, 1.342, 0.147],
+    anesthesiaTechniqueVi: 'Gây tê ngấm tại chỗ ngách tiền đình + Gây tê niêm mạc vòm',
+    anesthesiaTechniqueEn: 'Supraperiosteal infiltration + palatal infiltration'
+  },
+  {
+    fdi: 26,
+    universalNumber: 14,
+    nameVi: 'Răng cối lớn 1 trên trái (Răng 26)',
+    nameEn: 'Maxillary Left 1st Molar (#26)',
+    arch: 'maxillary',
+    quadrant: 2,
+    toothType: 'molar',
+    rootCount: 3,
+    canalCount: '3-4 (MB1, MB2, DB, Palatal)',
+    pulpInnervationId: 'nerve_psa',
+    periodontalInnervationId: 'nerve_psa',
+    buccalGingivaInnervationId: 'nerve_psa',
+    lingualGingivaInnervationId: 'nerve_greater_palatine',
+    position3D: [0.028, 1.343, 0.140],
+    anesthesiaTechniqueVi: 'Gây tê PSA + Tiêm ngấm bổ sung chân gần ngoài (nhánh MSA) + Gây tê khẩu cái lớn',
+    anesthesiaTechniqueEn: 'PSA block + local infiltration over mesiobuccal root (MSA) + Greater palatine block'
+  },
+  {
+    fdi: 27,
+    universalNumber: 15,
+    nameVi: 'Răng cối lớn 2 trên trái (Răng 27)',
+    nameEn: 'Maxillary Left 2nd Molar (#27)',
+    arch: 'maxillary',
+    quadrant: 2,
+    toothType: 'molar',
+    rootCount: 3,
+    canalCount: '3-4',
+    pulpInnervationId: 'nerve_psa',
+    periodontalInnervationId: 'nerve_psa',
+    buccalGingivaInnervationId: 'nerve_psa',
+    lingualGingivaInnervationId: 'nerve_greater_palatine',
+    position3D: [0.030, 1.344, 0.132],
+    anesthesiaTechniqueVi: 'Gây tê PSA kết hợp gây tê vòm miệng khẩu cái lớn',
+    anesthesiaTechniqueEn: 'PSA nerve block + Greater palatine block'
+  },
+  {
+    fdi: 28,
+    universalNumber: 16,
+    nameVi: 'Răng khôn trên trái (Răng 28)',
+    nameEn: 'Maxillary Left 3rd Molar (#28)',
+    arch: 'maxillary',
+    quadrant: 2,
+    toothType: 'molar',
+    rootCount: 3,
+    canalCount: '3-4',
+    pulpInnervationId: 'nerve_psa',
+    periodontalInnervationId: 'nerve_psa',
+    buccalGingivaInnervationId: 'nerve_psa',
+    lingualGingivaInnervationId: 'nerve_greater_palatine',
+    position3D: [0.032, 1.344, 0.124],
+    anesthesiaTechniqueVi: 'Gây tê PSA kết hợp gây tê thần kinh khẩu cái lớn',
+    anesthesiaTechniqueEn: 'PSA nerve block + Greater palatine block'
+  },
+
+  // ==========================================================================
+  // --- CUNG 3: HÀM DƯỚI TRÁI (MANDIBULAR LEFT - FDI 31 - 38) ---
+  // ==========================================================================
+  {
+    fdi: 31,
+    universalNumber: 24,
+    nameVi: 'Răng cửa giữa dưới trái (Răng 31)',
+    nameEn: 'Mandibular Left Central Incisor (#31)',
+    arch: 'mandibular',
+    quadrant: 3,
+    toothType: 'incisor',
+    rootCount: 1,
+    canalCount: '1',
     pulpInnervationId: 'nerve_incisive',
     periodontalInnervationId: 'nerve_incisive',
     buccalGingivaInnervationId: 'nerve_mental',
     lingualGingivaInnervationId: 'nerve_lingual',
-    position3D: [-0.018, 1.285, 0.230],
-    anesthesiaTechniqueVi: 'Gây tê thần kinh răng cửa (Incisive nerve block) hoặc tiêm ngấm',
+    position3D: [0.004, 1.330, 0.158],
+    anesthesiaTechniqueVi: 'Gây tê thần kinh răng cửa hoặc tiêm ngấm tại chỗ',
     anesthesiaTechniqueEn: 'Incisive block or local infiltration'
   },
   {
@@ -1749,17 +1876,129 @@ export const DENTAL_INNERVATION_DATABASE: ToothInnervation[] = [
     periodontalInnervationId: 'nerve_incisive',
     buccalGingivaInnervationId: 'nerve_mental',
     lingualGingivaInnervationId: 'nerve_lingual',
-    position3D: [-0.011, 1.285, 0.240],
+    position3D: [0.010, 1.330, 0.157],
     anesthesiaTechniqueVi: 'Gây tê thần kinh răng cửa hoặc tiêm ngấm xương vỏ mỏng',
     anesthesiaTechniqueEn: 'Incisive block or supraperiosteal infiltration'
   },
   {
-    fdi: 31,
-    universalNumber: 24,
-    nameVi: 'Răng cửa giữa dưới trái (Răng 31)',
-    nameEn: 'Mandibular Left Central Incisor (#31)',
+    fdi: 33,
+    universalNumber: 22,
+    nameVi: 'Răng nanh dưới trái (Răng 33)',
+    nameEn: 'Mandibular Left Canine (#33)',
     arch: 'mandibular',
     quadrant: 3,
+    toothType: 'canine',
+    rootCount: 1,
+    canalCount: '1-2',
+    pulpInnervationId: 'nerve_incisive',
+    periodontalInnervationId: 'nerve_incisive',
+    buccalGingivaInnervationId: 'nerve_mental',
+    lingualGingivaInnervationId: 'nerve_lingual',
+    position3D: [0.016, 1.330, 0.154],
+    anesthesiaTechniqueVi: 'Gây tê thần kinh răng cửa (Incisive nerve block) hoặc tiêm ngấm',
+    anesthesiaTechniqueEn: 'Incisive block or local infiltration'
+  },
+  {
+    fdi: 34,
+    universalNumber: 21,
+    nameVi: 'Răng cối nhỏ 1 dưới trái (Răng 34)',
+    nameEn: 'Mandibular Left 1st Premolar (#34)',
+    arch: 'mandibular',
+    quadrant: 3,
+    toothType: 'premolar',
+    rootCount: 1,
+    canalCount: '1-2',
+    pulpInnervationId: 'nerve_ian',
+    periodontalInnervationId: 'nerve_ian',
+    buccalGingivaInnervationId: 'nerve_mental',
+    lingualGingivaInnervationId: 'nerve_lingual',
+    position3D: [0.021, 1.330, 0.151],
+    anesthesiaTechniqueVi: 'Gây tê lỗ cằm/răng cửa hoặc gây tê gai Spix',
+    anesthesiaTechniqueEn: 'Mental/Incisive block or IAN block'
+  },
+  {
+    fdi: 35,
+    universalNumber: 20,
+    nameVi: 'Răng cối nhỏ 2 dưới trái (Răng 35)',
+    nameEn: 'Mandibular Left 2nd Premolar (#35)',
+    arch: 'mandibular',
+    quadrant: 3,
+    toothType: 'premolar',
+    rootCount: 1,
+    canalCount: '1-2',
+    pulpInnervationId: 'nerve_ian',
+    periodontalInnervationId: 'nerve_ian',
+    buccalGingivaInnervationId: 'nerve_mental',
+    lingualGingivaInnervationId: 'nerve_lingual',
+    position3D: [0.025, 1.330, 0.147],
+    anesthesiaTechniqueVi: 'Gây tê gai Spix hoặc gây tê lỗ cằm/răng cửa (Mental/Incisive block)',
+    anesthesiaTechniqueEn: 'IAN block or Mental/Incisive nerve block'
+  },
+  {
+    fdi: 36,
+    universalNumber: 19,
+    nameVi: 'Răng cối lớn 1 dưới trái (Răng 36)',
+    nameEn: 'Mandibular Left 1st Molar (#36)',
+    arch: 'mandibular',
+    quadrant: 3,
+    toothType: 'molar',
+    rootCount: 2,
+    canalCount: '3-4 (MB, ML, Distal / DB, DL)',
+    pulpInnervationId: 'nerve_ian',
+    periodontalInnervationId: 'nerve_ian',
+    buccalGingivaInnervationId: 'nerve_buccal',
+    lingualGingivaInnervationId: 'nerve_lingual',
+    position3D: [0.029, 1.332, 0.140],
+    anesthesiaTechniqueVi: 'Gây tê gai Spix (IAN block) + Gây tê thần kinh má',
+    anesthesiaTechniqueEn: 'IAN block + Long buccal block'
+  },
+  {
+    fdi: 37,
+    universalNumber: 18,
+    nameVi: 'Răng cối lớn 2 dưới trái (Răng 37)',
+    nameEn: 'Mandibular Left 2nd Molar (#37)',
+    arch: 'mandibular',
+    quadrant: 3,
+    toothType: 'molar',
+    rootCount: 2,
+    canalCount: '3 (Mesial x2, Distal x1)',
+    pulpInnervationId: 'nerve_ian',
+    periodontalInnervationId: 'nerve_ian',
+    buccalGingivaInnervationId: 'nerve_buccal',
+    lingualGingivaInnervationId: 'nerve_lingual',
+    position3D: [0.032, 1.332, 0.132],
+    anesthesiaTechniqueVi: 'Gây tê gai Spix (IAN block) + Gây tê thần kinh má',
+    anesthesiaTechniqueEn: 'IAN block + Long buccal block'
+  },
+  {
+    fdi: 38,
+    universalNumber: 17,
+    nameVi: 'Răng khôn dưới trái (Răng 38)',
+    nameEn: 'Mandibular Left 3rd Molar (#38)',
+    arch: 'mandibular',
+    quadrant: 3,
+    toothType: 'molar',
+    rootCount: 2,
+    canalCount: '2-3',
+    pulpInnervationId: 'nerve_ian',
+    periodontalInnervationId: 'nerve_ian',
+    buccalGingivaInnervationId: 'nerve_buccal',
+    lingualGingivaInnervationId: 'nerve_lingual',
+    position3D: [0.034, 1.332, 0.124],
+    anesthesiaTechniqueVi: 'Gây tê gai Spix (IAN block) + Gây tê thần kinh má (Buccal block) + Gây tê thần kinh lưỡi',
+    anesthesiaTechniqueEn: 'Inferior alveolar nerve block + Long buccal block + Lingual block'
+  },
+
+  // ==========================================================================
+  // --- CUNG 4: HÀM DƯỚI PHẢI (MANDIBULAR RIGHT - FDI 41 - 48) ---
+  // ==========================================================================
+  {
+    fdi: 41,
+    universalNumber: 25,
+    nameVi: 'Răng cửa giữa dưới phải (Răng 41)',
+    nameEn: 'Mandibular Right Central Incisor (#41)',
+    arch: 'mandibular',
+    quadrant: 4,
     toothType: 'incisor',
     rootCount: 1,
     canalCount: '1',
@@ -1767,9 +2006,135 @@ export const DENTAL_INNERVATION_DATABASE: ToothInnervation[] = [
     periodontalInnervationId: 'nerve_incisive',
     buccalGingivaInnervationId: 'nerve_mental',
     lingualGingivaInnervationId: 'nerve_lingual',
-    position3D: [-0.004, 1.285, 0.245],
+    position3D: [-0.004, 1.330, 0.158],
     anesthesiaTechniqueVi: 'Gây tê thần kinh răng cửa hoặc tiêm ngấm tại chỗ',
     anesthesiaTechniqueEn: 'Incisive block or local infiltration'
+  },
+  {
+    fdi: 42,
+    universalNumber: 26,
+    nameVi: 'Răng cửa bên dưới phải (Răng 42)',
+    nameEn: 'Mandibular Right Lateral Incisor (#42)',
+    arch: 'mandibular',
+    quadrant: 4,
+    toothType: 'incisor',
+    rootCount: 1,
+    canalCount: '1-2',
+    pulpInnervationId: 'nerve_incisive',
+    periodontalInnervationId: 'nerve_incisive',
+    buccalGingivaInnervationId: 'nerve_mental',
+    lingualGingivaInnervationId: 'nerve_lingual',
+    position3D: [-0.010, 1.330, 0.157],
+    anesthesiaTechniqueVi: 'Gây tê thần kinh răng cửa hoặc tiêm ngấm xương vỏ mỏng',
+    anesthesiaTechniqueEn: 'Incisive block or supraperiosteal infiltration'
+  },
+  {
+    fdi: 43,
+    universalNumber: 27,
+    nameVi: 'Răng nanh dưới phải (Răng 43)',
+    nameEn: 'Mandibular Right Canine (#43)',
+    arch: 'mandibular',
+    quadrant: 4,
+    toothType: 'canine',
+    rootCount: 1,
+    canalCount: '1-2',
+    pulpInnervationId: 'nerve_incisive',
+    periodontalInnervationId: 'nerve_incisive',
+    buccalGingivaInnervationId: 'nerve_mental',
+    lingualGingivaInnervationId: 'nerve_lingual',
+    position3D: [-0.016, 1.330, 0.154],
+    anesthesiaTechniqueVi: 'Gây tê thần kinh răng cửa (Incisive nerve block) hoặc tiêm ngấm',
+    anesthesiaTechniqueEn: 'Incisive block or local infiltration'
+  },
+  {
+    fdi: 44,
+    universalNumber: 28,
+    nameVi: 'Răng cối nhỏ 1 dưới phải (Răng 44)',
+    nameEn: 'Mandibular Right 1st Premolar (#44)',
+    arch: 'mandibular',
+    quadrant: 4,
+    toothType: 'premolar',
+    rootCount: 1,
+    canalCount: '1-2',
+    pulpInnervationId: 'nerve_ian',
+    periodontalInnervationId: 'nerve_ian',
+    buccalGingivaInnervationId: 'nerve_mental',
+    lingualGingivaInnervationId: 'nerve_lingual',
+    position3D: [-0.021, 1.330, 0.151],
+    anesthesiaTechniqueVi: 'Gây tê lỗ cằm/răng cửa hoặc gây tê gai Spix',
+    anesthesiaTechniqueEn: 'Mental/Incisive block or IAN block'
+  },
+  {
+    fdi: 45,
+    universalNumber: 29,
+    nameVi: 'Răng cối nhỏ 2 dưới phải (Răng 45)',
+    nameEn: 'Mandibular Right 2nd Premolar (#45)',
+    arch: 'mandibular',
+    quadrant: 4,
+    toothType: 'premolar',
+    rootCount: 1,
+    canalCount: '1-2',
+    pulpInnervationId: 'nerve_ian',
+    periodontalInnervationId: 'nerve_ian',
+    buccalGingivaInnervationId: 'nerve_mental',
+    lingualGingivaInnervationId: 'nerve_lingual',
+    position3D: [-0.025, 1.330, 0.147],
+    anesthesiaTechniqueVi: 'Gây tê gai Spix hoặc gây tê lỗ cằm/răng cửa (Mental/Incisive block)',
+    anesthesiaTechniqueEn: 'IAN block or Mental/Incisive nerve block'
+  },
+  {
+    fdi: 46,
+    universalNumber: 30,
+    nameVi: 'Răng cối lớn 1 dưới phải (Răng 46)',
+    nameEn: 'Mandibular Right 1st Molar (#46)',
+    arch: 'mandibular',
+    quadrant: 4,
+    toothType: 'molar',
+    rootCount: 2,
+    canalCount: '3-4 (MB, ML, Distal / DB, DL)',
+    pulpInnervationId: 'nerve_ian',
+    periodontalInnervationId: 'nerve_ian',
+    buccalGingivaInnervationId: 'nerve_buccal',
+    lingualGingivaInnervationId: 'nerve_lingual',
+    position3D: [-0.029, 1.332, 0.140],
+    anesthesiaTechniqueVi: 'Gây tê gai Spix (IAN block) + Gây tê thần kinh má',
+    anesthesiaTechniqueEn: 'IAN block + Long buccal block'
+  },
+  {
+    fdi: 47,
+    universalNumber: 31,
+    nameVi: 'Răng cối lớn 2 dưới phải (Răng 47)',
+    nameEn: 'Mandibular Right 2nd Molar (#47)',
+    arch: 'mandibular',
+    quadrant: 4,
+    toothType: 'molar',
+    rootCount: 2,
+    canalCount: '3 (Mesial x2, Distal x1)',
+    pulpInnervationId: 'nerve_ian',
+    periodontalInnervationId: 'nerve_ian',
+    buccalGingivaInnervationId: 'nerve_buccal',
+    lingualGingivaInnervationId: 'nerve_lingual',
+    position3D: [-0.032, 1.332, 0.132],
+    anesthesiaTechniqueVi: 'Gây tê gai Spix (IAN block) + Gây tê thần kinh má',
+    anesthesiaTechniqueEn: 'IAN block + Long buccal block'
+  },
+  {
+    fdi: 48,
+    universalNumber: 32,
+    nameVi: 'Răng khôn dưới phải (Răng 48)',
+    nameEn: 'Mandibular Right 3rd Molar (#48)',
+    arch: 'mandibular',
+    quadrant: 4,
+    toothType: 'molar',
+    rootCount: 2,
+    canalCount: '2-3',
+    pulpInnervationId: 'nerve_ian',
+    periodontalInnervationId: 'nerve_ian',
+    buccalGingivaInnervationId: 'nerve_buccal',
+    lingualGingivaInnervationId: 'nerve_lingual',
+    position3D: [-0.034, 1.332, 0.124],
+    anesthesiaTechniqueVi: 'Gây tê gai Spix (IAN block) + Gây tê thần kinh má (Buccal block) + Gây tê thần kinh lưỡi',
+    anesthesiaTechniqueEn: 'Inferior alveolar nerve block + Long buccal block + Lingual block'
   }
 ];
 
@@ -1852,7 +2217,7 @@ export const CLINICAL_ANESTHESIA_TECHNIQUES: ClinicalAnesthesiaTechnique[] = [
     targetNerveIds: ['nerve_ian', 'nerve_lingual'],
     landmarkVi: 'Độ sâu rãnh chân bướm hàm, bờ trước cành lên (mào thái dương), cách mặt nhai răng cối lớn dưới 1cm',
     landmarkEn: 'Pterygomandibular raphe, coronoid notch, 6-10mm superior to mandibular occlusal plane',
-    needleTargetPosition: [-0.044, 1.325, 0.130],
+    needleTargetPosition: [-0.038, 1.355, 0.095],
     anesthetizedStructuresVi: [
       'Toàn bộ răng hàm dưới cùng bên (tủy và nha chu)',
       'Thân và cành xương hàm dưới',
@@ -1889,7 +2254,7 @@ export const CLINICAL_ANESTHESIA_TECHNIQUES: ClinicalAnesthesiaTechnique[] = [
     targetNerveIds: ['cn_5_v3', 'nerve_ian', 'nerve_lingual', 'nerve_buccal', 'nerve_auriculotemporal'],
     landmarkVi: 'Mặt trong cổ lồi cầu xương hàm dưới, ngay dưới bám tận cơ chân bướm ngoài',
     landmarkEn: 'Anteromedial neck of mandibular condyle, below lateral pterygoid insertion',
-    needleTargetPosition: [-0.048, 1.365, 0.095],
+    needleTargetPosition: [-0.044, 1.380, 0.070],
     anesthetizedStructuresVi: [
       'Toàn bộ phân bố của dây V3: tất cả răng dưới, lưỡi, má, cằm, thái dương'
     ],
@@ -1914,7 +2279,7 @@ export const CLINICAL_ANESTHESIA_TECHNIQUES: ClinicalAnesthesiaTechnique[] = [
     targetNerveIds: ['nerve_mental', 'nerve_incisive'],
     landmarkVi: 'Ngách lợi giữa 2 răng cối nhỏ hàm dưới (răng 34-35 hoặc 44-45)',
     landmarkEn: 'Mucobuccal fold adjacent to mandibular premolar apices',
-    needleTargetPosition: [-0.028, 1.280, 0.205],
+    needleTargetPosition: [-0.030, 1.320, 0.150],
     anesthetizedStructuresVi: [
       'Răng cối nhỏ, răng nanh và răng cửa hàm dưới cùng bên',
       'Môi dưới và cằm cùng bên'
