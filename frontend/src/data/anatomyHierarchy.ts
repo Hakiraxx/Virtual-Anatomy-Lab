@@ -1490,11 +1490,18 @@ export const DISSECTION_LAYERS: DissectionLayer[] = [
   }
 ];
 
+import {
+  DENTAL_NERVE_STRUCTURES,
+  CRANIAL_FORAMINA,
+  DENTAL_INNERVATION_DATABASE,
+  MUSCLES_OF_MASTICATION
+} from './dentalNeuroData';
+
 export function searchAnatomyStructures(query: string, gender: GenderFilter = 'all'): AnatomicalStructure[] {
   const q = query.trim().toLowerCase();
   if (!q) return [];
 
-  return Object.values(ANATOMICAL_STRUCTURES).filter((st) => {
+  const baseResults = Object.values(ANATOMICAL_STRUCTURES).filter((st) => {
     if (st.gender !== 'all' && gender !== 'all' && st.gender !== gender) {
       return false;
     }
@@ -1505,4 +1512,137 @@ export function searchAnatomyStructures(query: string, gender: GenderFilter = 'a
     if (st.clinicalNotesVi && st.clinicalNotesVi.toLowerCase().includes(q)) return true;
     return false;
   });
+
+  // Include Craniofacial Lab structures (Cranial Nerves, Foramina, FDI Teeth, Muscles)
+  const craniofacialResults: AnatomicalStructure[] = [];
+
+  // 1. Nerves
+  Object.values(DENTAL_NERVE_STRUCTURES).forEach((nerve) => {
+    if (
+      nerve.nameVi.toLowerCase().includes(q) ||
+      nerve.nameEn.toLowerCase().includes(q) ||
+      nerve.latinName.toLowerCase().includes(q) ||
+      (nerve.division && nerve.division.toLowerCase().includes(q)) ||
+      (nerve.cranialNerveNumber && `cn ${nerve.cranialNerveNumber}`.includes(q)) ||
+      (nerve.id.includes('ian') && q.includes('ian'))
+    ) {
+      craniofacialResults.push({
+        id: nerve.id,
+        systemId: 'craniofacial',
+        childrenIds: [],
+        layerIndex: 7,
+        category: 'nerve',
+        gender: 'all',
+        nameVi: nerve.nameVi,
+        nameEn: nerve.nameEn,
+        nameLatin: nerve.latinName,
+        synonyms: [nerve.division || '', `CN ${nerve.cranialNerveNumber || ''}`, nerve.id].filter(Boolean),
+        position: nerve.path3D && nerve.path3D.length > 0 ? nerve.path3D[0] : [0, 1.34, 0.12],
+        descriptionVi: nerve.courseVi,
+        descriptionEn: nerve.courseEn,
+        clinicalNotesVi: nerve.clinicalAnatomyVi,
+        clinicalNotesEn: nerve.clinicalAnatomyEn,
+        relationships: [],
+        reviewStatus: 'verified',
+        assetStatus: 'READY',
+        referenceSource: nerve.references ? `TA: ${nerve.references.terminologiaAnatomica}` : 'Netter'
+      });
+    }
+  });
+
+  // 2. Foramina
+  Object.values(CRANIAL_FORAMINA).forEach((f) => {
+    if (
+      f.nameVi.toLowerCase().includes(q) ||
+      f.nameEn.toLowerCase().includes(q) ||
+      f.latinName.toLowerCase().includes(q) ||
+      f.boneVi.toLowerCase().includes(q)
+    ) {
+      craniofacialResults.push({
+        id: f.id,
+        systemId: 'craniofacial',
+        childrenIds: [],
+        layerIndex: 4,
+        category: 'bone',
+        gender: 'all',
+        nameVi: f.nameVi,
+        nameEn: f.nameEn,
+        nameLatin: f.latinName,
+        synonyms: ['lỗ sọ', 'foramen', f.id],
+        position: f.position,
+        descriptionVi: `Lỗ nền sọ tại ${f.boneVi}. Cấu trúc đi qua: ${f.structuresPassingThroughVi.join(', ')}.`,
+        descriptionEn: `Cranial foramen at ${f.boneEn}. Structures: ${f.structuresPassingThroughEn.join(', ')}.`,
+        clinicalNotesVi: f.clinicalSignificanceVi,
+        clinicalNotesEn: f.clinicalSignificanceEn,
+        relationships: [],
+        reviewStatus: 'verified',
+        assetStatus: 'READY',
+        referenceSource: 'Gray\'s Anatomy'
+      });
+    }
+  });
+
+  // 3. Teeth
+  DENTAL_INNERVATION_DATABASE.forEach((t) => {
+    if (
+      t.nameVi.toLowerCase().includes(q) ||
+      t.nameEn.toLowerCase().includes(q) ||
+      `răng ${t.fdi}`.includes(q) ||
+      `${t.fdi}` === q
+    ) {
+      craniofacialResults.push({
+        id: `tooth_${t.fdi}`,
+        systemId: 'craniofacial',
+        childrenIds: [],
+        layerIndex: 4,
+        category: 'bone',
+        gender: 'all',
+        nameVi: t.nameVi,
+        nameEn: t.nameEn,
+        nameLatin: `Dens [FDI ${t.fdi}]`,
+        synonyms: [`răng ${t.fdi}`, `FDI ${t.fdi}`, `#${t.universalNumber}`],
+        position: t.position3D,
+        descriptionVi: `Răng ${t.fdi} thuộc cung ${t.arch === 'maxillary' ? 'hàm trên' : 'hàm dưới'}, có ${t.rootCount} chân và ${t.canalCount} ống tủy.`,
+        descriptionEn: `${t.nameEn}, ${t.rootCount} roots, ${t.canalCount} canals.`,
+        clinicalNotesVi: `Gây tê khuyến nghị: ${t.anesthesiaTechniqueVi}`,
+        clinicalNotesEn: `Anesthesia: ${t.anesthesiaTechniqueEn}`,
+        relationships: [],
+        reviewStatus: 'verified',
+        assetStatus: 'READY',
+        referenceSource: 'FDI Dental World Federation'
+      });
+    }
+  });
+
+  // 4. Muscles of Mastication
+  MUSCLES_OF_MASTICATION.forEach((m) => {
+    if (
+      m.nameVi.toLowerCase().includes(q) ||
+      m.nameEn.toLowerCase().includes(q) ||
+      m.latinName.toLowerCase().includes(q)
+    ) {
+      craniofacialResults.push({
+        id: m.id,
+        systemId: 'craniofacial',
+        childrenIds: [],
+        layerIndex: 5,
+        category: 'muscle',
+        gender: 'all',
+        nameVi: m.nameVi,
+        nameEn: m.nameEn,
+        nameLatin: m.latinName,
+        synonyms: ['cơ nhai', 'mastication', m.id],
+        position: [0, 1.33, 0.17],
+        descriptionVi: `${m.nameVi}: Nguyên ủy tại ${m.originVi}, bám tận tại ${m.insertionVi}. Động tác: ${m.actionVi}.`,
+        descriptionEn: `${m.nameEn}: Origin ${m.originEn}, insertion ${m.insertionEn}. Action: ${m.actionEn}.`,
+        relationships: [],
+        reviewStatus: 'verified',
+        assetStatus: 'READY',
+        referenceSource: 'Gray\'s Anatomy'
+      });
+    }
+  });
+
+  return [...baseResults, ...craniofacialResults];
 }
+

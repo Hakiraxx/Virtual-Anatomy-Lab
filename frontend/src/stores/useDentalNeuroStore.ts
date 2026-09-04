@@ -144,6 +144,11 @@ interface DentalNeuroState {
   toggleTeethMarkers: () => void;
   toggleDirectionalFlow: () => void;
   setClippingPlane: (update: Partial<DentalNeuroState['clippingPlane']>) => void;
+  setCameraTarget: (
+    position: [number, number, number],
+    lookAt: [number, number, number],
+    distance?: number
+  ) => void;
 
   // Tracing controls
   startTrace: (nerveId: string) => void;
@@ -434,6 +439,16 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
 
   setClippingPlane: (update) =>
     set((s) => ({ clippingPlane: { ...s.clippingPlane, ...update } })),
+
+  setCameraTarget: (position, lookAt, distance = 0.35) =>
+    set({
+      cameraTarget: {
+        position,
+        lookAt,
+        distance,
+        timestamp: Date.now()
+      }
+    }),
 
   startTrace: (nerveId) => {
     set({

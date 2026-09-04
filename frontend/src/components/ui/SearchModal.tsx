@@ -3,6 +3,8 @@ import { Search, X, Layers, ArrowRight, Activity, Sparkles } from 'lucide-react'
 import { useAnatomyStore } from '../../stores/useAnatomyStore';
 import { searchAnatomyStructures, AnatomicalStructure } from '../../data/anatomyHierarchy';
 
+import { useDentalNeuroStore } from '../../stores/useDentalNeuroStore';
+
 export const SearchModal: React.FC = () => {
   const activeModal = useAnatomyStore((s) => s.activeModal);
   const setActiveModal = useAnatomyStore((s) => s.setActiveModal);
@@ -35,6 +37,13 @@ export const SearchModal: React.FC = () => {
   if (activeModal !== 'search') return null;
 
   const handleSelect = (st: AnatomicalStructure) => {
+    if (st.systemId === 'craniofacial') {
+      setViewMode('dental-neuro');
+      useDentalNeuroStore.getState().selectAnatomy(st.id);
+      setActiveModal(null);
+      return;
+    }
+
     selectStructure(st.id);
 
     // Focus camera onto structure position
@@ -145,8 +154,14 @@ export const SearchModal: React.FC = () => {
                   </div>
 
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-black/20 text-slate-300 uppercase">
-                      {st.category}
+                    <span
+                      className={`text-[9px] font-mono px-1.5 py-0.5 rounded uppercase ${
+                        st.systemId === 'craniofacial'
+                          ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                          : 'bg-black/20 text-slate-300'
+                      }`}
+                    >
+                      {st.systemId === 'craniofacial' ? 'RHM' : st.category}
                     </span>
                     <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-amber-400 group-hover:translate-x-1 transition" />
                   </div>

@@ -49,7 +49,21 @@ export function App() {
       window.history.replaceState({ viewMode: 'full-body' }, '', '/toanthan');
     } else if (pathname.includes('dental-neuro') || pathname.includes('craniofacial') || pathname.includes('rhm')) {
       useAnatomyStore.setState({ viewMode: 'dental-neuro' });
-      if (pathname.includes('cn-v') || pathname.includes('trigeminal')) {
+      const params = new URLSearchParams(window.location.search);
+      const structureParam = params.get('structure');
+      if (structureParam) {
+        const clean = structureParam.toLowerCase();
+        if (clean === 'nerve.inferior-alveolar' || clean === 'ian') {
+          useDentalNeuroStore.getState().selectAnatomy('nerve_ian');
+        } else if (clean === 'foramen.mental' || clean === 'mental_foramen') {
+          useDentalNeuroStore.getState().selectAnatomy('mental_foramen');
+        } else if (clean.startsWith('tooth.') || clean.startsWith('tooth_')) {
+          const num = clean.replace(/tooth[._]/, '');
+          useDentalNeuroStore.getState().selectAnatomy(`tooth_${num}`);
+        } else {
+          useDentalNeuroStore.getState().selectAnatomy(clean.replace(/\./g, '_'));
+        }
+      } else if (pathname.includes('cn-v') || pathname.includes('trigeminal')) {
         useDentalNeuroStore.getState().selectAnatomy('cn_5');
       } else if (pathname.includes('v3') || pathname.includes('mandibular-nerve')) {
         useDentalNeuroStore.getState().selectAnatomy('cn_5_v3');
