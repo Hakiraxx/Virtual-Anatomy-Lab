@@ -55,18 +55,22 @@ const CanonicalSkullSurgeryContext: React.FC<{
 };
 
 // ============================================================================
-// 2. SURGICAL SITE MESH: IMPACTED R48, IAN CANAL & 6-STEP SIMULATION
+// 2. SURGICAL SITE MESH: IMPACTED R48/R38, IAN CANAL & 6-STEP SIMULATION
 // ============================================================================
 const MandibularSurgicalSiteMesh: React.FC<{
-  toothId: string;
+  toothId: 'tooth_38' | 'tooth_48';
   winterType: 'mesioangular' | 'horizontal' | 'vertical' | 'distoangular';
   pellClass: 'I' | 'II' | 'III';
   pellPos: 'A' | 'B' | 'C';
   surgicalStep: number;
   showNerves: boolean;
 }> = ({ toothId, winterType, pellClass, pellPos, surgicalStep, showNerves }) => {
-  // Exact coordinate of R48 on canonical skull: [0.034, 1.332, 0.124]
-  const baseR48Pos: [number, number, number] = [0.033, 1.330, 0.122];
+  // Quadrant 4 (R48 - Phải) uses NEGATIVE X (-0.034)
+  // Quadrant 3 (R38 - Trái) uses POSITIVE X (+0.034)
+  const isRight = toothId === 'tooth_48';
+  const sideSign = isRight ? -1 : 1;
+
+  const baseToothPos: [number, number, number] = [sideSign * 0.034, 1.332, 0.124];
 
   // Compute 3D rotation & depth from Winter & Pell-Gregory classifications
   const { toothRotation, depthOffset, distToCanalMm } = useMemo(() => {
@@ -79,10 +83,10 @@ const MandibularSurgicalSiteMesh: React.FC<{
 
     // Winter Angulation
     if (winterType === 'mesioangular') {
-      rotX = 0.65; // Tilted forward towards R47
+      rotX = 0.65; // Tilted forward towards R7
       dist = 1.1;  // High risk
     } else if (winterType === 'horizontal') {
-      rotX = 1.35; // Crown completely horizontal facing R47 root
+      rotX = 1.35; // Crown horizontal facing R7 root
       dY = -0.003;
       dist = 0.5;  // Extreme risk (contacting canal)
     } else if (winterType === 'distoangular') {
@@ -118,19 +122,22 @@ const MandibularSurgicalSiteMesh: React.FC<{
     };
   }, [winterType, pellClass, pellPos]);
 
-  // Actual Mandibular Canal & IAN curve through the mandible
+  // Authentic IAN pathway through mandibular canal (verified against skull.glb geometry)
   const ianPoints: [number, number, number][] = [
-    [0.030, 1.350, 0.082], // Lỗ hàm dưới (Mandibular foramen / Spix)
-    [0.031, 1.336, 0.098], // Ramus canal
-    [0.032, 1.322, 0.114], // Posterior canal
-    [0.031, 1.317, 0.126], // Under R48 apex
-    [0.028, 1.315, 0.138], // Under R47 roots
-    [0.024, 1.315, 0.145]  // Lỗ cằm (Mental foramen)
+    [sideSign * 0.035, 1.370, 0.075], // Origin from V3 trunk
+    [sideSign * 0.036, 1.365, 0.080], // Pterygomandibular space
+    [sideSign * 0.037, 1.360, 0.088], // Behind lingula (gai Spix)
+    [sideSign * 0.038, 1.355, 0.095], // Mandibular Foramen
+    [sideSign * 0.037, 1.346, 0.106], // Canal in ramus
+    [sideSign * 0.036, 1.336, 0.118], // Beneath R48/38
+    [sideSign * 0.034, 1.330, 0.130], // Beneath R47/37
+    [sideSign * 0.033, 1.325, 0.138], // Beneath R46/36
+    [sideSign * 0.030, 1.320, 0.150]  // Mental Foramen exit
   ];
 
   const ianCurve = useMemo(() => {
     return new THREE.CatmullRomCurve3(ianPoints.map((p) => new THREE.Vector3(...p)));
-  }, []);
+  }, [ianPoints]);
 
   const ianGeometry = useMemo(() => {
     return new THREE.TubeGeometry(ianCurve, 32, 0.0016, 12, false);
@@ -138,36 +145,36 @@ const MandibularSurgicalSiteMesh: React.FC<{
 
   // Lingual nerve along medial cortical plate
   const lingualPoints: [number, number, number][] = [
-    [0.026, 1.355, 0.080],
-    [0.026, 1.340, 0.100],
-    [0.023, 1.330, 0.120],
-    [0.020, 1.322, 0.136]
+    [sideSign * 0.032, 1.365, 0.080],
+    [sideSign * 0.030, 1.350, 0.096],
+    [sideSign * 0.026, 1.335, 0.116], // inner plate near 3rd molar
+    [sideSign * 0.022, 1.325, 0.132]
   ];
 
   const lingualCurve = useMemo(() => {
     return new THREE.CatmullRomCurve3(lingualPoints.map((p) => new THREE.Vector3(...p)));
-  }, []);
+  }, [lingualPoints]);
 
   const lingualGeometry = useMemo(() => {
     return new THREE.TubeGeometry(lingualCurve, 24, 0.0012, 10, false);
   }, [lingualCurve]);
 
-  // Tooth R48 position with depth offset
-  const r48Pos: [number, number, number] = [
-    baseR48Pos[0] + depthOffset[0],
-    baseR48Pos[1] + depthOffset[1],
-    baseR48Pos[2] + depthOffset[2]
+  // Tooth position with depth offset
+  const toothPos: [number, number, number] = [
+    baseToothPos[0] + depthOffset[0],
+    baseToothPos[1] + depthOffset[1],
+    baseToothPos[2] + depthOffset[2]
   ];
 
-  // Apex of R48 root for proximity sensor
-  const r48ApexPos: [number, number, number] = [
-    r48Pos[0],
-    r48Pos[1] - 0.010,
-    r48Pos[2] - 0.003
+  // Apex of tooth root for proximity sensor
+  const toothApexPos: [number, number, number] = [
+    toothPos[0],
+    toothPos[1] - 0.009,
+    toothPos[2] - 0.003
   ];
 
-  // Closest IAN canal point beneath R48
-  const canalTargetPos: [number, number, number] = [0.031, 1.317, 0.126];
+  // Closest IAN canal point beneath tooth
+  const canalTargetPos: [number, number, number] = [sideSign * 0.036, 1.336, 0.118];
 
   // Surgical step states
   const isAnesthetized = surgicalStep >= 1;
@@ -177,7 +184,7 @@ const MandibularSurgicalSiteMesh: React.FC<{
   const isToothElevated = surgicalStep >= 5;
   const isSutured = surgicalStep >= 6;
 
-  // Pulse animation on warning badge
+  // Color-coded safety alert
   const riskColor = distToCanalMm <= 1.0 ? '#ef4444' : distToCanalMm <= 2.0 ? '#f59e0b' : '#10b981';
 
   return (
@@ -206,19 +213,19 @@ const MandibularSurgicalSiteMesh: React.FC<{
           </mesh>
 
           {/* IAN Foramen & Exit Labels */}
-          <Html position={[0.030, 1.353, 0.082]} center>
+          <Html position={[sideSign * 0.038, 1.358, 0.095]} center>
             <div className="px-1.5 py-0.5 rounded bg-amber-950/90 border border-amber-500/50 text-amber-300 text-[7px] font-mono whitespace-nowrap pointer-events-none shadow-lg">
-              Lỗ hàm dưới (Spix)
+              Lỗ hàm dưới (Gai Spix)
             </div>
           </Html>
 
-          <Html position={[0.024, 1.312, 0.147]} center>
+          <Html position={[sideSign * 0.030, 1.317, 0.152]} center>
             <div className="px-1.5 py-0.5 rounded bg-amber-950/90 border border-amber-500/50 text-amber-300 text-[7px] font-mono whitespace-nowrap pointer-events-none shadow-lg">
               Lỗ cằm (Mental Foramen)
             </div>
           </Html>
 
-          <Html position={[0.022, 1.332, 0.120]} center>
+          <Html position={[sideSign * 0.026, 1.337, 0.116]} center>
             <div className="px-1.5 py-0.5 rounded bg-rose-950/90 border border-rose-500/50 text-rose-300 text-[7px] font-mono whitespace-nowrap pointer-events-none shadow-lg">
               TK Lưỡi (Lingual N.)
             </div>
@@ -234,7 +241,7 @@ const MandibularSurgicalSiteMesh: React.FC<{
             <bufferAttribute
               attach="attributes-position"
               count={2}
-              array={new Float32Array([...r48ApexPos, ...canalTargetPos])}
+              array={new Float32Array([...toothApexPos, ...canalTargetPos])}
               itemSize={3}
             />
           </bufferGeometry>
@@ -249,9 +256,9 @@ const MandibularSurgicalSiteMesh: React.FC<{
         {/* Live Distance Floating Indicator */}
         <Html
           position={[
-            (r48ApexPos[0] + canalTargetPos[0]) / 2 + 0.008,
-            (r48ApexPos[1] + canalTargetPos[1]) / 2,
-            (r48ApexPos[2] + canalTargetPos[2]) / 2
+            (toothApexPos[0] + canalTargetPos[0]) / 2 + (isRight ? -0.008 : 0.008),
+            (toothApexPos[1] + canalTargetPos[1]) / 2,
+            (toothApexPos[2] + canalTargetPos[2]) / 2
           ]}
           center
         >
@@ -269,9 +276,9 @@ const MandibularSurgicalSiteMesh: React.FC<{
         </Html>
       </group>
 
-      {/* 3. RĂNG KHÔN NGẦM R.48 (IMPACTED TOOTH WITH WINTER MORPHING) */}
+      {/* 3. RĂNG KHÔN NGẦM (IMPACTED TOOTH WITH WINTER MORPHING) */}
       {!isToothElevated && (
-        <group position={r48Pos} rotation={toothRotation}>
+        <group position={toothPos} rotation={toothRotation}>
           {/* Thân răng (Crown) */}
           <mesh castShadow position={[0, 0.004, 0]}>
             <boxGeometry args={[0.008, 0.007, 0.008]} />
@@ -301,10 +308,10 @@ const MandibularSurgicalSiteMesh: React.FC<{
             </mesh>
           )}
 
-          {/* R48 Label Badge */}
+          {/* Tooth Label Badge */}
           <Html position={[0, 0.010, 0]} center>
             <div className="px-1.5 py-0.5 rounded bg-amber-500 text-slate-950 font-bold text-[8px] font-mono whitespace-nowrap shadow-md pointer-events-none">
-              R.48 (Răng Khôn)
+              {isRight ? 'R.48' : 'R.38'} (Răng Khôn)
             </div>
           </Html>
         </group>
@@ -312,7 +319,7 @@ const MandibularSurgicalSiteMesh: React.FC<{
 
       {/* Răng đã bẩy rời (Elevated Tooth fragment at Step 5) */}
       {isToothElevated && !isSutured && (
-        <group position={[r48Pos[0] + 0.012, r48Pos[1] + 0.018, r48Pos[2] + 0.008]}>
+        <group position={[toothPos[0] + (isRight ? -0.012 : 0.012), toothPos[1] + 0.018, toothPos[2] + 0.008]}>
           <mesh>
             <boxGeometry args={[0.007, 0.006, 0.007]} />
             <meshStandardMaterial color="#fbbf24" roughness={0.3} />
@@ -327,9 +334,9 @@ const MandibularSurgicalSiteMesh: React.FC<{
 
       {/* 4. GÂY TÊ VÙNG SPIX (Anesthesia Depot at Step 1) */}
       {isAnesthetized && (
-        <group position={[0.030, 1.350, 0.082]}>
+        <group position={[sideSign * 0.038, 1.355, 0.095]}>
           {/* Kim gây tê (27G Dental Needle) */}
-          <mesh position={[0.008, 0.012, -0.012]} rotation={[-0.8, 0.5, 0.2]}>
+          <mesh position={[sideSign * -0.008, 0.012, -0.012]} rotation={[-0.8, sideSign * -0.5, 0.2]}>
             <cylinderGeometry args={[0.0003, 0.0003, 0.028, 8]} />
             <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.1} />
           </mesh>
@@ -349,24 +356,22 @@ const MandibularSurgicalSiteMesh: React.FC<{
 
       {/* 5. ĐƯỜNG RẠCH VẠT & MỞ XƯƠNG (Flap Incision & Bone Window at Steps 2 & 3) */}
       {isFlapReflected && (
-        <group position={[0.035, 1.334, 0.126]}>
-          {/* Đường rạch vạt bám rãnh lợi & giảm căng */}
-          <mesh rotation={[0, 0.5, 0]}>
+        <group position={[sideSign * 0.035, 1.335, 0.126]}>
+          <mesh rotation={[0, sideSign * 0.5, 0]}>
             <boxGeometry args={[0.0008, 0.008, 0.018]} />
             <meshBasicMaterial color="#ef4444" />
           </mesh>
-          <Html position={[0.004, 0.006, 0]} center>
+          <Html position={[sideSign * 0.004, 0.006, 0]} center>
             <div className="px-1.5 py-0.5 rounded bg-rose-950/90 border border-rose-500/50 text-rose-300 text-[7px] font-mono whitespace-nowrap pointer-events-none">
-              Đường rạch vạt màng xương
+              Đường rạch vạt
             </div>
           </Html>
         </group>
       )}
 
       {isBoneGuttered && (
-        <group position={[0.036, 1.332, 0.122]}>
-          {/* Cửa sổ mở xương trên bản xương ngoài (Bone Guttering Window) */}
-          <mesh rotation={[0, 0.3, 0]}>
+        <group position={[sideSign * 0.036, 1.332, 0.122]}>
+          <mesh rotation={[0, sideSign * 0.3, 0]}>
             <boxGeometry args={[0.003, 0.009, 0.012]} />
             <meshStandardMaterial
               color="#0284c7"
@@ -375,9 +380,9 @@ const MandibularSurgicalSiteMesh: React.FC<{
               emissiveIntensity={0.8}
             />
           </mesh>
-          <Html position={[0.004, -0.006, 0]} center>
+          <Html position={[sideSign * 0.004, -0.006, 0]} center>
             <div className="px-1.5 py-0.5 rounded bg-sky-950/90 border border-sky-500/50 text-sky-200 text-[7px] font-mono whitespace-nowrap pointer-events-none">
-              Cửa sổ mở xương (Bone Guttering)
+              Cửa sổ mở xương
             </div>
           </Html>
         </group>
@@ -385,14 +390,14 @@ const MandibularSurgicalSiteMesh: React.FC<{
 
       {/* 6. VẠT PHẪU THUẬT & ĐƯỜNG KHÂU (Vicryl Suture Lines at Step 6) */}
       {isSutured && (
-        <group position={[0.035, 1.336, 0.124]}>
+        <group position={[sideSign * 0.035, 1.336, 0.124]}>
           <mesh rotation={[0, 0, Math.PI / 2]}>
             <cylinderGeometry args={[0.0008, 0.0008, 0.016, 8]} />
             <meshBasicMaterial color="#0284c7" />
           </mesh>
           <Html position={[0, 0.006, 0]} center>
             <div className="px-2 py-0.5 rounded bg-sky-900 border border-sky-400 text-sky-200 text-[8px] font-mono whitespace-nowrap pointer-events-none shadow-lg">
-              Đường khâu vạt kín (Vicryl 4-0)
+              Đường khâu kín (Vicryl 4-0)
             </div>
           </Html>
         </group>
@@ -430,6 +435,9 @@ export const WisdomSurgeryStage: React.FC = () => {
 
   const wisdomBoneOpacity = useDentalNeuroStore((s) => s.wisdomBoneOpacity);
   const setWisdomBoneOpacity = useDentalNeuroStore((s) => s.setWisdomBoneOpacity);
+
+  const isRight = wisdomToothId === 'tooth_48';
+  const sideSign = isRight ? -1 : 1;
 
   const currentStep =
     WISDOM_SURGICAL_DATABASE.surgicalSteps.find((s) => s.stepNumber === wisdomSurgicalStep) ||
@@ -615,13 +623,13 @@ export const WisdomSurgeryStage: React.FC = () => {
       {/* 3. 3D WEBGL CANVAS STAGE */}
       <Canvas
         shadows
-        camera={{ position: [0.10, 1.355, 0.17], fov: 32 }}
+        camera={{ position: [sideSign * 0.10, 1.355, 0.17], fov: 30 }}
         gl={{ antialias: true, alpha: true }}
       >
         <ambientLight intensity={1.1} />
-        <directionalLight position={[0.4, 1.8, 0.5]} intensity={2.2} castShadow />
-        <directionalLight position={[-0.4, 0.5, -0.4]} intensity={0.9} />
-        <pointLight position={[0.034, 1.35, 0.15]} intensity={1.5} color="#fffef7" />
+        <directionalLight position={[sideSign * 0.4, 1.8, 0.5]} intensity={2.2} castShadow />
+        <directionalLight position={[sideSign * -0.4, 0.5, -0.4]} intensity={0.9} />
+        <pointLight position={[sideSign * 0.034, 1.35, 0.15]} intensity={1.5} color="#fffef7" />
 
         {/* Real Canonical 3D Skull / Mandible Context */}
         <CanonicalSkullSurgeryContext
@@ -629,7 +637,7 @@ export const WisdomSurgeryStage: React.FC = () => {
           boneOpacity={wisdomBoneOpacity}
         />
 
-        {/* Surgical Site: Impacted R48, IAN Tube, Proximity Line, 6 Steps */}
+        {/* Surgical Site: Impacted Tooth, IAN Tube, Proximity Line, 6 Steps */}
         <MandibularSurgicalSiteMesh
           toothId={wisdomToothId}
           winterType={wisdomWinterType}
@@ -639,13 +647,14 @@ export const WisdomSurgeryStage: React.FC = () => {
           showNerves={wisdomShowNerves}
         />
 
-        {/* Focused on Right Posterior Mandible R48 */}
+        {/* Focused on Mandibular Angle and Retromolar Trigone */}
         <OrbitControls
+          key={wisdomToothId}
           enableDamping
           dampingFactor={0.06}
-          minDistance={0.04}
+          minDistance={0.03}
           maxDistance={0.4}
-          target={[0.034, 1.328, 0.126]}
+          target={[sideSign * 0.034, 1.332, 0.124]}
         />
       </Canvas>
 

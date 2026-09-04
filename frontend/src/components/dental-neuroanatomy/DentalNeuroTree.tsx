@@ -63,6 +63,16 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
     setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const activeSpecimenMode = useDentalNeuroStore((s) => s.activeSpecimenMode);
+
+  useEffect(() => {
+    if (activeSpecimenMode === 'tmj_specimen') {
+      setExpandedSections((prev) => ({ ...prev, muscles: true }));
+    } else if (activeSpecimenMode === 'wisdom_surgery') {
+      setExpandedSections((prev) => ({ ...prev, mandible: true }));
+    }
+  }, [activeSpecimenMode]);
+
   // Auto-expand parent branches and scroll into view when selection changes
   useEffect(() => {
     if (!selectedAnatomyId) return;
@@ -119,7 +129,11 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
         } else {
           next.mandible = true;
         }
-      } else if (selectedAnatomyId.startsWith('muscle_')) {
+      } else if (
+        selectedAnatomyId === 'joint_tmj' ||
+        selectedAnatomyId === 'specimen_tmj' ||
+        selectedAnatomyId.startsWith('muscle_')
+      ) {
         next.muscles = true;
       }
       return next;
@@ -708,6 +722,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
               {DENTAL_INNERVATION_DATABASE.filter((t) => t.arch === 'mandibular').map((tooth) => {
                 const toothId = `tooth_${tooth.fdi}`;
                 const isSelected = selectedAnatomyId === toothId;
+                const isWisdom = tooth.fdi === 38 || tooth.fdi === 48;
                 return (
                   <button
                     key={tooth.fdi}
@@ -721,8 +736,15 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                         : 'hover:bg-[#ede3d5]/60 text-slate-700'
                     }`}
                   >
-                    <span>R.{tooth.fdi} — {tooth.nameVi.split('(')[0]}</span>
-                    <span className="text-[9px] font-mono text-rose-500/80">IAN</span>
+                    <span className="flex items-center gap-1.5 truncate">
+                      <span className="truncate">R.{tooth.fdi} — {tooth.nameVi.split('(')[0]}</span>
+                      {isWisdom && (
+                        <span className="text-[8px] font-mono px-1 py-0.2 rounded bg-amber-500/20 text-amber-500 dark:text-amber-400 border border-amber-500/30 flex-shrink-0">
+                          Tiểu Phẫu
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-[9px] font-mono text-rose-500/80 flex-shrink-0">IAN</span>
                   </button>
                 );
               })}
@@ -803,7 +825,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
           )}
         </div>
 
-        {/* SECTION 5: MUSCLES OF MASTICATION */}
+        {/* SECTION 5: TMJ & MUSCLES OF MASTICATION */}
         <div>
           <button
             onClick={() => toggleSection('muscles')}
@@ -813,7 +835,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
           >
             <div className="flex items-center gap-1.5">
               <Zap className="w-3.5 h-3.5 text-emerald-500" />
-              <span>Cơ Nhai (Muscles of Mastication)</span>
+              <span>Khớp TDH & Cơ Nhai (TMJ & Muscles)</span>
             </div>
             {expandedSections.muscles ? (
               <ChevronDown className="w-3.5 h-3.5" />
@@ -824,6 +846,31 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
 
           {expandedSections.muscles && (
             <div className={`pl-3 border-l mt-1 space-y-0.5 ${isDark ? 'border-slate-800' : 'border-[#e7ded3]'}`}>
+              {/* TMJ Complex node */}
+              <button
+                id="tree_item_joint_tmj"
+                onClick={() => handleItemSelect('joint_tmj')}
+                className={`w-full text-left px-2 py-1.5 rounded text-[10px] flex items-center justify-between cursor-pointer font-semibold transition ${
+                  selectedAnatomyId === 'joint_tmj' || selectedAnatomyId === 'specimen_tmj'
+                    ? 'bg-amber-600 text-white font-bold shadow-sm'
+                    : isDark
+                    ? 'hover:bg-slate-800 text-amber-400'
+                    : 'hover:bg-[#ede3d5]/60 text-amber-700'
+                }`}
+              >
+                <div className="flex items-center gap-1.5">
+                  <Activity className="w-3 h-3 text-amber-500" />
+                  <span>Khớp Thái Dương Hàm (TMJ)</span>
+                </div>
+                <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-amber-500/20 text-amber-500 dark:text-amber-400 border border-amber-500/30">
+                  ĐỘNG HỌC
+                </span>
+              </button>
+
+              <div className="pt-1 text-[9px] font-mono text-slate-400 px-1 uppercase">
+                4 Cơ Nhai (Masticatory Muscles)
+              </div>
+
               {MUSCLES_OF_MASTICATION.map((m) => {
                 const isSelected = selectedAnatomyId === m.id;
                 return (

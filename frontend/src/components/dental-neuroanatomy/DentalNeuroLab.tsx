@@ -37,8 +37,11 @@ import { WisdomSurgeryStage } from './specimens/WisdomSurgeryStage';
 
 export const DentalNeuroLab: React.FC = () => {
   const activeSpecimenMode = useDentalNeuroStore((s) => s.activeSpecimenMode);
+  const setActiveSpecimenMode = useDentalNeuroStore((s) => s.setActiveSpecimenMode);
   const selectedAnatomyId = useDentalNeuroStore((s) => s.selectedAnatomyId);
   const selectAnatomy = useDentalNeuroStore((s) => s.selectAnatomy);
+  const selectedToothFdi = useDentalNeuroStore((s) => s.selectedToothFdi);
+  const wisdomToothId = useDentalNeuroStore((s) => s.wisdomToothId);
 
   const visualizationDepth = useDentalNeuroStore((s) => s.visualizationDepth);
   const setVisualizationDepth = useDentalNeuroStore((s) => s.setVisualizationDepth);
@@ -200,10 +203,21 @@ export const DentalNeuroLab: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isDepthMenuOpen, setIsDepthMenuOpen] = useState(false);
 
-  // Parse URL search parameters on mount (?structure=nerve.inferior-alveolar or ?structure=tooth.36)
+  // Parse URL search parameters on mount (?specimen=tooth_specimen&structure=tooth.48)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    const specimenParam = params.get('specimen');
     const structureParam = params.get('structure');
+
+    if (
+      specimenParam === 'general' ||
+      specimenParam === 'tooth_specimen' ||
+      specimenParam === 'tmj_specimen' ||
+      specimenParam === 'wisdom_surgery'
+    ) {
+      setActiveSpecimenMode(specimenParam);
+    }
+
     if (structureParam) {
       const clean = structureParam.toLowerCase();
       if (clean === 'nerve.inferior-alveolar' || clean === 'ian') {
@@ -219,35 +233,38 @@ export const DentalNeuroLab: React.FC = () => {
         selectAnatomy('cn_5_v3');
       } else if (clean === 'cn-v' || clean === 'trigeminal') {
         selectAnatomy('cn_5');
+      } else if (clean === 'joint_tmj' || clean === 'tmj') {
+        selectAnatomy('joint_tmj');
       } else {
         const mapped = clean.replace(/\./g, '_');
-        if (DENTAL_NERVE_STRUCTURES[mapped] || CRANIAL_FORAMINA[mapped]) {
+        if (
+          DENTAL_NERVE_STRUCTURES[mapped] ||
+          CRANIAL_FORAMINA[mapped] ||
+          MUSCLES_OF_MASTICATION.some((m) => m.id === mapped)
+        ) {
           selectAnatomy(mapped);
         }
       }
     }
-  }, [selectAnatomy]);
+  }, [selectAnatomy, setActiveSpecimenMode]);
 
-  // Sync active structure with URL search param
+  // Sync active specimen & structure with URL search param
   useEffect(() => {
-    if (!selectedAnatomyId) {
-      const url = new URL(window.location.href);
-      if (url.searchParams.has('structure')) {
-        url.searchParams.delete('structure');
-        window.history.replaceState({}, '', url.pathname);
-      }
-      return;
+    const url = new URL(window.location.href);
+    url.searchParams.set('specimen', activeSpecimenMode);
+
+    if (selectedAnatomyId) {
+      let structureValue = selectedAnatomyId;
+      if (selectedAnatomyId === 'nerve_ian') structureValue = 'nerve.inferior-alveolar';
+      else if (selectedAnatomyId === 'mental_foramen') structureValue = 'foramen.mental';
+      else if (selectedAnatomyId.startsWith('tooth_')) structureValue = selectedAnatomyId.replace('_', '.');
+      url.searchParams.set('structure', structureValue);
+    } else {
+      url.searchParams.delete('structure');
     }
 
-    const url = new URL(window.location.href);
-    let structureValue = selectedAnatomyId;
-    if (selectedAnatomyId === 'nerve_ian') structureValue = 'nerve.inferior-alveolar';
-    else if (selectedAnatomyId === 'mental_foramen') structureValue = 'foramen.mental';
-    else if (selectedAnatomyId.startsWith('tooth_')) structureValue = selectedAnatomyId.replace('_', '.');
-
-    url.searchParams.set('structure', structureValue);
-    window.history.replaceState({ structure: selectedAnatomyId }, '', url.toString());
-  }, [selectedAnatomyId]);
+    window.history.replaceState({ specimen: activeSpecimenMode, structure: selectedAnatomyId }, '', url.toString());
+  }, [activeSpecimenMode, selectedAnatomyId]);
 
   // Filtered search results
   const searchResults = useMemo(() => {
@@ -255,6 +272,21 @@ export const DentalNeuroLab: React.FC = () => {
     if (!q) return [];
 
     const results: Array<{ id: string; labelVi: string; labelEn: string; category: string }> = [];
+
+    // Search TMJ Complex
+    if (
+      'khớp thái dương hàm'.includes(q) ||
+      'tmj'.includes(q) ||
+      'temporomandibular'.includes(q) ||
+      'đĩa khớp'.includes(q)
+    ) {
+      results.push({
+        id: 'joint_tmj',
+        labelVi: 'Khớp Thái Dương Hàm (TMJ)',
+        labelEn: 'Temporomandibular Joint Complex',
+        category: 'Khớp & Động học'
+      });
+    }
 
     // Search nerves
     Object.values(DENTAL_NERVE_STRUCTURES).forEach((n) => {
@@ -307,30 +339,64 @@ export const DentalNeuroLab: React.FC = () => {
     return results.slice(0, 10);
   }, [searchQuery]);
 
-  // Breadcrumbs
+  // Breadcrumbs with full specimen mode awareness
   const breadcrumbSegments = useMemo(() => {
     const list: Array<{ label: string; action?: () => void }> = [
       { label: 'MedAnatomy', action: () => setViewMode('full-body') },
-      { label: 'Phòng Lab RHM' },
-      { label: 'Neuroanatomy' }
+      { label: 'Phòng Lab RHM', action: () => setActiveSpecimenMode('general') }
     ];
 
-    if (selectedAnatomyId) {
-      const nerve = DENTAL_NERVE_STRUCTURES[selectedAnatomyId];
-      if (nerve) {
-        list.push({ label: nerve.nameVi });
-      } else {
-        const foramen = CRANIAL_FORAMINA[selectedAnatomyId];
-        if (foramen) {
-          list.push({ label: foramen.nameVi });
-        } else if (selectedAnatomyId.startsWith('tooth_')) {
-          list.push({ label: selectedAnatomyId.replace('tooth_', 'Răng ') });
+    if (activeSpecimenMode === 'general') {
+      list.push({ label: 'Dây TK & Nền Sọ' });
+      if (selectedAnatomyId) {
+        const nerve = DENTAL_NERVE_STRUCTURES[selectedAnatomyId];
+        if (nerve) {
+          list.push({ label: nerve.nameVi });
+        } else {
+          const foramen = CRANIAL_FORAMINA[selectedAnatomyId];
+          if (foramen) {
+            list.push({ label: foramen.nameVi });
+          } else if (selectedAnatomyId.startsWith('tooth_')) {
+            list.push({ label: selectedAnatomyId.replace('tooth_', 'Răng ') });
+          }
         }
       }
+    } else if (activeSpecimenMode === 'tooth_specimen') {
+      list.push({
+        label: 'Tiêu Bản Răng FDI',
+        action: () => selectAnatomy(`tooth_${selectedToothFdi}`)
+      });
+      const tooth = DENTAL_INNERVATION_DATABASE.find((t) => t.fdi === selectedToothFdi);
+      if (tooth) {
+        list.push({ label: `Răng ${tooth.fdi} (${tooth.nameVi.split('(')[0].trim()})` });
+      } else {
+        list.push({ label: `Răng FDI ${selectedToothFdi}` });
+      }
+    } else if (activeSpecimenMode === 'tmj_specimen') {
+      list.push({ label: 'Khớp TDH & Cơ Nhai' });
+      if (selectedAnatomyId && selectedAnatomyId.startsWith('muscle_')) {
+        const m = MUSCLES_OF_MASTICATION.find((mus) => mus.id === selectedAnatomyId);
+        list.push({ label: m ? m.nameVi : 'Cơ Nhai' });
+      } else {
+        list.push({ label: 'Khớp Thái Dương Hàm (TMJ)' });
+      }
+    } else if (activeSpecimenMode === 'wisdom_surgery') {
+      list.push({ label: 'Phẫu Thuật Răng Khôn' });
+      list.push({
+        label: wisdomToothId === 'tooth_48' ? 'Răng 48 (Hàm dưới Phải)' : 'Răng 38 (Hàm dưới Trái)'
+      });
     }
 
     return list;
-  }, [selectedAnatomyId, setViewMode]);
+  }, [
+    activeSpecimenMode,
+    selectedAnatomyId,
+    selectedToothFdi,
+    wisdomToothId,
+    setViewMode,
+    setActiveSpecimenMode,
+    selectAnatomy
+  ]);
 
   return (
     <div

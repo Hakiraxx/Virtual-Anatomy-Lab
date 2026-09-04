@@ -55,7 +55,7 @@ const CanonicalSkullTMJContext: React.FC<{
 };
 
 // ============================================================================
-// 2. TMJ COMPLEX & BIOMECHANICS MESH (ARTICULAR DISC & CONDYLAR DYNAMICS)
+// 2. TMJ COMPLEX & BIOMECHANICS MESH (RIGHT TMJ: NEGATIVE X)
 // ============================================================================
 const TMJComplexMesh: React.FC<{
   progress: number;
@@ -69,8 +69,8 @@ const TMJComplexMesh: React.FC<{
   const discRef = useRef<THREE.Group>(null);
   const [clickSoundTriggered, setClickSoundTriggered] = useState(false);
 
-  // Exact anatomical coordinate of Right TMJ on canonical skull: [0.046, 1.366, 0.068]
-  const tmjBasePos: [number, number, number] = [0.046, 1.366, 0.068];
+  // Exact anatomical coordinate of Right TMJ on canonical skull: [-0.046, 1.366, 0.068]
+  const tmjBasePos: [number, number, number] = [-0.046, 1.366, 0.068];
 
   // Compute anatomical translation & rotation based on jaw opening phase
   const kinematics = useMemo(() => {
@@ -128,13 +128,11 @@ const TMJComplexMesh: React.FC<{
         }
       }
     } else if (motionMode === 'protrusion') {
-      // Direct forward translation
       translationZ = progress * 0.018;
       translationY = -progress * 0.004;
       rotationAngle = 0.05;
     } else if (motionMode === 'lateral') {
-      // Lateral excursion
-      translationX = progress * 0.010;
+      translationX = -progress * 0.008;
       translationZ = progress * 0.008;
       rotationAngle = progress * 0.06;
     }
@@ -155,12 +153,12 @@ const TMJComplexMesh: React.FC<{
     <group position={tmjBasePos}>
       {/* 1. MỐC GIẢI PHẪU NỀN SỌ (Articular Eminence & Glenoid Fossa Labels) */}
       <group position={[0, 0.006, 0]}>
-        <Html position={[0.015, 0.006, -0.010]} center>
+        <Html position={[-0.012, 0.006, -0.010]} center>
           <div className="px-2 py-0.5 rounded bg-slate-900/90 border border-white/20 text-slate-200 text-[8px] font-mono whitespace-nowrap pointer-events-none shadow-md">
             Hố hàm (Glenoid Fossa)
           </div>
         </Html>
-        <Html position={[0.015, 0.002, 0.016]} center>
+        <Html position={[-0.012, 0.002, 0.016]} center>
           <div className="px-2 py-0.5 rounded bg-slate-900/90 border border-white/20 text-slate-200 text-[8px] font-mono whitespace-nowrap pointer-events-none shadow-md">
             Lồi khớp (Articular Eminence)
           </div>
@@ -225,7 +223,7 @@ const TMJComplexMesh: React.FC<{
         position={[kinematics.translationX, -0.003 + kinematics.translationY, kinematics.translationZ]}
         rotation={[kinematics.rotationAngle, 0, 0]}
       >
-        {/* Chỏm lồi cầu (Condylar Head - Dạng elip ngang giải phẫu) */}
+        {/* Chỏm lồi cầu (Condylar Head) */}
         <mesh castShadow receiveShadow scale={[1.3, 0.65, 0.85]}>
           <sphereGeometry args={[0.0095, 24, 16]} />
           <meshStandardMaterial
@@ -246,7 +244,7 @@ const TMJComplexMesh: React.FC<{
 
       {/* 4. DÂY CHẰNG THÁI DƯƠNG HÀM (Temporomandibular Lateral Ligament) */}
       {showLigaments && (
-        <group position={[0.012, kinematics.translationY * 0.5, kinematics.translationZ * 0.5]}>
+        <group position={[-0.010, kinematics.translationY * 0.5, kinematics.translationZ * 0.5]}>
           <mesh position={[0, -0.008, 0]} rotation={[0.35, 0, 0]}>
             <cylinderGeometry args={[0.0018, 0.0022, 0.022, 12]} />
             <meshStandardMaterial
@@ -256,7 +254,7 @@ const TMJComplexMesh: React.FC<{
               opacity={0.8}
             />
           </mesh>
-          <Html position={[0.005, -0.008, 0]} center>
+          <Html position={[-0.005, -0.008, 0]} center>
             <div className="px-1.5 py-0.5 rounded bg-sky-950/80 border border-sky-400/30 text-sky-200 text-[7px] font-mono whitespace-nowrap pointer-events-none">
               Dây chằng bên
             </div>
@@ -264,22 +262,22 @@ const TMJComplexMesh: React.FC<{
         </group>
       )}
 
-      {/* 5. HỆ THỐNG 4 CƠ NHAI (Masticatory Muscles) Mapped to Anatomical Craniofacial Landmarks */}
+      {/* 5. HỆ THỐNG 4 CƠ NHAI (Masticatory Muscles) Mapped onto Right Skull Landmarks */}
       {showMuscles && (
         <group>
-          {/* CƠ CẮN (Masseter) - Bó Nông & Bó Sâu: Cung gò má -> Góc hàm */}
+          {/* CƠ CẮN (Masseter) - Bó Nông: Cung gò má -> Góc hàm */}
           {(!activeMuscleId || activeMuscleId === 'muscle_masseter') && (
-            <group position={[0.005, -0.028, 0.018]}>
-              <mesh rotation={[0.45, 0.1, -0.1]}>
-                <boxGeometry args={[0.008, 0.038, 0.016]} />
+            <group position={[-0.003, -0.028, 0.018]}>
+              <mesh rotation={[0.45, -0.1, 0.1]}>
+                <boxGeometry args={[0.006, 0.038, 0.014]} />
                 <meshStandardMaterial
                   color="#e11d48"
                   roughness={0.4}
                   transparent
-                  opacity={activeMuscleId === 'muscle_masseter' ? 0.95 : 0.65}
+                  opacity={activeMuscleId === 'muscle_masseter' ? 0.92 : 0.65}
                 />
               </mesh>
-              <Html position={[0.008, 0, 0]} center>
+              <Html position={[-0.006, 0, 0]} center>
                 <div className="px-1.5 py-0.5 rounded bg-rose-950/80 border border-rose-500/40 text-rose-200 text-[7px] font-mono whitespace-nowrap pointer-events-none">
                   Cơ Cắn (Masseter)
                 </div>
@@ -289,17 +287,17 @@ const TMJComplexMesh: React.FC<{
 
           {/* CƠ THÁI DƯƠNG (Temporalis): Hố thái dương -> Mỏm vẹt */}
           {(!activeMuscleId || activeMuscleId === 'muscle_temporalis') && (
-            <group position={[0.006, 0.024, 0.012]}>
-              <mesh rotation={[-0.3, 0.15, -0.15]}>
-                <cylinderGeometry args={[0.018, 0.006, 0.045, 16, 1, false, 0, Math.PI]} />
+            <group position={[-0.004, 0.024, 0.012]}>
+              <mesh rotation={[-0.3, -0.15, 0.15]}>
+                <cylinderGeometry args={[0.016, 0.005, 0.042, 16, 1, false, 0, Math.PI]} />
                 <meshStandardMaterial
                   color="#be123c"
                   roughness={0.4}
                   transparent
-                  opacity={activeMuscleId === 'muscle_temporalis' ? 0.95 : 0.60}
+                  opacity={activeMuscleId === 'muscle_temporalis' ? 0.92 : 0.60}
                 />
               </mesh>
-              <Html position={[0.010, 0.015, 0]} center>
+              <Html position={[-0.008, 0.015, 0]} center>
                 <div className="px-1.5 py-0.5 rounded bg-rose-950/80 border border-rose-500/40 text-rose-200 text-[7px] font-mono whitespace-nowrap pointer-events-none">
                   Cơ Thái Dương (Temporalis)
                 </div>
@@ -307,14 +305,11 @@ const TMJComplexMesh: React.FC<{
             </group>
           )}
 
-          {/* CƠ CHÂN BƯỚM NGOÀI (Lateral Pterygoid) - 2 Bó: Cánh lớn xương bướm -> Đĩa khớp & Cổ lồi cầu */}
+          {/* CƠ CHÂN BƯỚM NGOÀI (Lateral Pterygoid) - Đi vào trong (medial = +X relative to Right TMJ) */}
           {(!activeMuscleId || activeMuscleId === 'muscle_lateral_pterygoid') && (
-            <group position={[-0.015, -0.002, 0.014]}>
-              {/* Bó trên (Superior head) bám vào Đĩa khớp */}
-              <mesh
-                position={[0, 0.003, 0]}
-                rotation={[0, 0.7, -0.15]}
-              >
+            <group position={[0.015, -0.002, 0.014]}>
+              {/* Bó trên bám Đĩa khớp */}
+              <mesh position={[0, 0.003, 0]} rotation={[0, -0.7, 0.15]}>
                 <cylinderGeometry args={[0.0025, 0.003, 0.022, 10]} />
                 <meshStandardMaterial
                   color="#f97316"
@@ -323,11 +318,8 @@ const TMJComplexMesh: React.FC<{
                   opacity={activeMuscleId === 'muscle_lateral_pterygoid' ? 0.95 : 0.75}
                 />
               </mesh>
-              {/* Bó dưới (Inferior head) bám vào Cổ lồi cầu */}
-              <mesh
-                position={[0, -0.004, -0.002]}
-                rotation={[0, 0.7, -0.3]}
-              >
+              {/* Bó dưới bám Cổ lồi cầu */}
+              <mesh position={[0, -0.004, -0.002]} rotation={[0, -0.7, 0.3]}>
                 <cylinderGeometry args={[0.003, 0.0035, 0.024, 10]} />
                 <meshStandardMaterial
                   color="#ea580c"
@@ -336,19 +328,19 @@ const TMJComplexMesh: React.FC<{
                   opacity={activeMuscleId === 'muscle_lateral_pterygoid' ? 0.95 : 0.75}
                 />
               </mesh>
-              <Html position={[-0.005, 0, 0]} center>
+              <Html position={[0.005, 0, 0]} center>
                 <div className="px-1.5 py-0.5 rounded bg-orange-950/80 border border-orange-500/40 text-orange-200 text-[7px] font-mono whitespace-nowrap pointer-events-none">
-                  Cơ Chân Bướm Ngoài (Lateral Pterygoid)
+                  Cơ Chân Bướm Ngoài
                 </div>
               </Html>
             </group>
           )}
 
-          {/* CƠ CHÂN BƯỚM TRONG (Medial Pterygoid): Hố chân bướm -> Mặt trong góc hàm */}
+          {/* CƠ CHÂN BƯỚM TRONG (Medial Pterygoid) - Đi vào trong */}
           {(!activeMuscleId || activeMuscleId === 'muscle_medial_pterygoid') && (
-            <group position={[-0.014, -0.026, 0.010]}>
-              <mesh rotation={[0.4, -0.2, 0.15]}>
-                <boxGeometry args={[0.007, 0.034, 0.012]} />
+            <group position={[0.014, -0.026, 0.010]}>
+              <mesh rotation={[0.4, 0.2, -0.15]}>
+                <boxGeometry args={[0.006, 0.034, 0.010]} />
                 <meshStandardMaterial
                   color="#c2410c"
                   roughness={0.4}
@@ -356,9 +348,9 @@ const TMJComplexMesh: React.FC<{
                   opacity={activeMuscleId === 'muscle_medial_pterygoid' ? 0.95 : 0.65}
                 />
               </mesh>
-              <Html position={[-0.005, 0, 0]} center>
+              <Html position={[0.005, 0, 0]} center>
                 <div className="px-1.5 py-0.5 rounded bg-orange-950/80 border border-orange-500/40 text-orange-200 text-[7px] font-mono whitespace-nowrap pointer-events-none">
-                  Cơ Chân Bướm Trong (Medial Pterygoid)
+                  Cơ Chân Bướm Trong
                 </div>
               </Html>
             </group>
@@ -596,13 +588,13 @@ export const TMJSpecimenStage: React.FC = () => {
       {/* 3. 3D WEBGL CANVAS STAGE */}
       <Canvas
         shadows
-        camera={{ position: [0.16, 1.38, 0.12], fov: 32 }}
+        camera={{ position: [-0.16, 1.38, 0.12], fov: 32 }}
         gl={{ antialias: true, alpha: true }}
       >
         <ambientLight intensity={1.1} />
-        <directionalLight position={[0.4, 1.8, 0.5]} intensity={2.2} castShadow />
-        <directionalLight position={[-0.4, 0.5, -0.4]} intensity={0.9} />
-        <pointLight position={[0.046, 1.39, 0.10]} intensity={1.5} color="#fffef7" />
+        <directionalLight position={[-0.4, 1.8, 0.5]} intensity={2.2} castShadow />
+        <directionalLight position={[0.4, 0.5, -0.4]} intensity={0.9} />
+        <pointLight position={[-0.046, 1.39, 0.10]} intensity={1.5} color="#fffef7" />
 
         {/* Realistic 3D Canonical Skull Context */}
         <CanonicalSkullTMJContext
@@ -610,7 +602,7 @@ export const TMJSpecimenStage: React.FC = () => {
           opacity={skullOpacity}
         />
 
-        {/* Articulating TMJ Disc & Condyle & Muscles directly in Skull Space */}
+        {/* Articulating TMJ Disc & Condyle & Muscles on Right TMJ */}
         <TMJComplexMesh
           progress={tmjJawState}
           motionMode={tmjMotionMode}
@@ -626,7 +618,7 @@ export const TMJSpecimenStage: React.FC = () => {
           dampingFactor={0.06}
           minDistance={0.05}
           maxDistance={0.5}
-          target={[0.046, 1.366, 0.068]}
+          target={[-0.046, 1.366, 0.068]}
         />
       </Canvas>
 
