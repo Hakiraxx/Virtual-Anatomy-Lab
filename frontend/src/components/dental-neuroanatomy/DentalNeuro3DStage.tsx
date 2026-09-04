@@ -12,7 +12,7 @@ import {
 } from '../../data/dentalNeuroData';
 
 // Normalizes and articulates any head mesh into the standard Craniofacial coordinate system
-function createCraniofacialOrganGroup(
+export function createCraniofacialOrganGroup(
   scene: THREE.Object3D,
   targetSize: number | [number, number, number],
   rotationOffset: [number, number, number] = [0, -Math.PI / 2, 0],

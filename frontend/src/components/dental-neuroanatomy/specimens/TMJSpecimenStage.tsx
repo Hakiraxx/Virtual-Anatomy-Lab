@@ -1,22 +1,62 @@
 import React, { useMemo, useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Html } from '@react-three/drei';
+import { OrbitControls, useGLTF, Html } from '@react-three/drei';
 import {
   Play,
   Pause,
   RotateCcw,
-  Activity,
-  Layers,
   Volume2,
   AlertTriangle,
-  CheckCircle2
+  CheckCircle2,
+  Eye,
+  Layers
 } from 'lucide-react';
 import { useDentalNeuroStore } from '../../../stores/useDentalNeuroStore';
 import { useAnatomyStore } from '../../../stores/useAnatomyStore';
 import { TMJ_SPECIMEN_DATA, MASTICATORY_MUSCLES_DETAIL } from '../../../data/dentalSpecimensData';
+import { createCraniofacialOrganGroup } from '../DentalNeuro3DStage';
 
-// 3D Procedural TMJ Joint Complex & Biomechanics Mesh
+// ============================================================================
+// 1. CANONICAL 3D SKULL BACKGROUND FOR TMJ CONTEXT
+// ============================================================================
+const CanonicalSkullTMJContext: React.FC<{
+  opacity: number;
+  showSkull: boolean;
+}> = ({ opacity, showSkull }) => {
+  const skullGltf = useGLTF('/models/skull.glb');
+
+  const normalizedSkull = useMemo(() => {
+    const group = createCraniofacialOrganGroup(
+      skullGltf.scene,
+      0.205,
+      [0, -Math.PI / 2, 0],
+      [0.0, 1.41, 0.09]
+    );
+
+    // Apply high-fidelity anatomical bone shader
+    group.traverse((child: any) => {
+      if (child.isMesh && child.material) {
+        child.material.transparent = opacity < 0.98;
+        child.material.opacity = opacity;
+        child.material.roughness = 0.65;
+        child.material.metalness = 0.03;
+        child.material.color = new THREE.Color('#eae2d5');
+        child.material.depthWrite = opacity > 0.6;
+      }
+    });
+
+    return group;
+  }, [skullGltf, opacity]);
+
+  if (!showSkull) return null;
+
+  return <primitive object={normalizedSkull} />;
+};
+
+// ============================================================================
+// 2. TMJ COMPLEX & BIOMECHANICS MESH (ARTICULAR DISC & CONDYLAR DYNAMICS)
+// ============================================================================
 const TMJComplexMesh: React.FC<{
   progress: number;
   motionMode: 'opening' | 'protrusion' | 'lateral';
@@ -28,6 +68,9 @@ const TMJComplexMesh: React.FC<{
   const condyleRef = useRef<THREE.Group>(null);
   const discRef = useRef<THREE.Group>(null);
   const [clickSoundTriggered, setClickSoundTriggered] = useState(false);
+
+  // Exact anatomical coordinate of Right TMJ on canonical skull: [0.046, 1.366, 0.068]
+  const tmjBasePos: [number, number, number] = [0.046, 1.366, 0.068];
 
   // Compute anatomical translation & rotation based on jaw opening phase
   const kinematics = useMemo(() => {
@@ -42,58 +85,58 @@ const TMJComplexMesh: React.FC<{
         // Closed lock: cannot open beyond ~25mm (progress capped at 0.45)
         const capped = Math.min(progress, 0.45);
         rotationAngle = capped * 0.28;
-        translationY = -capped * 0.008;
-        translationZ = capped * 0.006;
-        discOffsetZ = 0.012; // Disc stuck in front
+        translationY = -capped * 0.006;
+        translationZ = capped * 0.005;
+        discOffsetZ = 0.008; // Disc stuck in front
       } else if (pathology === 'tmd_dislocation') {
         // Dislocation: condyle translates past articular crest and stays stuck
         const val = Math.max(progress, 0.95);
         rotationAngle = 0.45;
-        translationY = -0.018;
-        translationZ = 0.042; // Over-translated
-        discOffsetZ = -0.005;
+        translationY = -0.015;
+        translationZ = 0.024; // Over-translated past eminence
+        discOffsetZ = -0.004;
       } else if (pathology === 'tmd_reduction') {
         // With reduction: Disc starts anterior, snaps back at progress ~ 0.35
         if (progress < 0.35) {
           rotationAngle = progress * 0.35;
-          translationY = -progress * 0.015;
-          translationZ = progress * 0.018;
-          discOffsetZ = 0.014; // Displaced forward
+          translationY = -progress * 0.010;
+          translationZ = progress * 0.012;
+          discOffsetZ = 0.009; // Displaced forward
         } else {
           // Snapped onto condyle
           rotationAngle = progress * 0.42;
-          translationY = -progress * 0.024;
-          translationZ = progress * 0.032;
-          discOffsetZ = 0.001; // Normal relation
+          translationY = -progress * 0.016;
+          translationZ = progress * 0.020;
+          discOffsetZ = 0.001; // Recaptured
         }
       } else {
         // Normal Opening
-        // Phase 1 (0 to 0.4): Pure rotation (0-20mm)
-        // Phase 2 (0.4 to 1.0): Translation along articular eminence (20-50mm)
+        // Phase 1 (0 to 0.4): Pure rotation (0-20mm) in lower compartment
+        // Phase 2 (0.4 to 1.0): Translation along articular eminence (20-50mm) in upper compartment
         if (progress <= 0.4) {
           const p1 = progress / 0.4;
           rotationAngle = p1 * 0.22;
-          translationY = -p1 * 0.004;
-          translationZ = p1 * 0.003;
+          translationY = -p1 * 0.003;
+          translationZ = p1 * 0.002;
           discOffsetZ = 0;
         } else {
           const p2 = (progress - 0.4) / 0.6;
           rotationAngle = 0.22 + p2 * 0.24;
-          translationY = -0.004 - p2 * 0.022;
-          translationZ = 0.003 + p2 * 0.028;
-          discOffsetZ = -p2 * 0.003;
+          translationY = -0.003 - p2 * 0.014;
+          translationZ = 0.002 + p2 * 0.018;
+          discOffsetZ = -p2 * 0.002;
         }
       }
     } else if (motionMode === 'protrusion') {
       // Direct forward translation
-      translationZ = progress * 0.025;
-      translationY = -progress * 0.006;
+      translationZ = progress * 0.018;
+      translationY = -progress * 0.004;
       rotationAngle = 0.05;
     } else if (motionMode === 'lateral') {
       // Lateral excursion
-      translationX = progress * 0.015;
-      translationZ = progress * 0.012;
-      rotationAngle = progress * 0.08;
+      translationX = progress * 0.010;
+      translationZ = progress * 0.008;
+      rotationAngle = progress * 0.06;
     }
 
     return { rotationAngle, translationX, translationY, translationZ, discOffsetZ };
@@ -109,35 +152,16 @@ const TMJComplexMesh: React.FC<{
   }, [pathology, progress]);
 
   return (
-    <group position={[0, 0, 0]}>
-      {/* 1. XƯƠNG THÁI DƯƠNG (Temporal Bone: Glenoid Fossa & Articular Eminence) */}
-      <group position={[0, 0.045, 0]}>
-        {/* Phần trai xương thái dương */}
-        <mesh position={[0, 0.02, 0]} receiveShadow>
-          <boxGeometry args={[0.07, 0.025, 0.12]} />
-          <meshStandardMaterial color="#dfd4c4" roughness={0.7} metalness={0.05} />
-        </mesh>
-
-        {/* Hố hàm (Glenoid Fossa - Lõm vào) */}
-        <mesh position={[0, 0.005, -0.015]} rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[0.022, 0.025, 0.012, 32, 1, false, 0, Math.PI]} />
-          <meshStandardMaterial color="#c5b69f" roughness={0.6} />
-        </mesh>
-
-        {/* Lồi khớp / Củ khớp (Articular Eminence - Gờ lồi phía trước sườn dốc 45 độ) */}
-        <mesh position={[0, 0.002, 0.025]} rotation={[0.4, 0, 0]}>
-          <boxGeometry args={[0.045, 0.014, 0.035]} />
-          <meshStandardMaterial color="#d4c5a9" roughness={0.5} />
-        </mesh>
-
-        {/* Nhãn mốc giải phẫu */}
-        <Html position={[0.035, 0.01, -0.015]} center>
-          <div className="px-2 py-0.5 rounded bg-slate-900/80 border border-white/20 text-slate-200 text-[8px] font-mono whitespace-nowrap pointer-events-none">
+    <group position={tmjBasePos}>
+      {/* 1. MỐC GIẢI PHẪU NỀN SỌ (Articular Eminence & Glenoid Fossa Labels) */}
+      <group position={[0, 0.006, 0]}>
+        <Html position={[0.015, 0.006, -0.010]} center>
+          <div className="px-2 py-0.5 rounded bg-slate-900/90 border border-white/20 text-slate-200 text-[8px] font-mono whitespace-nowrap pointer-events-none shadow-md">
             Hố hàm (Glenoid Fossa)
           </div>
         </Html>
-        <Html position={[0.035, 0.005, 0.035]} center>
-          <div className="px-2 py-0.5 rounded bg-slate-900/80 border border-white/20 text-slate-200 text-[8px] font-mono whitespace-nowrap pointer-events-none">
+        <Html position={[0.015, 0.002, 0.016]} center>
+          <div className="px-2 py-0.5 rounded bg-slate-900/90 border border-white/20 text-slate-200 text-[8px] font-mono whitespace-nowrap pointer-events-none shadow-md">
             Lồi khớp (Articular Eminence)
           </div>
         </Html>
@@ -148,45 +172,45 @@ const TMJComplexMesh: React.FC<{
         ref={discRef}
         position={[
           kinematics.translationX * 0.9,
-          0.042 + kinematics.translationY * 0.85,
+          0.002 + kinematics.translationY * 0.85,
           kinematics.translationZ * 0.85 + kinematics.discOffsetZ
         ]}
       >
         {/* Vùng trung gian mỏng (Intermediate Zone - 1mm) */}
-        <mesh position={[0, 0, 0]} scale={[1.2, 1, 1]}>
-          <cylinderGeometry args={[0.018, 0.019, 0.003, 32]} />
+        <mesh position={[0, 0, 0]} scale={[1.1, 1, 1]}>
+          <cylinderGeometry args={[0.010, 0.011, 0.002, 24]} />
           <meshStandardMaterial
             color="#38bdf8"
-            roughness={0.35}
+            roughness={0.3}
             metalness={0.1}
             transparent
-            opacity={0.85}
+            opacity={0.88}
           />
         </mesh>
         {/* Băng trước dày (Anterior Band - 2mm) */}
-        <mesh position={[0, 0.001, 0.014]}>
-          <cylinderGeometry args={[0.018, 0.018, 0.005, 32, 1, false, 0, Math.PI]} />
-          <meshStandardMaterial color="#0284c7" roughness={0.4} />
+        <mesh position={[0, 0.0005, 0.008]}>
+          <cylinderGeometry args={[0.010, 0.010, 0.0035, 24, 1, false, 0, Math.PI]} />
+          <meshStandardMaterial color="#0284c7" roughness={0.35} />
         </mesh>
         {/* Băng sau dày nhất (Posterior Band - 3mm) */}
-        <mesh position={[0, 0.002, -0.013]}>
-          <cylinderGeometry args={[0.018, 0.018, 0.007, 32, 1, false, Math.PI, Math.PI]} />
-          <meshStandardMaterial color="#0369a1" roughness={0.4} />
+        <mesh position={[0, 0.001, -0.007]}>
+          <cylinderGeometry args={[0.010, 0.010, 0.0048, 24, 1, false, Math.PI, Math.PI]} />
+          <meshStandardMaterial color="#0369a1" roughness={0.35} />
         </mesh>
-        {/* Mô sau đĩa 2 lá giàu mạch máu thần kinh (Retrodiscal pad / Bilaminar zone) */}
-        <mesh position={[0, 0.003, -0.024]}>
-          <boxGeometry args={[0.034, 0.008, 0.018]} />
+        {/* Mô sau đĩa 2 lá (Bilaminar retrodiscal tissue) */}
+        <mesh position={[0, 0.0015, -0.014]}>
+          <boxGeometry args={[0.018, 0.005, 0.010]} />
           <meshStandardMaterial
             color="#fb7185"
-            roughness={0.6}
+            roughness={0.5}
             transparent
-            opacity={0.7}
+            opacity={0.75}
           />
         </mesh>
 
         {/* Dynamic Click Alert Visualizer for DDwR */}
         {clickSoundTriggered && (
-          <Html position={[0, 0.02, 0]} center>
+          <Html position={[0, 0.015, 0]} center>
             <div className="px-3 py-1 rounded-full bg-amber-500 text-slate-950 text-xs font-black tracking-widest shadow-2xl animate-bounce flex items-center gap-1 border border-white">
               <Volume2 className="w-3.5 h-3.5" />
               <span>CLICK! (Tái Lập Đĩa)</span>
@@ -195,154 +219,148 @@ const TMJComplexMesh: React.FC<{
         )}
       </group>
 
-      {/* 3. LỒI CẦU & CÀNH LÊN XƯƠNG HÀM DƯỚI (Mandibular Condyle & Ramus) */}
+      {/* 3. LỒI CẦU & ĐỘNG HỌC KHỚP (Articulating Condylar Dynamic Head) */}
       <group
         ref={condyleRef}
-        position={[kinematics.translationX, 0.032 + kinematics.translationY, kinematics.translationZ]}
+        position={[kinematics.translationX, -0.003 + kinematics.translationY, kinematics.translationZ]}
         rotation={[kinematics.rotationAngle, 0, 0]}
       >
-        {/* Chỏm lồi cầu (Condylar Head - Dạng elip ngang) */}
-        <mesh castShadow receiveShadow scale={[1.4, 0.65, 0.9]}>
-          <sphereGeometry args={[0.018, 32, 16]} />
+        {/* Chỏm lồi cầu (Condylar Head - Dạng elip ngang giải phẫu) */}
+        <mesh castShadow receiveShadow scale={[1.3, 0.65, 0.85]}>
+          <sphereGeometry args={[0.0095, 24, 16]} />
           <meshStandardMaterial
-            color="#e2d8c3"
+            color="#f5ede2"
+            emissive="#fbbf24"
+            emissiveIntensity={0.15}
             roughness={0.4}
             metalness={0.05}
           />
         </mesh>
 
         {/* Cổ lồi cầu (Condylar Neck) */}
-        <mesh position={[0, -0.022, 0]} castShadow>
-          <cylinderGeometry args={[0.010, 0.014, 0.036, 24]} />
-          <meshStandardMaterial color="#dfd2bc" roughness={0.5} />
-        </mesh>
-
-        {/* Cành lên xương hàm dưới (Ramus of Mandible) */}
-        <mesh position={[0, -0.065, -0.005]} castShadow>
-          <boxGeometry args={[0.016, 0.065, 0.042]} />
-          <meshStandardMaterial color="#dac9af" roughness={0.6} />
-        </mesh>
-
-        {/* Mỏm vẹt (Coronoid Process) ở phía trước */}
-        <mesh position={[0, -0.022, 0.035]} rotation={[-0.3, 0, 0]}>
-          <coneGeometry args={[0.012, 0.045, 16]} />
-          <meshStandardMaterial color="#dac9af" roughness={0.6} />
-        </mesh>
-
-        {/* Khuyết hàm dưới (Sigmoid Notch) giữa mỏm vẹt và lồi cầu */}
-        {/* Gai Spix & Lỗ hàm dưới ở mặt trong */}
-        <mesh position={[0.008, -0.052, 0.005]}>
-          <cylinderGeometry args={[0.002, 0.003, 0.008, 12]} />
-          <meshStandardMaterial color="#f59e0b" emissive="#f59e0b" emissiveIntensity={0.5} />
+        <mesh position={[0, -0.014, 0]} castShadow>
+          <cylinderGeometry args={[0.006, 0.008, 0.020, 16]} />
+          <meshStandardMaterial color="#ebdcc8" roughness={0.5} />
         </mesh>
       </group>
 
-      {/* 4. BAO KHỚP & DÂY CHẰNG THÁI DƯƠNG HÀM (Capsule & Lateral Ligament) */}
+      {/* 4. DÂY CHẰNG THÁI DƯƠNG HÀM (Temporomandibular Lateral Ligament) */}
       {showLigaments && (
-        <group position={[0, 0.038 + kinematics.translationY * 0.5, kinematics.translationZ * 0.5]}>
-          {/* Dây chằng bên (Temporomandibular / Lateral Ligament) */}
-          <mesh position={[-0.024, -0.012, 0]} rotation={[0.4, 0, 0]}>
-            <cylinderGeometry args={[0.003, 0.004, 0.035, 16]} />
+        <group position={[0.012, kinematics.translationY * 0.5, kinematics.translationZ * 0.5]}>
+          <mesh position={[0, -0.008, 0]} rotation={[0.35, 0, 0]}>
+            <cylinderGeometry args={[0.0018, 0.0022, 0.022, 12]} />
             <meshStandardMaterial
               color="#38bdf8"
-              roughness={0.4}
+              roughness={0.3}
               transparent
-              opacity={0.7}
+              opacity={0.8}
             />
           </mesh>
-          <Html position={[-0.03, -0.012, 0]} center>
+          <Html position={[0.005, -0.008, 0]} center>
             <div className="px-1.5 py-0.5 rounded bg-sky-950/80 border border-sky-400/30 text-sky-200 text-[7px] font-mono whitespace-nowrap pointer-events-none">
-              Dây chằng bên (Lateral Lig.)
+              Dây chằng bên
             </div>
           </Html>
         </group>
       )}
 
-      {/* 5. 4 CƠ NHAI 3D (4 Muscles of Mastication) */}
+      {/* 5. HỆ THỐNG 4 CƠ NHAI (Masticatory Muscles) Mapped to Anatomical Craniofacial Landmarks */}
       {showMuscles && (
         <group>
-          {/* A. Cơ Cắn (Masseter) */}
-          {(!activeMuscleId || activeMuscleId === 'masseter') && (
-            <group position={[-0.025, -0.02, 0.01]} rotation={[0.2, 0, 0]}>
-              <mesh>
-                <boxGeometry args={[0.012, 0.08, 0.035]} />
+          {/* CƠ CẮN (Masseter) - Bó Nông & Bó Sâu: Cung gò má -> Góc hàm */}
+          {(!activeMuscleId || activeMuscleId === 'muscle_masseter') && (
+            <group position={[0.005, -0.028, 0.018]}>
+              <mesh rotation={[0.45, 0.1, -0.1]}>
+                <boxGeometry args={[0.008, 0.038, 0.016]} />
                 <meshStandardMaterial
-                  color="#ef4444"
-                  roughness={0.6}
+                  color="#e11d48"
+                  roughness={0.4}
                   transparent
-                  opacity={activeMuscleId === 'masseter' ? 0.9 : 0.45}
-                  emissive={activeMuscleId === 'masseter' ? '#ef4444' : '#000000'}
-                  emissiveIntensity={0.3}
+                  opacity={activeMuscleId === 'muscle_masseter' ? 0.95 : 0.65}
                 />
               </mesh>
+              <Html position={[0.008, 0, 0]} center>
+                <div className="px-1.5 py-0.5 rounded bg-rose-950/80 border border-rose-500/40 text-rose-200 text-[7px] font-mono whitespace-nowrap pointer-events-none">
+                  Cơ Cắn (Masseter)
+                </div>
+              </Html>
             </group>
           )}
 
-          {/* B. Cơ Thái Dương (Temporalis) */}
-          {(!activeMuscleId || activeMuscleId === 'temporalis') && (
-            <group position={[-0.018, 0.07, 0.02]} rotation={[-0.1, 0, 0]}>
-              <mesh rotation={[Math.PI, 0, 0]}>
-                <coneGeometry args={[0.045, 0.09, 24, 1, false, 0, Math.PI]} />
+          {/* CƠ THÁI DƯƠNG (Temporalis): Hố thái dương -> Mỏm vẹt */}
+          {(!activeMuscleId || activeMuscleId === 'muscle_temporalis') && (
+            <group position={[0.006, 0.024, 0.012]}>
+              <mesh rotation={[-0.3, 0.15, -0.15]}>
+                <cylinderGeometry args={[0.018, 0.006, 0.045, 16, 1, false, 0, Math.PI]} />
+                <meshStandardMaterial
+                  color="#be123c"
+                  roughness={0.4}
+                  transparent
+                  opacity={activeMuscleId === 'muscle_temporalis' ? 0.95 : 0.60}
+                />
+              </mesh>
+              <Html position={[0.010, 0.015, 0]} center>
+                <div className="px-1.5 py-0.5 rounded bg-rose-950/80 border border-rose-500/40 text-rose-200 text-[7px] font-mono whitespace-nowrap pointer-events-none">
+                  Cơ Thái Dương (Temporalis)
+                </div>
+              </Html>
+            </group>
+          )}
+
+          {/* CƠ CHÂN BƯỚM NGOÀI (Lateral Pterygoid) - 2 Bó: Cánh lớn xương bướm -> Đĩa khớp & Cổ lồi cầu */}
+          {(!activeMuscleId || activeMuscleId === 'muscle_lateral_pterygoid') && (
+            <group position={[-0.015, -0.002, 0.014]}>
+              {/* Bó trên (Superior head) bám vào Đĩa khớp */}
+              <mesh
+                position={[0, 0.003, 0]}
+                rotation={[0, 0.7, -0.15]}
+              >
+                <cylinderGeometry args={[0.0025, 0.003, 0.022, 10]} />
                 <meshStandardMaterial
                   color="#f97316"
-                  roughness={0.6}
+                  roughness={0.35}
                   transparent
-                  opacity={activeMuscleId === 'temporalis' ? 0.9 : 0.4}
-                  emissive={activeMuscleId === 'temporalis' ? '#f97316' : '#000000'}
-                  emissiveIntensity={0.3}
+                  opacity={activeMuscleId === 'muscle_lateral_pterygoid' ? 0.95 : 0.75}
                 />
               </mesh>
-            </group>
-          )}
-
-          {/* C. Cơ Chân Bướm Trong (Medial Pterygoid) */}
-          {(!activeMuscleId || activeMuscleId === 'medial_pterygoid') && (
-            <group position={[0.024, -0.035, 0.005]} rotation={[0.25, 0, -0.1]}>
-              <mesh>
-                <boxGeometry args={[0.010, 0.065, 0.028]} />
+              {/* Bó dưới (Inferior head) bám vào Cổ lồi cầu */}
+              <mesh
+                position={[0, -0.004, -0.002]}
+                rotation={[0, 0.7, -0.3]}
+              >
+                <cylinderGeometry args={[0.003, 0.0035, 0.024, 10]} />
                 <meshStandardMaterial
-                  color="#eab308"
-                  roughness={0.6}
+                  color="#ea580c"
+                  roughness={0.35}
                   transparent
-                  opacity={activeMuscleId === 'medial_pterygoid' ? 0.9 : 0.4}
-                  emissive={activeMuscleId === 'medial_pterygoid' ? '#eab308' : '#000000'}
-                  emissiveIntensity={0.3}
+                  opacity={activeMuscleId === 'muscle_lateral_pterygoid' ? 0.95 : 0.75}
                 />
               </mesh>
+              <Html position={[-0.005, 0, 0]} center>
+                <div className="px-1.5 py-0.5 rounded bg-orange-950/80 border border-orange-500/40 text-orange-200 text-[7px] font-mono whitespace-nowrap pointer-events-none">
+                  Cơ Chân Bướm Ngoài (Lateral Pterygoid)
+                </div>
+              </Html>
             </group>
           )}
 
-          {/* D. Cơ Chân Bướm Ngoài (Lateral Pterygoid - 2 Bó) */}
-          {(!activeMuscleId || activeMuscleId === 'lateral_pterygoid') && (
-            <group position={[0.015, 0.035, 0.025]}>
-              {/* Bó trên (Superior Head - Bám vào đĩa khớp) */}
-              <group position={[0, 0.005, 0.018]} rotation={[-0.2, 0, 0]}>
-                <mesh rotation={[Math.PI / 2, 0, 0]}>
-                  <cylinderGeometry args={[0.005, 0.006, 0.035, 16]} />
-                  <meshStandardMaterial
-                    color="#06b6d4"
-                    roughness={0.5}
-                    transparent
-                    opacity={activeMuscleId === 'lateral_pterygoid' ? 0.95 : 0.55}
-                    emissive={activeMuscleId === 'lateral_pterygoid' ? '#06b6d4' : '#000000'}
-                    emissiveIntensity={0.4}
-                  />
-                </mesh>
-              </group>
-              {/* Bó dưới (Inferior Head - Bám vào cổ lồi cầu) */}
-              <group position={[0, -0.012, 0.015]} rotation={[-0.4, 0, 0]}>
-                <mesh rotation={[Math.PI / 2, 0, 0]}>
-                  <cylinderGeometry args={[0.007, 0.008, 0.042, 16]} />
-                  <meshStandardMaterial
-                    color="#06b6d4"
-                    roughness={0.5}
-                    transparent
-                    opacity={activeMuscleId === 'lateral_pterygoid' ? 0.95 : 0.55}
-                    emissive={activeMuscleId === 'lateral_pterygoid' ? '#06b6d4' : '#000000'}
-                    emissiveIntensity={0.4}
-                  />
-                </mesh>
-              </group>
+          {/* CƠ CHÂN BƯỚM TRONG (Medial Pterygoid): Hố chân bướm -> Mặt trong góc hàm */}
+          {(!activeMuscleId || activeMuscleId === 'muscle_medial_pterygoid') && (
+            <group position={[-0.014, -0.026, 0.010]}>
+              <mesh rotation={[0.4, -0.2, 0.15]}>
+                <boxGeometry args={[0.007, 0.034, 0.012]} />
+                <meshStandardMaterial
+                  color="#c2410c"
+                  roughness={0.4}
+                  transparent
+                  opacity={activeMuscleId === 'muscle_medial_pterygoid' ? 0.95 : 0.65}
+                />
+              </mesh>
+              <Html position={[-0.005, 0, 0]} center>
+                <div className="px-1.5 py-0.5 rounded bg-orange-950/80 border border-orange-500/40 text-orange-200 text-[7px] font-mono whitespace-nowrap pointer-events-none">
+                  Cơ Chân Bướm Trong (Medial Pterygoid)
+                </div>
+              </Html>
             </group>
           )}
         </group>
@@ -351,135 +369,195 @@ const TMJComplexMesh: React.FC<{
   );
 };
 
+// ============================================================================
+// 3. MAIN COMPONENT: TMJ SPECIMEN STAGE
+// ============================================================================
 export const TMJSpecimenStage: React.FC = () => {
-  const tmjJawState = useDentalNeuroStore((s) => s.tmjJawState);
-  const setTmjJawState = useDentalNeuroStore((s) => s.setTmjJawState);
-  const tmjMotionMode = useDentalNeuroStore((s) => s.tmjMotionMode);
-  const setTmjMotionMode = useDentalNeuroStore((s) => s.setTmjMotionMode);
-  const tmjPathology = useDentalNeuroStore((s) => s.tmjPathology);
-  const setTmjPathology = useDentalNeuroStore((s) => s.setTmjPathology);
-  const tmjShowMuscles = useDentalNeuroStore((s) => s.tmjShowMuscles);
-  const setTmjShowMuscles = useDentalNeuroStore((s) => s.setTmjShowMuscles);
-  const tmjShowLigaments = useDentalNeuroStore((s) => s.tmjShowLigaments);
-  const setTmjShowLigaments = useDentalNeuroStore((s) => s.setTmjShowLigaments);
-  const tmjActiveMuscleId = useDentalNeuroStore((s) => s.tmjActiveMuscleId);
-  const setTmjActiveMuscleId = useDentalNeuroStore((s) => s.setTmjActiveMuscleId);
-
   const atelierTheme = useAnatomyStore((s) => s.atelierTheme);
   const isDark = atelierTheme === 'dark';
 
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [showFullSkull, setShowFullSkull] = useState(true);
+  const [skullOpacity, setSkullOpacity] = useState(0.85);
 
-  // Auto-play jaw cycle animation
+  const tmjJawState = useDentalNeuroStore((s) => s.tmjJawState);
+  const setTmjJawState = useDentalNeuroStore((s) => s.setTmjJawState);
+
+  const tmjMotionMode = useDentalNeuroStore((s) => s.tmjMotionMode);
+  const setTmjMotionMode = useDentalNeuroStore((s) => s.setTmjMotionMode);
+
+  const tmjPathology = useDentalNeuroStore((s) => s.tmjPathology);
+  const setTmjPathology = useDentalNeuroStore((s) => s.setTmjPathology);
+
+  const tmjShowMuscles = useDentalNeuroStore((s) => s.tmjShowMuscles);
+  const setTmjShowMuscles = useDentalNeuroStore((s) => s.setTmjShowMuscles);
+
+  const tmjShowLigaments = useDentalNeuroStore((s) => s.tmjShowLigaments);
+  const setTmjShowLigaments = useDentalNeuroStore((s) => s.setTmjShowLigaments);
+
+  const tmjActiveMuscleId = useDentalNeuroStore((s) => s.tmjActiveMuscleId);
+  const setTmjActiveMuscleId = useDentalNeuroStore((s) => s.setTmjActiveMuscleId);
+
+  // Auto-play jaw animation state
+  const [isPlaying, setIsPlaying] = useState(false);
+  const jawStateRef = useRef(tmjJawState);
+  jawStateRef.current = tmjJawState;
+
   useEffect(() => {
-    if (!isPlaying) return;
     let animId: number;
     let direction = 1;
+    const speed = 0.008;
 
-    const animate = () => {
-      setTmjJawState(Math.max(0, Math.min(1, tmjJawState + direction * 0.015)));
-      if (tmjJawState >= 1.0) direction = -1;
-      else if (tmjJawState <= 0.0) direction = 1;
-      animId = requestAnimationFrame(animate);
+    const animateLoop = () => {
+      if (isPlaying) {
+        let next = jawStateRef.current + direction * speed;
+        if (next >= 1.0) {
+          next = 1.0;
+          direction = -1;
+        } else if (next <= 0.0) {
+          next = 0.0;
+          direction = 1;
+        }
+        setTmjJawState(next);
+        animId = requestAnimationFrame(animateLoop);
+      }
     };
 
-    animId = requestAnimationFrame(animate);
+    if (isPlaying) {
+      animId = requestAnimationFrame(animateLoop);
+    }
     return () => cancelAnimationFrame(animId);
-  }, [isPlaying, tmjJawState, setTmjJawState]);
+  }, [isPlaying, setTmjJawState]);
 
-  // Current jaw opening distance in mm
+  // mm of mouth opening (0 - 50 mm)
   const mmOpening = Math.round(tmjJawState * 50);
 
   return (
-    <div className="relative w-full h-full overflow-hidden select-none">
-      {/* 1. TOP-LEFT OVERLAY: TMJ INFO & KINEMATICS PHASE */}
-      <div className="absolute top-3 left-3 z-20 flex flex-col gap-2 max-w-sm pointer-events-auto">
+    <div className="relative w-full h-full select-none overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+      {/* 1. TOP HEADER OVERLAY */}
+      <div className="absolute top-4 left-4 z-20 flex flex-col gap-2 pointer-events-auto">
         <div
-          className={`p-3 rounded-2xl border backdrop-blur-md shadow-2xl transition ${
-            isDark ? 'bg-slate-900/90 border-slate-700/80 text-slate-100' : 'bg-white/95 border-[#e7ded3] text-[#28231d]'
+          className={`p-3 rounded-2xl border backdrop-blur-md shadow-xl max-w-sm ${
+            isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-[#f7f2ea]/90 border-[#dfd5c6]'
           }`}
         >
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-500/30">
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-500 border border-amber-500/30">
               TMJ BIOMECHANICS
             </span>
-            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-500 font-bold">
+            <span className="text-xs font-mono font-bold text-amber-400">
               KHOẢNG HÁ: {mmOpening} mm
             </span>
           </div>
-          <h2 className="text-sm font-serif font-bold text-current">{TMJ_SPECIMEN_DATA.nameVi}</h2>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 italic mb-2">
-            {tmjJawState <= 0.4
+          <h2 className="text-sm font-bold font-serif text-current">
+            Tiêu Bản Phức Hợp Khớp Thái Dương Hàm (TMJ)
+          </h2>
+          <p className="text-[11px] text-slate-400 mt-0.5">
+            {mmOpening <= 20
               ? 'Thì 1: Xoay lồi cầu thuần túy quanh trục bản lề (Khoang khớp dưới)'
-              : 'Thì 2: Trượt phức hợp lồi cầu - đĩa khớp ra trước xuống dưới (Khoang khớp trên)'}
+              : 'Thì 2: Trượt lồi cầu & đĩa khớp ra trước - xuống dưới qua lồi khớp (Khoang khớp trên)'}
           </p>
 
-          {/* Jaw Motion Mode Switcher */}
-          <div className="flex items-center gap-1">
-            {(
-              [
-                { id: 'opening', label: 'Há Miệng 2 Thì' },
-                { id: 'protrusion', label: 'Đưa Ra Trước' },
-                { id: 'lateral', label: 'Sang Bên (Bennett)' }
-              ] as const
-            ).map((m) => (
-              <button
-                key={m.id}
-                onClick={() => setTmjMotionMode(m.id)}
-                className={`flex-1 py-1 px-1 text-center rounded-lg text-[10px] font-semibold transition cursor-pointer ${
-                  tmjMotionMode === m.id
-                    ? 'bg-amber-600 text-white font-bold shadow-sm'
-                    : isDark
-                    ? 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                    : 'bg-[#ede3d5] text-slate-700 hover:bg-[#dfd4c4]'
-                }`}
-              >
-                {m.label}
-              </button>
-            ))}
+          {/* Mode Selector */}
+          <div className="flex items-center gap-1 mt-2.5">
+            <button
+              onClick={() => setTmjMotionMode('opening')}
+              className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer ${
+                tmjMotionMode === 'opening'
+                  ? 'bg-amber-600 text-white shadow-sm'
+                  : 'bg-black/5 dark:bg-white/5 text-slate-400 hover:text-current'
+              }`}
+            >
+              Há Miệng 2 Thì
+            </button>
+            <button
+              onClick={() => setTmjMotionMode('protrusion')}
+              className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer ${
+                tmjMotionMode === 'protrusion'
+                  ? 'bg-amber-600 text-white shadow-sm'
+                  : 'bg-black/5 dark:bg-white/5 text-slate-400 hover:text-current'
+              }`}
+            >
+              Đưa Ra Trước
+            </button>
+            <button
+              onClick={() => setTmjMotionMode('lateral')}
+              className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer ${
+                tmjMotionMode === 'lateral'
+                  ? 'bg-amber-600 text-white shadow-sm'
+                  : 'bg-black/5 dark:bg-white/5 text-slate-400 hover:text-current'
+              }`}
+            >
+              Sang Bên (Excursion)
+            </button>
           </div>
         </div>
       </div>
 
-      {/* 2. TOP-RIGHT OVERLAY: TMD PATHOLOGY & MUSCLES CONTROLS */}
-      <div className="absolute top-3 right-3 z-20 flex flex-col gap-2 max-w-xs pointer-events-auto">
+      {/* 2. TOP RIGHT CLINICAL PATHOLOGY SELECTOR & 3D SKULL TOGGLE */}
+      <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 pointer-events-auto max-w-xs">
+        {/* Skull Model Context Toggle */}
         <div
-          className={`p-3 rounded-2xl border backdrop-blur-md shadow-2xl transition ${
-            isDark ? 'bg-slate-900/90 border-slate-700/80 text-slate-100' : 'bg-white/95 border-[#e7ded3] text-[#28231d]'
+          className={`p-2.5 rounded-2xl border backdrop-blur-md shadow-xl flex items-center justify-between gap-3 ${
+            isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-[#f7f2ea]/90 border-[#dfd5c6]'
           }`}
         >
-          <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1">
-            <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-            <span>Mô Phỏng Rối Loạn TMD</span>
+          <div className="flex items-center gap-2">
+            <Layers className="w-3.5 h-3.5 text-amber-500" />
+            <span className="text-[11px] font-bold">Mô Hình Xương Sọ 3D</span>
+          </div>
+          <button
+            onClick={() => setShowFullSkull(!showFullSkull)}
+            className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer ${
+              showFullSkull
+                ? 'bg-amber-600 text-white'
+                : 'bg-slate-800 text-slate-400 hover:text-white'
+            }`}
+          >
+            {showFullSkull ? 'ĐANG BẬT' : 'ĐÃ TẮT'}
+          </button>
+        </div>
+
+        {/* Pathology Selector */}
+        <div
+          className={`p-3 rounded-2xl border backdrop-blur-md shadow-xl ${
+            isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-[#f7f2ea]/90 border-[#dfd5c6]'
+          }`}
+        >
+          <div className="flex items-center gap-1.5 text-xs font-bold text-amber-500 mb-2">
+            <AlertTriangle className="w-3.5 h-3.5" />
+            <span>MÔ PHỎNG RỐI LOẠN TMD</span>
           </div>
 
-          {/* Pathology Mode Buttons */}
-          <div className="flex flex-col gap-1 mb-2.5">
+          <div className="space-y-1">
             {[
-              { id: 'normal', label: 'Bình Thường (Khớp Khỏe Mạnh)' },
-              { id: 'tmd_reduction', label: 'Trượt Đĩa CÓ Hồi Phục (Tiếng Click)' },
-              { id: 'tmd_non_reduction', label: 'Trượt Đĩa KHÔNG Hồi Phục (Kẹt Hàm)' },
-              { id: 'tmd_dislocation', label: 'Trật Khớp TDH Cấp (Hở Khớp Cắn)' }
-            ].map((p) => (
-              <button
-                key={p.id}
-                onClick={() => setTmjPathology(p.id as any)}
-                className={`w-full text-left px-2 py-1 rounded-lg text-[10px] transition cursor-pointer flex items-center justify-between ${
-                  tmjPathology === p.id
-                    ? 'bg-amber-600 text-white font-bold shadow-sm'
-                    : isDark
-                    ? 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                    : 'bg-[#ede3d5] text-slate-700 hover:bg-[#dfd4c4]'
-                }`}
-              >
-                <span className="truncate">{p.label}</span>
-                {tmjPathology === p.id && <CheckCircle2 className="w-3 h-3 flex-shrink-0" />}
-              </button>
-            ))}
+              { id: 'normal', name: 'Bình Thường (Khớp Khỏe Mạnh)', icon: CheckCircle2 },
+              { id: 'tmd_reduction', name: 'Trượt Đĩa CÓ Hồi Phục (Tiếng Click)', icon: Volume2 },
+              { id: 'tmd_non_reduction', name: 'Trượt Đĩa KHÔNG Hồi Phục (Kẹt Hàm)', icon: AlertTriangle },
+              { id: 'tmd_dislocation', name: 'Trật Khớp TDH Cấp (Hở Khớp Cắn)', icon: AlertTriangle }
+            ].map((p) => {
+              const Icon = p.icon;
+              const isSelected = tmjPathology === p.id;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => setTmjPathology(p.id as any)}
+                  className={`w-full px-2.5 py-1.5 rounded-xl text-[11px] font-medium transition cursor-pointer flex items-center justify-between text-left ${
+                    isSelected
+                      ? 'bg-amber-500 text-slate-950 font-bold shadow-md'
+                      : isDark
+                      ? 'bg-slate-800/60 text-slate-300 hover:bg-slate-800'
+                      : 'bg-[#ede3d5] text-slate-700 hover:bg-[#dfd4c4]'
+                  }`}
+                >
+                  <span className="truncate">{p.name}</span>
+                  <Icon className="w-3 h-3 flex-shrink-0 ml-1 opacity-80" />
+                </button>
+              );
+            })}
           </div>
 
           {/* 4 Muscles of Mastication Filter */}
-          <div className="pt-2 border-t border-inherit">
+          <div className="pt-2.5 mt-2.5 border-t border-inherit">
             <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 mb-1.5">
               <span>Hệ Thống 4 Cơ Nhai</span>
               <button
@@ -518,14 +596,21 @@ export const TMJSpecimenStage: React.FC = () => {
       {/* 3. 3D WEBGL CANVAS STAGE */}
       <Canvas
         shadows
-        camera={{ position: [0.15, 0.05, 0.12], fov: 36 }}
+        camera={{ position: [0.16, 1.38, 0.12], fov: 32 }}
         gl={{ antialias: true, alpha: true }}
       >
         <ambientLight intensity={1.1} />
-        <directionalLight position={[0.4, 0.8, 0.5]} intensity={2.0} castShadow />
-        <directionalLight position={[-0.4, -0.2, -0.4]} intensity={0.7} />
-        <pointLight position={[0, 0.08, 0.08]} intensity={1.2} />
+        <directionalLight position={[0.4, 1.8, 0.5]} intensity={2.2} castShadow />
+        <directionalLight position={[-0.4, 0.5, -0.4]} intensity={0.9} />
+        <pointLight position={[0.046, 1.39, 0.10]} intensity={1.5} color="#fffef7" />
 
+        {/* Realistic 3D Canonical Skull Context */}
+        <CanonicalSkullTMJContext
+          showSkull={showFullSkull}
+          opacity={skullOpacity}
+        />
+
+        {/* Articulating TMJ Disc & Condyle & Muscles directly in Skull Space */}
         <TMJComplexMesh
           progress={tmjJawState}
           motionMode={tmjMotionMode}
@@ -535,12 +620,13 @@ export const TMJSpecimenStage: React.FC = () => {
           activeMuscleId={tmjActiveMuscleId}
         />
 
+        {/* Orbit Controls centered on Right TMJ */}
         <OrbitControls
           enableDamping
           dampingFactor={0.06}
-          minDistance={0.08}
-          maxDistance={0.35}
-          target={[0, 0.01, 0]}
+          minDistance={0.05}
+          maxDistance={0.5}
+          target={[0.046, 1.366, 0.068]}
         />
       </Canvas>
 

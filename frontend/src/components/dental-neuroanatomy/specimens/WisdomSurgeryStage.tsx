@@ -1,285 +1,397 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Html } from '@react-three/drei';
+import { OrbitControls, useGLTF, Html } from '@react-three/drei';
 import {
-  Scissors,
   AlertTriangle,
-  Activity,
-  Layers,
-  ShieldAlert,
-  ChevronRight,
+  CheckCircle2,
   ChevronLeft,
-  CheckCircle2
+  ChevronRight,
+  ShieldAlert,
+  Activity,
+  Maximize2,
+  Layers
 } from 'lucide-react';
 import { useDentalNeuroStore } from '../../../stores/useDentalNeuroStore';
 import { useAnatomyStore } from '../../../stores/useAnatomyStore';
 import { WISDOM_SURGICAL_DATABASE } from '../../../data/dentalSpecimensData';
+import { createCraniofacialOrganGroup } from '../DentalNeuro3DStage';
 
-// 3D Procedural Mandibular Angle & Impacted 3rd Molar Mesh
-const MandibularAngleSurgeryMesh: React.FC<{
-  toothId: 'tooth_38' | 'tooth_48';
+// ============================================================================
+// 1. CANONICAL 3D SKULL BACKGROUND FOR MANDIBULAR SURGERY
+// ============================================================================
+const CanonicalSkullSurgeryContext: React.FC<{
+  boneOpacity: number;
+  showSkull: boolean;
+}> = ({ boneOpacity, showSkull }) => {
+  const skullGltf = useGLTF('/models/skull.glb');
+
+  const normalizedSkull = useMemo(() => {
+    const group = createCraniofacialOrganGroup(
+      skullGltf.scene,
+      0.205,
+      [0, -Math.PI / 2, 0],
+      [0.0, 1.41, 0.09]
+    );
+
+    // Apply clinical bone transparency
+    group.traverse((child: any) => {
+      if (child.isMesh && child.material) {
+        child.material.transparent = boneOpacity < 0.98;
+        child.material.opacity = boneOpacity;
+        child.material.roughness = 0.65;
+        child.material.metalness = 0.02;
+        child.material.color = new THREE.Color('#f0e8dc');
+        child.material.depthWrite = boneOpacity > 0.7;
+      }
+    });
+
+    return group;
+  }, [skullGltf, boneOpacity]);
+
+  if (!showSkull) return null;
+
+  return <primitive object={normalizedSkull} />;
+};
+
+// ============================================================================
+// 2. SURGICAL SITE MESH: IMPACTED R48, IAN CANAL & 6-STEP SIMULATION
+// ============================================================================
+const MandibularSurgicalSiteMesh: React.FC<{
+  toothId: string;
   winterType: 'mesioangular' | 'horizontal' | 'vertical' | 'distoangular';
   pellClass: 'I' | 'II' | 'III';
   pellPos: 'A' | 'B' | 'C';
   surgicalStep: number;
   showNerves: boolean;
-  boneOpacity: number;
-}> = ({ toothId, winterType, pellClass, pellPos, surgicalStep, showNerves, boneOpacity }) => {
-  const isR48 = toothId === 'tooth_48'; // Right vs Left side
+}> = ({ toothId, winterType, pellClass, pellPos, surgicalStep, showNerves }) => {
+  // Exact coordinate of R48 on canonical skull: [0.034, 1.332, 0.124]
+  const baseR48Pos: [number, number, number] = [0.033, 1.330, 0.122];
 
-  // Calculate tooth tilt and depth according to Winter and Pell-Gregory
-  const toothTransform = useMemo(() => {
-    let angleRad = 0;
-    if (winterType === 'mesioangular') angleRad = Math.PI * 0.25; // 45 deg
-    else if (winterType === 'horizontal') angleRad = Math.PI * 0.50; // 90 deg
-    else if (winterType === 'vertical') angleRad = 0;
-    else if (winterType === 'distoangular') angleRad = -Math.PI * 0.20; // -35 deg
+  // Compute 3D rotation & depth from Winter & Pell-Gregory classifications
+  const { toothRotation, depthOffset, distToCanalMm } = useMemo(() => {
+    let rotX = 0;
+    let rotY = 0;
+    let rotZ = 0;
+    let dY = 0;
+    let dZ = 0;
+    let dist = 2.5;
 
-    // Depth: Pos A (0), Pos B (-0.005), Pos C (-0.012)
-    let depthY = 0;
-    if (pellPos === 'B') depthY = -0.006;
-    else if (pellPos === 'C') depthY = -0.013;
+    // Winter Angulation
+    if (winterType === 'mesioangular') {
+      rotX = 0.65; // Tilted forward towards R47
+      dist = 1.1;  // High risk
+    } else if (winterType === 'horizontal') {
+      rotX = 1.35; // Crown completely horizontal facing R47 root
+      dY = -0.003;
+      dist = 0.5;  // Extreme risk (contacting canal)
+    } else if (winterType === 'distoangular') {
+      rotX = -0.55; // Tilted backwards into ascending ramus
+      dZ = -0.004;
+      dist = 1.8;
+    } else {
+      // vertical
+      rotX = 0.05;
+      dist = 3.2;  // Low risk
+    }
 
-    // Ramus overlap: Class I (0), Class II (-0.004), Class III (-0.009)
-    let ramusOffsetZ = 0;
-    if (pellClass === 'II') ramusOffsetZ = -0.005;
-    else if (pellClass === 'III') ramusOffsetZ = -0.010;
+    // Pell-Gregory Depth Position
+    if (pellPos === 'B') {
+      dY -= 0.003;
+      dist = Math.max(0.4, dist - 0.7);
+    } else if (pellPos === 'C') {
+      dY -= 0.006;
+      dist = Math.max(0.2, dist - 1.4);
+    }
 
-    // Proximity to IAN calculation (simulated distance in mm)
-    let distanceMm = 2.4;
-    if (pellPos === 'B') distanceMm -= 1.0;
-    if (pellPos === 'C') distanceMm -= 1.0;
-    if (winterType === 'horizontal') distanceMm -= 0.6;
-    if (winterType === 'mesioangular') distanceMm -= 0.3;
-    const finalDistanceMm = Math.max(0.2, Math.round(distanceMm * 10) / 10);
+    // Pell-Gregory Ramal Class
+    if (pellClass === 'II') {
+      dZ -= 0.002;
+    } else if (pellClass === 'III') {
+      dZ -= 0.004;
+    }
 
-    return { angleRad, depthY, ramusOffsetZ, finalDistanceMm };
+    return {
+      toothRotation: [rotX, rotY, rotZ] as [number, number, number],
+      depthOffset: [0, dY, dZ] as [number, number, number],
+      distToCanalMm: dist
+    };
   }, [winterType, pellClass, pellPos]);
 
-  // Surgical step visual state
+  // Actual Mandibular Canal & IAN curve through the mandible
+  const ianPoints: [number, number, number][] = [
+    [0.030, 1.350, 0.082], // Lỗ hàm dưới (Mandibular foramen / Spix)
+    [0.031, 1.336, 0.098], // Ramus canal
+    [0.032, 1.322, 0.114], // Posterior canal
+    [0.031, 1.317, 0.126], // Under R48 apex
+    [0.028, 1.315, 0.138], // Under R47 roots
+    [0.024, 1.315, 0.145]  // Lỗ cằm (Mental foramen)
+  ];
+
+  const ianCurve = useMemo(() => {
+    return new THREE.CatmullRomCurve3(ianPoints.map((p) => new THREE.Vector3(...p)));
+  }, []);
+
+  const ianGeometry = useMemo(() => {
+    return new THREE.TubeGeometry(ianCurve, 32, 0.0016, 12, false);
+  }, [ianCurve]);
+
+  // Lingual nerve along medial cortical plate
+  const lingualPoints: [number, number, number][] = [
+    [0.026, 1.355, 0.080],
+    [0.026, 1.340, 0.100],
+    [0.023, 1.330, 0.120],
+    [0.020, 1.322, 0.136]
+  ];
+
+  const lingualCurve = useMemo(() => {
+    return new THREE.CatmullRomCurve3(lingualPoints.map((p) => new THREE.Vector3(...p)));
+  }, []);
+
+  const lingualGeometry = useMemo(() => {
+    return new THREE.TubeGeometry(lingualCurve, 24, 0.0012, 10, false);
+  }, [lingualCurve]);
+
+  // Tooth R48 position with depth offset
+  const r48Pos: [number, number, number] = [
+    baseR48Pos[0] + depthOffset[0],
+    baseR48Pos[1] + depthOffset[1],
+    baseR48Pos[2] + depthOffset[2]
+  ];
+
+  // Apex of R48 root for proximity sensor
+  const r48ApexPos: [number, number, number] = [
+    r48Pos[0],
+    r48Pos[1] - 0.010,
+    r48Pos[2] - 0.003
+  ];
+
+  // Closest IAN canal point beneath R48
+  const canalTargetPos: [number, number, number] = [0.031, 1.317, 0.126];
+
+  // Surgical step states
+  const isAnesthetized = surgicalStep >= 1;
   const isFlapReflected = surgicalStep >= 2;
   const isBoneGuttered = surgicalStep >= 3;
-  const isSectioned = surgicalStep >= 4;
-  const isExtracted = surgicalStep >= 5;
+  const isOdontotomyCut = surgicalStep >= 4;
+  const isToothElevated = surgicalStep >= 5;
   const isSutured = surgicalStep >= 6;
 
-  // Pulse effect for IAN nerve
-  const nervePulseRef = useRef<THREE.Mesh>(null);
-  useFrame(({ clock }) => {
-    if (nervePulseRef.current) {
-      const glow = 0.5 + 0.5 * Math.sin(clock.getElapsedTime() * 4.0);
-      (nervePulseRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = glow;
-    }
-  });
+  // Pulse animation on warning badge
+  const riskColor = distToCanalMm <= 1.0 ? '#ef4444' : distToCanalMm <= 2.0 ? '#f59e0b' : '#10b981';
 
   return (
-    <group position={[0, -0.02, 0]}>
-      {/* 1. KHỐI XƯƠNG HÀM DƯỚI (Mandibular Body & Ramus with Adjustable Opacity) */}
-      <group position={[0, 0, 0]}>
-        {/* Bản ngoài xương hàm dưới (Buccal Cortical Plate) */}
-        <mesh position={[-0.016, -0.02, 0]} receiveShadow>
-          <boxGeometry args={[0.006, 0.08, 0.12]} />
-          <meshStandardMaterial
-            color="#dfd4c4"
-            roughness={0.6}
-            transparent={boneOpacity < 1.0}
-            opacity={boneOpacity}
-          />
-        </mesh>
-
-        {/* Cành lên (Ramus) ở phía sau */}
-        <mesh position={[0, 0.02, -0.045]}>
-          <boxGeometry args={[0.028, 0.09, 0.035]} />
-          <meshStandardMaterial
-            color="#d5c7b3"
-            roughness={0.65}
-            transparent={boneOpacity < 1.0}
-            opacity={boneOpacity}
-          />
-        </mesh>
-
-        {/* Bản xương mặt trong (Lingual Cortical Plate - Mỏng manh, nơi TK Lưỡi chạy qua) */}
-        <mesh position={[0.016, -0.02, 0]}>
-          <boxGeometry args={[0.004, 0.08, 0.12]} />
-          <meshStandardMaterial
-            color="#dfd4c4"
-            roughness={0.6}
-            transparent={boneOpacity < 1.0}
-            opacity={boneOpacity}
-          />
-        </mesh>
-
-        {/* Máng xương phẫu thuật (Ostectomy Bone Gutter Window - Bộc lộ ở bước 3) */}
-        {isBoneGuttered && (
-          <group position={[-0.018, 0.002, -0.005]}>
-            <mesh>
-              <boxGeometry args={[0.004, 0.022, 0.028]} />
-              <meshBasicMaterial color="#1e293b" wireframe />
-            </mesh>
-            <Html position={[0, 0, 0]} center>
-              <div className="px-1.5 py-0.5 rounded bg-amber-500 text-slate-950 text-[8px] font-bold whitespace-nowrap pointer-events-none">
-                Máng xương mở (Guttering)
-              </div>
-            </Html>
-          </group>
-        )}
-      </group>
-
-      {/* 2. RĂNG KẾ CẬN (Răng cối lớn thứ hai R.47/37) */}
-      <group position={[0, 0.015, 0.028]}>
-        {/* Thân răng 7 */}
-        <mesh position={[0, 0.01, 0]}>
-          <boxGeometry args={[0.022, 0.022, 0.024]} />
-          <meshStandardMaterial color="#f8f7f5" roughness={0.2} />
-        </mesh>
-        {/* Chân răng 7 */}
-        <mesh position={[0, -0.025, 0]}>
-          <cylinderGeometry args={[0.009, 0.004, 0.05, 16]} />
-          <meshStandardMaterial color="#e8d5a7" roughness={0.4} />
-        </mesh>
-        <Html position={[0, 0.03, 0]} center>
-          <div className="px-1.5 py-0.5 rounded bg-slate-900/80 border border-white/20 text-slate-200 text-[8px] font-mono whitespace-nowrap pointer-events-none">
-            R.{isR48 ? '47' : '37'} (Răng 7)
-          </div>
-        </Html>
-      </group>
-
-      {/* 3. RĂNG KHÔN NGẦM (Impacted 3rd Molar R.48/38) - Morphed by Winter & Pell-Gregory */}
-      {!isExtracted && (
-        <group
-          position={[0, 0.01 + toothTransform.depthY, -0.005 + toothTransform.ramusOffsetZ]}
-          rotation={[toothTransform.angleRad, 0, 0]}
-        >
-          {/* Thân răng 8 */}
-          <group position={[0, 0.01, 0]}>
-            <mesh>
-              <boxGeometry args={[0.022, 0.022, 0.024]} />
-              <meshStandardMaterial
-                color="#fde047"
-                emissive="#fde047"
-                emissiveIntensity={0.3}
-                roughness={0.25}
-              />
-            </mesh>
-
-            {/* Vết cắt chia thân răng (Odontotomy Sectioning Line - Bước 4) */}
-            {isSectioned && (
-              <mesh position={[0, 0, 0]}>
-                <boxGeometry args={[0.024, 0.024, 0.003]} />
-                <meshBasicMaterial color="#ef4444" wireframe />
-              </mesh>
-            )}
-          </group>
-
-          {/* Chân răng 8 (Uốn cong hướng về phía sau/dưới) */}
-          <mesh position={[0, -0.024, -0.003]} rotation={[-0.1, 0, 0]}>
-            <cylinderGeometry args={[0.009, 0.0035, 0.048, 16]} />
-            <meshStandardMaterial color="#e5d2a0" roughness={0.4} />
-          </mesh>
-
-          {/* Nhãn 3D Răng khôn */}
-          <Html position={[0, 0.025, 0]} center>
-            <div className="px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 text-[9px] font-mono font-black whitespace-nowrap shadow-xl pointer-events-none animate-pulse">
-              R.{isR48 ? '48' : '38'} (Răng Khôn)
-            </div>
-          </Html>
-        </group>
-      )}
-
-      {/* 4. ỐNG HÀM DƯỚI & THẦN KINH HUYỆT RĂNG DƯỚI (IAN Canal & Nerve) */}
+    <group>
+      {/* 1. THẦN KINH RĂNG DƯỚI (IAN) & THẦN KINH LƯỠI */}
       {showNerves && (
-        <group position={[0, -0.052, 0]}>
-          {/* Ống xương hàm dưới (Bony Canal) */}
-          <mesh rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[0.0055, 0.0055, 0.12, 24, 1, true]} />
+        <group>
+          {/* IAN Main Trunk inside Mandibular Canal */}
+          <mesh geometry={ianGeometry}>
             <meshStandardMaterial
-              color="#0f172a"
-              wireframe={false}
-              transparent
-              opacity={0.35}
-              side={THREE.DoubleSide}
-            />
-          </mesh>
-
-          {/* Bó sợi Thần kinh IAN (Màu vàng rực phát quang) */}
-          <mesh ref={nervePulseRef} rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[0.0028, 0.0028, 0.12, 16]} />
-            <meshStandardMaterial
-              color="#eab308"
+              color="#f59e0b"
               emissive="#f59e0b"
               emissiveIntensity={0.8}
               roughness={0.3}
             />
           </mesh>
 
-          {/* Đường đo khoảng cách an toàn 3D (Distance line between Root & IAN) */}
-          {!isExtracted && (
-            <group position={[0, 0.015, 0]}>
-              <mesh>
-                <cylinderGeometry args={[0.0008, 0.0008, 0.024, 8]} />
-                <meshBasicMaterial
-                  color={
-                    toothTransform.finalDistanceMm <= 1.0
-                      ? '#ef4444'
-                      : toothTransform.finalDistanceMm <= 2.0
-                      ? '#f59e0b'
-                      : '#10b981'
-                  }
-                />
-              </mesh>
-              <Html position={[0.02, 0.005, 0]} center>
-                <div
-                  className={`px-2 py-0.5 rounded text-[8px] font-mono font-black whitespace-nowrap shadow-lg ${
-                    toothTransform.finalDistanceMm <= 1.0
-                      ? 'bg-rose-600 text-white animate-bounce'
-                      : toothTransform.finalDistanceMm <= 2.0
-                      ? 'bg-amber-500 text-slate-950'
-                      : 'bg-emerald-600 text-white'
-                  }`}
-                >
-                  Khoảng cách IAN: {toothTransform.finalDistanceMm} mm
-                </div>
-              </Html>
-            </group>
-          )}
-
-          <Html position={[0, -0.01, 0.03]} center>
-            <div className="px-2 py-0.5 rounded bg-amber-950/80 border border-amber-400/40 text-amber-300 text-[8px] font-mono font-bold whitespace-nowrap pointer-events-none">
-              Thần kinh IAN (Ống răng dưới)
-            </div>
-          </Html>
-        </group>
-      )}
-
-      {/* 5. THẦN KINH LƯỠI (Lingual Nerve) CHẠY SÁT BẢN XƯƠNG TRONG */}
-      {showNerves && (
-        <group position={[0.019, -0.015, 0.01]}>
-          <mesh rotation={[0.2, 0, 0.15]}>
-            <cylinderGeometry args={[0.0022, 0.0022, 0.09, 16]} />
+          {/* Lingual Nerve running medially */}
+          <mesh geometry={lingualGeometry}>
             <meshStandardMaterial
-              color="#f97316"
-              emissive="#ea580c"
+              color="#fb7185"
+              emissive="#e11d48"
               emissiveIntensity={0.6}
+              roughness={0.4}
             />
           </mesh>
-          <Html position={[0.01, 0, 0]} center>
-            <div className="px-1.5 py-0.5 rounded bg-rose-950/85 border border-rose-400/40 text-rose-300 text-[8px] font-mono font-bold whitespace-nowrap pointer-events-none">
-              TK Lưỡi (Lingual N. &lt; 1.5mm)
+
+          {/* IAN Foramen & Exit Labels */}
+          <Html position={[0.030, 1.353, 0.082]} center>
+            <div className="px-1.5 py-0.5 rounded bg-amber-950/90 border border-amber-500/50 text-amber-300 text-[7px] font-mono whitespace-nowrap pointer-events-none shadow-lg">
+              Lỗ hàm dưới (Spix)
+            </div>
+          </Html>
+
+          <Html position={[0.024, 1.312, 0.147]} center>
+            <div className="px-1.5 py-0.5 rounded bg-amber-950/90 border border-amber-500/50 text-amber-300 text-[7px] font-mono whitespace-nowrap pointer-events-none shadow-lg">
+              Lỗ cằm (Mental Foramen)
+            </div>
+          </Html>
+
+          <Html position={[0.022, 1.332, 0.120]} center>
+            <div className="px-1.5 py-0.5 rounded bg-rose-950/90 border border-rose-500/50 text-rose-300 text-[7px] font-mono whitespace-nowrap pointer-events-none shadow-lg">
+              TK Lưỡi (Lingual N.)
             </div>
           </Html>
         </group>
       )}
 
-      {/* 6. VẠT PHẪU THUẬT & ĐƯỜNG KHÂU (Suture lines at Step 6) */}
+      {/* 2. THƯỚC ĐO KHOẢNG CÁCH 3D (REAL-TIME PROXIMITY LINE) */}
+      <group>
+        {/* Measurement dashed line */}
+        <line>
+          <bufferGeometry>
+            <bufferAttribute
+              attach="attributes-position"
+              count={2}
+              array={new Float32Array([...r48ApexPos, ...canalTargetPos])}
+              itemSize={3}
+            />
+          </bufferGeometry>
+          <lineDashedMaterial
+            color={riskColor}
+            dashSize={0.002}
+            gapSize={0.001}
+            linewidth={2}
+          />
+        </line>
+
+        {/* Live Distance Floating Indicator */}
+        <Html
+          position={[
+            (r48ApexPos[0] + canalTargetPos[0]) / 2 + 0.008,
+            (r48ApexPos[1] + canalTargetPos[1]) / 2,
+            (r48ApexPos[2] + canalTargetPos[2]) / 2
+          ]}
+          center
+        >
+          <div
+            className="px-2 py-0.5 rounded-full border text-[8px] font-black tracking-wider flex items-center gap-1 shadow-2xl pointer-events-none whitespace-nowrap animate-pulse"
+            style={{
+              backgroundColor: distToCanalMm <= 1.0 ? '#7f1d1d' : '#451a03',
+              borderColor: riskColor,
+              color: riskColor
+            }}
+          >
+            <Activity className="w-2.5 h-2.5" />
+            <span>K/c IAN: {distToCanalMm.toFixed(1)} mm</span>
+          </div>
+        </Html>
+      </group>
+
+      {/* 3. RĂNG KHÔN NGẦM R.48 (IMPACTED TOOTH WITH WINTER MORPHING) */}
+      {!isToothElevated && (
+        <group position={r48Pos} rotation={toothRotation}>
+          {/* Thân răng (Crown) */}
+          <mesh castShadow position={[0, 0.004, 0]}>
+            <boxGeometry args={[0.008, 0.007, 0.008]} />
+            <meshStandardMaterial
+              color="#fbbf24"
+              emissive="#f59e0b"
+              emissiveIntensity={0.25}
+              roughness={0.25}
+            />
+          </mesh>
+
+          {/* Chân răng (Roots: Mesial & Distal) */}
+          <mesh position={[-0.002, -0.005, 0.002]}>
+            <coneGeometry args={[0.0022, 0.010, 12]} />
+            <meshStandardMaterial color="#fef08a" roughness={0.4} />
+          </mesh>
+          <mesh position={[0.002, -0.005, -0.002]}>
+            <coneGeometry args={[0.0022, 0.010, 12]} />
+            <meshStandardMaterial color="#fef08a" roughness={0.4} />
+          </mesh>
+
+          {/* Odontotomy sectioning cut plane at Step 4 */}
+          {isOdontotomyCut && (
+            <mesh position={[0, 0.002, 0]} rotation={[0, 0, Math.PI / 4]}>
+              <boxGeometry args={[0.011, 0.0006, 0.011]} />
+              <meshBasicMaterial color="#ef4444" wireframe />
+            </mesh>
+          )}
+
+          {/* R48 Label Badge */}
+          <Html position={[0, 0.010, 0]} center>
+            <div className="px-1.5 py-0.5 rounded bg-amber-500 text-slate-950 font-bold text-[8px] font-mono whitespace-nowrap shadow-md pointer-events-none">
+              R.48 (Răng Khôn)
+            </div>
+          </Html>
+        </group>
+      )}
+
+      {/* Răng đã bẩy rời (Elevated Tooth fragment at Step 5) */}
+      {isToothElevated && !isSutured && (
+        <group position={[r48Pos[0] + 0.012, r48Pos[1] + 0.018, r48Pos[2] + 0.008]}>
+          <mesh>
+            <boxGeometry args={[0.007, 0.006, 0.007]} />
+            <meshStandardMaterial color="#fbbf24" roughness={0.3} />
+          </mesh>
+          <Html position={[0, 0.008, 0]} center>
+            <div className="px-1.5 py-0.5 rounded bg-emerald-500 text-slate-950 font-bold text-[8px] font-mono whitespace-nowrap shadow-md pointer-events-none">
+              Đã bẩy rời khỏi ổ răng
+            </div>
+          </Html>
+        </group>
+      )}
+
+      {/* 4. GÂY TÊ VÙNG SPIX (Anesthesia Depot at Step 1) */}
+      {isAnesthetized && (
+        <group position={[0.030, 1.350, 0.082]}>
+          {/* Kim gây tê (27G Dental Needle) */}
+          <mesh position={[0.008, 0.012, -0.012]} rotation={[-0.8, 0.5, 0.2]}>
+            <cylinderGeometry args={[0.0003, 0.0003, 0.028, 8]} />
+            <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.1} />
+          </mesh>
+          {/* Quầng thuốc tê phát quang (Anesthetic Depot) */}
+          <mesh>
+            <sphereGeometry args={[0.006, 16, 16]} />
+            <meshStandardMaterial
+              color="#06b6d4"
+              emissive="#06b6d4"
+              emissiveIntensity={0.8}
+              transparent
+              opacity={0.5}
+            />
+          </mesh>
+        </group>
+      )}
+
+      {/* 5. ĐƯỜNG RẠCH VẠT & MỞ XƯƠNG (Flap Incision & Bone Window at Steps 2 & 3) */}
+      {isFlapReflected && (
+        <group position={[0.035, 1.334, 0.126]}>
+          {/* Đường rạch vạt bám rãnh lợi & giảm căng */}
+          <mesh rotation={[0, 0.5, 0]}>
+            <boxGeometry args={[0.0008, 0.008, 0.018]} />
+            <meshBasicMaterial color="#ef4444" />
+          </mesh>
+          <Html position={[0.004, 0.006, 0]} center>
+            <div className="px-1.5 py-0.5 rounded bg-rose-950/90 border border-rose-500/50 text-rose-300 text-[7px] font-mono whitespace-nowrap pointer-events-none">
+              Đường rạch vạt màng xương
+            </div>
+          </Html>
+        </group>
+      )}
+
+      {isBoneGuttered && (
+        <group position={[0.036, 1.332, 0.122]}>
+          {/* Cửa sổ mở xương trên bản xương ngoài (Bone Guttering Window) */}
+          <mesh rotation={[0, 0.3, 0]}>
+            <boxGeometry args={[0.003, 0.009, 0.012]} />
+            <meshStandardMaterial
+              color="#0284c7"
+              wireframe
+              emissive="#0284c7"
+              emissiveIntensity={0.8}
+            />
+          </mesh>
+          <Html position={[0.004, -0.006, 0]} center>
+            <div className="px-1.5 py-0.5 rounded bg-sky-950/90 border border-sky-500/50 text-sky-200 text-[7px] font-mono whitespace-nowrap pointer-events-none">
+              Cửa sổ mở xương (Bone Guttering)
+            </div>
+          </Html>
+        </group>
+      )}
+
+      {/* 6. VẠT PHẪU THUẬT & ĐƯỜNG KHÂU (Vicryl Suture Lines at Step 6) */}
       {isSutured && (
-        <group position={[0, 0.026, -0.005]}>
+        <group position={[0.035, 1.336, 0.124]}>
           <mesh rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.001, 0.001, 0.035, 8]} />
+            <cylinderGeometry args={[0.0008, 0.0008, 0.016, 8]} />
             <meshBasicMaterial color="#0284c7" />
           </mesh>
-          <Html position={[0, 0.01, 0]} center>
-            <div className="px-2 py-0.5 rounded bg-sky-900 border border-sky-400 text-sky-200 text-[8px] font-mono whitespace-nowrap pointer-events-none">
+          <Html position={[0, 0.006, 0]} center>
+            <div className="px-2 py-0.5 rounded bg-sky-900 border border-sky-400 text-sky-200 text-[8px] font-mono whitespace-nowrap pointer-events-none shadow-lg">
               Đường khâu vạt kín (Vicryl 4-0)
             </div>
           </Html>
@@ -289,60 +401,70 @@ const MandibularAngleSurgeryMesh: React.FC<{
   );
 };
 
+// ============================================================================
+// 3. MAIN COMPONENT: WISDOM SURGERY STAGE
+// ============================================================================
 export const WisdomSurgeryStage: React.FC = () => {
-  const wisdomToothId = useDentalNeuroStore((s) => s.wisdomToothId);
-  const setWisdomToothId = useDentalNeuroStore((s) => s.setWisdomToothId);
-  const wisdomWinterType = useDentalNeuroStore((s) => s.wisdomWinterType);
-  const setWisdomWinterType = useDentalNeuroStore((s) => s.setWisdomWinterType);
-  const wisdomPellGregoryClass = useDentalNeuroStore((s) => s.wisdomPellGregoryClass);
-  const setWisdomPellGregoryClass = useDentalNeuroStore((s) => s.setWisdomPellGregoryClass);
-  const wisdomPellGregoryPos = useDentalNeuroStore((s) => s.wisdomPellGregoryPos);
-  const setWisdomPellGregoryPos = useDentalNeuroStore((s) => s.setWisdomPellGregoryPos);
-  const wisdomSurgicalStep = useDentalNeuroStore((s) => s.wisdomSurgicalStep);
-  const setWisdomSurgicalStep = useDentalNeuroStore((s) => s.setWisdomSurgicalStep);
-  const wisdomShowNerves = useDentalNeuroStore((s) => s.wisdomShowNerves);
-  const setWisdomShowNerves = useDentalNeuroStore((s) => s.setWisdomShowNerves);
-  const wisdomBoneOpacity = useDentalNeuroStore((s) => s.wisdomBoneOpacity);
-  const setWisdomBoneOpacity = useDentalNeuroStore((s) => s.setWisdomBoneOpacity);
-
   const atelierTheme = useAnatomyStore((s) => s.atelierTheme);
   const isDark = atelierTheme === 'dark';
+
+  const [showFullSkull, setShowFullSkull] = useState(true);
+
+  const wisdomToothId = useDentalNeuroStore((s) => s.wisdomToothId);
+  const setWisdomToothId = useDentalNeuroStore((s) => s.setWisdomToothId);
+
+  const wisdomWinterType = useDentalNeuroStore((s) => s.wisdomWinterType);
+  const setWisdomWinterType = useDentalNeuroStore((s) => s.setWisdomWinterType);
+
+  const wisdomPellGregoryClass = useDentalNeuroStore((s) => s.wisdomPellGregoryClass);
+  const setWisdomPellGregoryClass = useDentalNeuroStore((s) => s.setWisdomPellGregoryClass);
+
+  const wisdomPellGregoryPos = useDentalNeuroStore((s) => s.wisdomPellGregoryPos);
+  const setWisdomPellGregoryPos = useDentalNeuroStore((s) => s.setWisdomPellGregoryPos);
+
+  const wisdomSurgicalStep = useDentalNeuroStore((s) => s.wisdomSurgicalStep);
+  const setWisdomSurgicalStep = useDentalNeuroStore((s) => s.setWisdomSurgicalStep);
+
+  const wisdomShowNerves = useDentalNeuroStore((s) => s.wisdomShowNerves);
+  const setWisdomShowNerves = useDentalNeuroStore((s) => s.setWisdomShowNerves);
+
+  const wisdomBoneOpacity = useDentalNeuroStore((s) => s.wisdomBoneOpacity);
+  const setWisdomBoneOpacity = useDentalNeuroStore((s) => s.setWisdomBoneOpacity);
 
   const currentStep =
     WISDOM_SURGICAL_DATABASE.surgicalSteps.find((s) => s.stepNumber === wisdomSurgicalStep) ||
     WISDOM_SURGICAL_DATABASE.surgicalSteps[0];
 
-  const currentWinter =
+  const currentWinterInfo =
     WISDOM_SURGICAL_DATABASE.winterTypes.find((w) => w.id === wisdomWinterType) ||
     WISDOM_SURGICAL_DATABASE.winterTypes[0];
 
   return (
-    <div className="relative w-full h-full overflow-hidden select-none">
-      {/* 1. TOP-LEFT OVERLAY: WINTER & PELL-GREGORY CLASSIFIER */}
-      <div className="absolute top-3 left-3 z-20 flex flex-col gap-2 max-w-sm pointer-events-auto">
+    <div className="relative w-full h-full select-none overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+      {/* 1. TOP LEFT SURGICAL PARAMETERS & MORPHING CONTROLS */}
+      <div className="absolute top-4 left-4 z-20 flex flex-col gap-2 pointer-events-auto max-w-sm">
         <div
-          className={`p-3 rounded-2xl border backdrop-blur-md shadow-2xl transition ${
-            isDark ? 'bg-slate-900/90 border-slate-700/80 text-slate-100' : 'bg-white/95 border-[#e7ded3] text-[#28231d]'
+          className={`p-3 rounded-2xl border backdrop-blur-md shadow-xl ${
+            isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-[#f7f2ea]/90 border-[#dfd5c6]'
           }`}
         >
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30">
+          <div className="flex items-center justify-between mb-2">
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-500 border border-amber-500/30">
               PHẪU THUẬT RĂNG KHÔN
             </span>
-            {/* Tooth Switcher (R48 vs R38) */}
-            <div className="flex items-center gap-1 p-0.5 rounded-lg bg-black/5 dark:bg-white/5 border border-inherit">
+            <div className="flex items-center gap-1">
               <button
                 onClick={() => setWisdomToothId('tooth_48')}
-                className={`px-1.5 py-0.5 rounded text-[10px] font-bold transition cursor-pointer ${
-                  wisdomToothId === 'tooth_48' ? 'bg-amber-600 text-white' : 'text-slate-500'
+                className={`px-2 py-0.5 rounded text-[10px] font-bold transition cursor-pointer ${
+                  wisdomToothId === 'tooth_48' ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-400'
                 }`}
               >
                 R.48 (Phải)
               </button>
               <button
                 onClick={() => setWisdomToothId('tooth_38')}
-                className={`px-1.5 py-0.5 rounded text-[10px] font-bold transition cursor-pointer ${
-                  wisdomToothId === 'tooth_38' ? 'bg-amber-600 text-white' : 'text-slate-500'
+                className={`px-2 py-0.5 rounded text-[10px] font-bold transition cursor-pointer ${
+                  wisdomToothId === 'tooth_38' ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-400'
                 }`}
               >
                 R.38 (Trái)
@@ -350,66 +472,62 @@ export const WisdomSurgeryStage: React.FC = () => {
             </div>
           </div>
 
-          <div className="text-[11px] font-mono text-slate-400 mb-1 flex items-center justify-between">
-            <span>Phân loại Winter:</span>
-            <span className="font-bold text-amber-500">Độ khó: {currentWinter.surgicalDifficulty}</span>
+          {/* Phân loại Winter */}
+          <div className="mb-2">
+            <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 mb-1">
+              <span>Phân loại Winter:</span>
+              <span className="text-amber-400 font-bold">Độ khó: {currentWinterInfo.surgicalDifficulty}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-1">
+              {WISDOM_SURGICAL_DATABASE.winterTypes.map((w) => (
+                <button
+                  key={w.id}
+                  onClick={() => setWisdomWinterType(w.id as any)}
+                  className={`px-2 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer truncate ${
+                    wisdomWinterType === w.id
+                      ? 'bg-amber-600 text-white shadow-sm'
+                      : 'bg-black/5 dark:bg-white/5 text-slate-400 hover:text-current'
+                  }`}
+                >
+                  {w.labelVi}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Winter Angulation Buttons */}
-          <div className="grid grid-cols-2 gap-1 mb-2.5">
-            {WISDOM_SURGICAL_DATABASE.winterTypes.map((w) => (
-              <button
-                key={w.id}
-                onClick={() => setWisdomWinterType(w.id)}
-                className={`px-2 py-1 rounded-lg text-[10px] transition cursor-pointer text-left truncate ${
-                  wisdomWinterType === w.id
-                    ? 'bg-amber-600 text-white font-bold shadow-sm'
-                    : isDark
-                    ? 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                    : 'bg-[#ede3d5] text-slate-700 hover:bg-[#dfd4c4]'
-                }`}
-                title={w.notesVi}
-              >
-                {w.labelVi}
-              </button>
-            ))}
-          </div>
-
-          {/* Pell & Gregory: Class & Position Selectors */}
-          <div className="flex items-center gap-2 pt-2 border-t border-inherit">
-            <div className="flex-1">
-              <div className="text-[9px] font-mono text-slate-400 mb-0.5">Cành lên:</div>
-              <div className="flex items-center gap-1">
+          {/* Phân loại Pell-Gregory */}
+          <div>
+            <div className="text-[10px] font-mono text-slate-400 mb-1">
+              Phân loại Pell-Gregory (Tương quan Cành lên & Mặt phẳng nhai):
+            </div>
+            <div className="grid grid-cols-2 gap-1">
+              {/* Class I, II, III */}
+              <div className="flex rounded-lg bg-black/5 dark:bg-white/5 p-0.5">
                 {(['I', 'II', 'III'] as const).map((c) => (
                   <button
                     key={c}
                     onClick={() => setWisdomPellGregoryClass(c)}
-                    className={`flex-1 py-0.5 rounded text-[10px] font-bold transition cursor-pointer ${
+                    className={`flex-1 py-0.5 text-[9px] font-bold rounded transition cursor-pointer ${
                       wisdomPellGregoryClass === c
-                        ? 'bg-amber-600 text-white shadow-sm'
-                        : isDark
-                        ? 'bg-slate-800 text-slate-400'
-                        : 'bg-[#ede3d5] text-slate-600'
+                        ? 'bg-amber-600 text-white'
+                        : 'text-slate-400 hover:text-current'
                     }`}
                   >
                     Class {c}
                   </button>
                 ))}
               </div>
-            </div>
-            <div className="flex-1">
-              <div className="text-[9px] font-mono text-slate-400 mb-0.5">Độ sâu:</div>
-              <div className="flex items-center gap-1">
+
+              {/* Position A, B, C */}
+              <div className="flex rounded-lg bg-black/5 dark:bg-white/5 p-0.5">
                 {(['A', 'B', 'C'] as const).map((p) => (
                   <button
                     key={p}
                     onClick={() => setWisdomPellGregoryPos(p)}
-                    className={`flex-1 py-0.5 rounded text-[10px] font-bold transition cursor-pointer ${
+                    className={`flex-1 py-0.5 text-[9px] font-bold rounded transition cursor-pointer ${
                       wisdomPellGregoryPos === p
-                        ? 'bg-amber-600 text-white shadow-sm'
-                        : isDark
-                        ? 'bg-slate-800 text-slate-400'
-                        : 'bg-[#ede3d5] text-slate-600'
+                        ? 'bg-amber-600 text-white'
+                        : 'text-slate-400 hover:text-current'
                     }`}
                   >
                     Vị trí {p}
@@ -421,22 +539,46 @@ export const WisdomSurgeryStage: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. TOP-RIGHT OVERLAY: NERVE SAFETY METER & X-RAY RISKS */}
-      <div className="absolute top-3 right-3 z-20 flex flex-col gap-2 max-w-xs pointer-events-auto">
+      {/* 2. TOP RIGHT NERVE SAFETY & BONE TRANSPARENCY CONTROLS */}
+      <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 pointer-events-auto max-w-xs">
+        {/* Skull Model Context Toggle */}
         <div
-          className={`p-3 rounded-2xl border backdrop-blur-md shadow-2xl transition ${
-            isDark ? 'bg-slate-900/90 border-slate-700/80 text-slate-100' : 'bg-white/95 border-[#e7ded3] text-[#28231d]'
+          className={`p-2.5 rounded-2xl border backdrop-blur-md shadow-xl flex items-center justify-between gap-3 ${
+            isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-[#f7f2ea]/90 border-[#dfd5c6]'
           }`}
         >
-          <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-rose-500 mb-1 flex items-center gap-1">
+          <div className="flex items-center gap-2">
+            <Layers className="w-3.5 h-3.5 text-amber-500" />
+            <span className="text-[11px] font-bold">Mô Hình Xương Hàm 3D</span>
+          </div>
+          <button
+            onClick={() => setShowFullSkull(!showFullSkull)}
+            className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer ${
+              showFullSkull
+                ? 'bg-amber-600 text-white'
+                : 'bg-slate-800 text-slate-400 hover:text-white'
+            }`}
+          >
+            {showFullSkull ? 'ĐANG BẬT' : 'ĐÃ TẮT'}
+          </button>
+        </div>
+
+        {/* Bone Transparency & Proximity Controls */}
+        <div
+          className={`p-3 rounded-2xl border backdrop-blur-md shadow-xl ${
+            isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-[#f7f2ea]/90 border-[#dfd5c6]'
+          }`}
+        >
+          <div className="flex items-center gap-1.5 text-xs font-bold text-rose-400 mb-2">
             <ShieldAlert className="w-3.5 h-3.5" />
-            <span>Thước Đo Rủi Ro Thần Kinh (IAN)</span>
+            <span>THƯỚC ĐO RỦI RO THẦN KINH (IAN)</span>
           </div>
 
+          {/* Bone Opacity Slider */}
           <div className="space-y-1 mb-2.5">
             <div className="flex items-center justify-between text-[10px]">
-              <span className="text-slate-500">Độ Trong Suốt Xương:</span>
-              <span className="font-mono font-bold text-amber-500">
+              <span className="text-slate-400">Độ Trong Suốt Xương:</span>
+              <span className="font-mono font-bold text-amber-400">
                 {Math.round(wisdomBoneOpacity * 100)}%
               </span>
             </div>
@@ -473,30 +615,37 @@ export const WisdomSurgeryStage: React.FC = () => {
       {/* 3. 3D WEBGL CANVAS STAGE */}
       <Canvas
         shadows
-        camera={{ position: [0.14, 0.06, 0.12], fov: 36 }}
+        camera={{ position: [0.10, 1.355, 0.17], fov: 32 }}
         gl={{ antialias: true, alpha: true }}
       >
         <ambientLight intensity={1.1} />
-        <directionalLight position={[0.5, 0.8, 0.5]} intensity={2.0} castShadow />
-        <directionalLight position={[-0.5, -0.2, -0.4]} intensity={0.8} />
-        <pointLight position={[0, 0.08, 0.08]} intensity={1.2} />
+        <directionalLight position={[0.4, 1.8, 0.5]} intensity={2.2} castShadow />
+        <directionalLight position={[-0.4, 0.5, -0.4]} intensity={0.9} />
+        <pointLight position={[0.034, 1.35, 0.15]} intensity={1.5} color="#fffef7" />
 
-        <MandibularAngleSurgeryMesh
+        {/* Real Canonical 3D Skull / Mandible Context */}
+        <CanonicalSkullSurgeryContext
+          showSkull={showFullSkull}
+          boneOpacity={wisdomBoneOpacity}
+        />
+
+        {/* Surgical Site: Impacted R48, IAN Tube, Proximity Line, 6 Steps */}
+        <MandibularSurgicalSiteMesh
           toothId={wisdomToothId}
           winterType={wisdomWinterType}
           pellClass={wisdomPellGregoryClass}
           pellPos={wisdomPellGregoryPos}
           surgicalStep={wisdomSurgicalStep}
           showNerves={wisdomShowNerves}
-          boneOpacity={wisdomBoneOpacity}
         />
 
+        {/* Focused on Right Posterior Mandible R48 */}
         <OrbitControls
           enableDamping
           dampingFactor={0.06}
-          minDistance={0.08}
-          maxDistance={0.35}
-          target={[0, 0, 0]}
+          minDistance={0.04}
+          maxDistance={0.4}
+          target={[0.034, 1.328, 0.126]}
         />
       </Canvas>
 
