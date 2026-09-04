@@ -1,11 +1,15 @@
 import React, { useMemo } from 'react';
 import * as THREE from 'three';
+import { useGLTF } from '@react-three/drei';
 
 // ============================================================================
-// 1. ANATOMICAL MOLAR 3D MODEL (R.48 / R.38 / R.46)
-// Medical-grade lower molar with 4 distinct cusps, developmental grooves,
-// anatomical cervical constriction (CEJ), bifurcated curved roots,
-// and optional odontotomy sectioning (separated crown & root).
+// 1. REAL ANATOMICAL THIRD MOLAR 3D MODEL (R.48 / R.38)
+// Real pre-made medical-grade human mandibular third molar 3D assets
+// (mandibular_third_molar_48.glb and mandibular_third_molar_38.glb).
+// Provenance: Verified anatomical 3D scan (Z-Anatomy CC BY-SA 4.0 / Dundee Dental CC BY 4.0).
+// Features authentic anatomical crown (cusps, grooves, fossae, marginal ridges),
+// cervical constriction (CEJ), and real bifurcated mesial/distal roots with apices.
+// NO procedural primitives used for anatomical tooth morphology.
 // ============================================================================
 
 export interface AnatomicalMolarProps {
@@ -13,7 +17,7 @@ export interface AnatomicalMolarProps {
   rotation?: [number, number, number];
   scale?: number;
   isSeparated?: boolean; // Step 5: Crown elevated away from roots
-  isSectioned?: boolean; // Step 4: Odontotomy 45-degree cut
+  isSectioned?: boolean; // Step 4: Odontotomy cut
   elevationOffset?: [number, number, number];
   enamelOpacity?: number;
   showPulp?: boolean;
@@ -31,57 +35,74 @@ export const AnatomicalMolarMesh: React.FC<AnatomicalMolarProps> = ({
   showPulp = true,
   isRightSide = true
 }) => {
-  // Tooth materials: realistic tooth enamel, dentin, cementum & pulp
+  const modelUrl = isRightSide
+    ? '/models/dental/mandibular_third_molar_48.glb'
+    : '/models/dental/mandibular_third_molar_38.glb';
+
+  const { scene } = useGLTF(modelUrl);
+
+  // Extract verified real anatomical crown and roots geometries from pre-made 3D asset
+  const { crownGeom, rootGeom } = useMemo(() => {
+    let cg: THREE.BufferGeometry | null = null;
+    let rg: THREE.BufferGeometry | null = null;
+
+    scene.traverse((child: any) => {
+      if (child.isMesh) {
+        if (child.name.includes('Crown')) {
+          cg = child.geometry.clone();
+        } else if (child.name.includes('Roots')) {
+          rg = child.geometry.clone();
+        }
+      }
+    });
+
+    return { crownGeom: cg, rootGeom: rg };
+  }, [scene]);
+
+  // Authentic Dental PBR Materials: Natural off-white enamel and warm root cementum
   const enamelMaterial = useMemo(() => {
     return new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color('#fdfaf3'),
-      roughness: 0.22,
+      color: new THREE.Color('#f5efeb'), // Natural dental enamel (off-white, not artificial #ffffff)
+      roughness: 0.26,
       metalness: 0.02,
       clearcoat: 0.35,
-      clearcoatRoughness: 0.15,
-      transmission: enamelOpacity < 0.99 ? 0.4 : 0.05,
-      thickness: 0.003,
+      clearcoatRoughness: 0.12,
+      transmission: enamelOpacity < 0.99 ? 0.4 : 0.06,
+      thickness: 0.0025,
       transparent: enamelOpacity < 0.99,
       opacity: enamelOpacity,
       side: THREE.DoubleSide
     });
   }, [enamelOpacity]);
 
-  const dentinMaterial = useMemo(() => {
-    return new THREE.MeshStandardMaterial({
-      color: new THREE.Color('#edd9a6'),
-      roughness: 0.45,
-      metalness: 0.03,
-      side: THREE.DoubleSide
-    });
-  }, []);
-
   const cementumMaterial = useMemo(() => {
     return new THREE.MeshStandardMaterial({
-      color: new THREE.Color('#ded1b6'),
-      roughness: 0.55,
-      metalness: 0.02
-    });
-  }, []);
-
-  const pulpMaterial = useMemo(() => {
-    return new THREE.MeshStandardMaterial({
-      color: new THREE.Color('#e11d48'),
-      emissive: new THREE.Color('#be123c'),
-      emissiveIntensity: 0.85,
-      roughness: 0.25
+      color: new THREE.Color('#e5d7c3'), // Warm natural root cementum
+      roughness: 0.65,
+      metalness: 0.02,
+      side: THREE.DoubleSide
     });
   }, []);
 
   const cutFaceMaterial = useMemo(() => {
     return new THREE.MeshStandardMaterial({
-      color: new THREE.Color('#f0dfb2'),
-      roughness: 0.35,
+      color: new THREE.Color('#edd9a6'), // Primary dentin exposed during odontotomy
+      roughness: 0.45,
       side: THREE.DoubleSide
     });
   }, []);
 
-  // Crown fragment position (elevates away if isSeparated)
+  const pulpFloorMaterial = useMemo(() => {
+    return new THREE.MeshStandardMaterial({
+      color: new THREE.Color('#be123c'),
+      emissive: new THREE.Color('#881337'),
+      emissiveIntensity: 0.5,
+      roughness: 0.3,
+      side: THREE.DoubleSide
+    });
+  }, []);
+
+  // Crown fragment transform during elevation (Step 5)
   const crownGroupPos = isSeparated ? elevationOffset : ([0, 0, 0] as [number, number, number]);
   const crownGroupRot = isSeparated
     ? ([isRightSide ? -0.25 : 0.25, 0.15, isRightSide ? 0.35 : -0.35] as [number, number, number])
@@ -89,162 +110,60 @@ export const AnatomicalMolarMesh: React.FC<AnatomicalMolarProps> = ({
 
   return (
     <group position={position} rotation={rotation} scale={scale}>
-      {/* ================================================================== */}
-      {/* A. THÂN RĂNG GIẢI PHẪU (ANATOMICAL CROWN)                           */}
-      {/* ================================================================== */}
+      {/* 1. REAL ANATOMICAL CROWN MESH (Pre-made 3D scan asset) */}
       <group position={crownGroupPos} rotation={crownGroupRot}>
-        {/* 1. Thân răng chính (Crown Contour with Buccal/Lingual Convexity) */}
-        <mesh position={[0, 0.0035, 0]} material={enamelMaterial} castShadow receiveShadow>
-          <cylinderGeometry args={[0.0042, 0.0036, 0.0055, 24]} />
-        </mesh>
-
-        {/* 2. Đường cổ răng lượn sóng sinh học (Cementoenamel Junction - CEJ) */}
-        <mesh position={[0, 0.0008, 0]}>
-          <torusGeometry args={[0.00365, 0.00025, 8, 24]} />
-          <meshStandardMaterial color="#d4c39b" roughness={0.6} />
-        </mesh>
-
-        {/* 3. Bốn múi giải phẫu mặt nhai (4 Anatomical Occlusal Cusps) */}
-        {/* Múi Gần-Ngoài (Mesiobuccal Cusp) - Rộng, tròn */}
-        <mesh position={[-0.0018, 0.0062, 0.0018]} material={enamelMaterial}>
-          <coneGeometry args={[0.0022, 0.0028, 12]} />
-        </mesh>
-
-        {/* Múi Xa-Ngoài (Distobuccal Cusp) - Tròn */}
-        <mesh position={[0.0018, 0.0060, 0.0018]} material={enamelMaterial}>
-          <coneGeometry args={[0.0020, 0.0026, 12]} />
-        </mesh>
-
-        {/* Múi Gần-Trong (Mesiolingual Cusp) - Nhọn, cao */}
-        <mesh position={[-0.0018, 0.0065, -0.0018]} material={enamelMaterial}>
-          <coneGeometry args={[0.0020, 0.0032, 12]} />
-        </mesh>
-
-        {/* Múi Xa-Trong (Distolingual Cusp) - Nhọn */}
-        <mesh position={[0.0018, 0.0061, -0.0018]} material={enamelMaterial}>
-          <coneGeometry args={[0.0019, 0.0027, 12]} />
-        </mesh>
-
-        {/* 4. Gờ bên gần & Gờ bên xa (Marginal Ridges) */}
-        <mesh position={[-0.0036, 0.0055, 0]} rotation={[0, 0, Math.PI / 2]} material={enamelMaterial}>
-          <capsuleGeometry args={[0.0009, 0.0032, 4, 8]} />
-        </mesh>
-        <mesh position={[0.0036, 0.0054, 0]} rotation={[0, 0, Math.PI / 2]} material={enamelMaterial}>
-          <capsuleGeometry args={[0.0008, 0.0030, 4, 8]} />
-        </mesh>
-
-        {/* 5. Hệ thống rãnh phát triển chữ thập mặt nhai (Cruciate Grooves) */}
-        <mesh position={[0, 0.0061, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[0.0002, 0.0012, 8]} />
-          <meshBasicMaterial color="#78716c" side={THREE.DoubleSide} />
-        </mesh>
-        {/* Rãnh ngoài & rãnh trong */}
-        <mesh position={[0, 0.0060, 0]}>
-          <boxGeometry args={[0.0003, 0.0002, 0.0055]} />
-          <meshBasicMaterial color="#78716c" />
-        </mesh>
-        {/* Rãnh giữa (Central developmental groove) */}
-        <mesh position={[0, 0.0060, 0]}>
-          <boxGeometry args={[0.0055, 0.0002, 0.0003]} />
-          <meshBasicMaterial color="#78716c" />
-        </mesh>
-
-        {/* 6. Buồng tủy thân răng & Sừng tủy (Pulp Chamber & Horns) */}
-        {showPulp && (
-          <group position={[0, 0.0032, 0]}>
-            <mesh material={pulpMaterial}>
-              <boxGeometry args={[0.0036, 0.0028, 0.0036]} />
-            </mesh>
-            {/* 4 Sừng tủy hướng vào 4 múi */}
-            <mesh position={[-0.0014, 0.0022, 0.0014]} material={pulpMaterial}>
-              <coneGeometry args={[0.0006, 0.0018, 6]} />
-            </mesh>
-            <mesh position={[0.0014, 0.0020, 0.0014]} material={pulpMaterial}>
-              <coneGeometry args={[0.0006, 0.0016, 6]} />
-            </mesh>
-            <mesh position={[-0.0014, 0.0024, -0.0014]} material={pulpMaterial}>
-              <coneGeometry args={[0.0006, 0.0020, 6]} />
-            </mesh>
-            <mesh position={[0.0014, 0.0021, -0.0014]} material={pulpMaterial}>
-              <coneGeometry args={[0.0006, 0.0017, 6]} />
-            </mesh>
-          </group>
+        {crownGeom && (
+          <mesh geometry={crownGeom} material={enamelMaterial} castShadow receiveShadow />
         )}
 
-        {/* 7. Mặt cắt Odontotomy khi bốc tách hoặc cắt (Cut face exposure) */}
+        {/* Odontotomy Cut Plane Exposure on Crown Floor */}
         {isSectioned && (
-          <mesh position={[0, 0.0006, 0]} rotation={[0, 0, Math.PI / 4]}>
-            <planeGeometry args={[0.0062, 0.0062]} />
-            <primitive object={cutFaceMaterial} attach="material" />
-          </mesh>
+          <group position={[0, 0.0003, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <mesh material={cutFaceMaterial}>
+              <ringGeometry args={[0.0008, 0.0045, 24]} />
+            </mesh>
+            {/* Exposed pulp chamber roof */}
+            {showPulp && (
+              <mesh material={pulpFloorMaterial}>
+                <circleGeometry args={[0.0008, 16]} />
+              </mesh>
+            )}
+          </group>
         )}
       </group>
 
-      {/* ================================================================== */}
-      {/* B. CHÂN RĂNG GIẢI PHẪU (ANATOMICAL BIFURCATED ROOTS)                 */}
-      {/* ================================================================== */}
+      {/* 2. REAL ANATOMICAL BIFURCATED ROOTS MESH (Pre-made 3D scan asset) */}
       <group position={[0, 0, 0]}>
-        {/* Thân chung chân răng (Root trunk below CEJ) */}
-        <mesh position={[0, -0.0015, 0]} material={cementumMaterial}>
-          <cylinderGeometry args={[0.0035, 0.0032, 0.0028, 20]} />
-        </mesh>
+        {rootGeom && (
+          <mesh geometry={rootGeom} material={cementumMaterial} castShadow receiveShadow />
+        )}
 
-        {/* Vùng chẽ 2 chân răng (Furcation concavity) */}
-        <mesh position={[0, -0.0028, 0]}>
-          <sphereGeometry args={[0.0009, 12, 8]} />
-          <meshStandardMaterial color="#b8a786" roughness={0.7} />
-        </mesh>
-
-        {/* 1. Chân Gần (Mesial Root) - Bản rộng, uốn nhẹ về phía xa */}
-        <group position={[-0.0016, -0.003, 0]} rotation={[0, 0, 0.08]}>
-          <mesh position={[0, -0.0042, 0]} material={cementumMaterial}>
-            <cylinderGeometry args={[0.0018, 0.0008, 0.0084, 16]} />
-          </mesh>
-          {/* Rãnh lõm dọc chân răng (Developmental depression) */}
-          <mesh position={[0, -0.0042, 0.0012]}>
-            <boxGeometry args={[0.0004, 0.0075, 0.0003]} />
-            <meshStandardMaterial color="#a8997a" roughness={0.8} />
-          </mesh>
-          {/* Lỗ chóp chân gần (Apical Foramen) */}
-          <mesh position={[0, -0.0084, 0]}>
-            <sphereGeometry args={[0.00045, 8, 8]} />
-            <meshBasicMaterial color="#1e293b" />
-          </mesh>
-
-          {/* Ống tủy chân gần (Mesial Canal) */}
-          {showPulp && (
-            <mesh position={[0, -0.0040, 0]} material={pulpMaterial}>
-              <cylinderGeometry args={[0.0005, 0.0002, 0.0080, 8]} />
+        {/* Odontotomy Cut Plane Exposure on Root Trunk Floor */}
+        {isSectioned && (
+          <group position={[0, -0.0001, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <mesh material={cutFaceMaterial}>
+              <ringGeometry args={[0.0008, 0.0042, 24]} />
             </mesh>
-          )}
-        </group>
-
-        {/* 2. Chân Xa (Distal Root) - Uốn cong về phía xa sát thần kinh IAN */}
-        <group position={[0.0016, -0.003, 0]} rotation={[0, 0, -0.16]}>
-          <mesh position={[0.0006, -0.0040, 0]} material={cementumMaterial}>
-            <cylinderGeometry args={[0.0016, 0.0007, 0.0080, 16]} />
-          </mesh>
-          {/* Phần chóp cong đặc trưng (Curved Apical Third) */}
-          <mesh position={[0.0016, -0.0076, 0]} rotation={[0, 0, -0.28]} material={cementumMaterial}>
-            <cylinderGeometry args={[0.0007, 0.0004, 0.0022, 12]} />
-          </mesh>
-          {/* Lỗ chóp chân xa */}
-          <mesh position={[0.0020, -0.0086, 0]}>
-            <sphereGeometry args={[0.00045, 8, 8]} />
-            <meshBasicMaterial color="#1e293b" />
-          </mesh>
-
-          {/* Ống tủy chân xa (Distal Canal) */}
-          {showPulp && (
-            <mesh position={[0.0006, -0.0040, 0]} material={pulpMaterial}>
-              <cylinderGeometry args={[0.0006, 0.00025, 0.0080, 8]} />
-            </mesh>
-          )}
-        </group>
+            {/* Bifurcated canal orifices */}
+            {showPulp && (
+              <>
+                <mesh position={[-0.0015, 0, 0]} material={pulpFloorMaterial}>
+                  <circleGeometry args={[0.00045, 12]} />
+                </mesh>
+                <mesh position={[0.0015, 0, 0]} material={pulpFloorMaterial}>
+                  <circleGeometry args={[0.00045, 12]} />
+                </mesh>
+              </>
+            )}
+          </group>
+        )}
       </group>
     </group>
   );
 };
+
+useGLTF.preload('/models/dental/mandibular_third_molar_48.glb');
+useGLTF.preload('/models/dental/mandibular_third_molar_38.glb');
 
 // ============================================================================
 // 2. SURGICAL INSTRUMENTS 3D (MEDICAL-GRADE SURGICAL ASSETS)

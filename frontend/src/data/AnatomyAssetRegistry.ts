@@ -456,5 +456,39 @@ export const ANATOMY_ASSET_REGISTRY: Record<string, AnatomyAssetEntry> = {
     licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/',
     status: 'VERIFIED',
     category: 'bone'
+  },
+  'tooth_48': {
+    id: 'tooth_48',
+    nameVi: 'Răng khôn hàm dưới phải (R.48)',
+    nameEn: 'Mandibular Right Third Molar (Tooth #48)',
+    latinName: 'Dens serotinus inferior dexter',
+    modelUrl: '/models/dental/mandibular_third_molar_48.glb',
+    nodeNames: {
+      right: 'MandibularThirdMolar_48',
+      subNodes: ['MandibularThirdMolar_48_Crown', 'MandibularThirdMolar_48_Roots']
+    },
+    type: 'ANATOMICAL_MESH',
+    source: 'Z-Anatomy / University of Dundee Dental Education',
+    license: 'CC BY-SA 4.0',
+    licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/',
+    status: 'VERIFIED',
+    category: 'tooth'
+  },
+  'tooth_38': {
+    id: 'tooth_38',
+    nameVi: 'Răng khôn hàm dưới trái (R.38)',
+    nameEn: 'Mandibular Left Third Molar (Tooth #38)',
+    latinName: 'Dens serotinus inferior sinister',
+    modelUrl: '/models/dental/mandibular_third_molar_38.glb',
+    nodeNames: {
+      left: 'MandibularThirdMolar_38',
+      subNodes: ['MandibularThirdMolar_38_Crown', 'MandibularThirdMolar_38_Roots']
+    },
+    type: 'ANATOMICAL_MESH',
+    source: 'Z-Anatomy / University of Dundee Dental Education',
+    license: 'CC BY-SA 4.0',
+    licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/',
+    status: 'VERIFIED',
+    category: 'tooth'
   }
 };

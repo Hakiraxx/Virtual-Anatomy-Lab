@@ -10,7 +10,9 @@ import {
   ShieldAlert,
   Activity,
   Maximize2,
-  Layers
+  Layers,
+  Eye,
+  Camera
 } from 'lucide-react';
 import { useDentalNeuroStore } from '../../../stores/useDentalNeuroStore';
 import { useAnatomyStore } from '../../../stores/useAnatomyStore';
@@ -540,6 +542,7 @@ export const WisdomSurgeryStage: React.FC = () => {
   const selectedAnatomyId = useDentalNeuroStore((s) => s.selectedAnatomyId);
   const selectAnatomy = useDentalNeuroStore((s) => s.selectAnatomy);
   const focusAnatomy = useDentalNeuroStore((s) => s.focusAnatomy);
+  const setCameraTarget = useDentalNeuroStore((s) => s.setCameraTarget);
 
   const isRight = wisdomToothId === 'tooth_48';
   const sideSign = isRight ? -1 : 1;
@@ -547,6 +550,34 @@ export const WisdomSurgeryStage: React.FC = () => {
   const currentStep =
     WISDOM_SURGICAL_DATABASE.surgicalSteps.find((s) => s.stepNumber === wisdomSurgicalStep) ||
     WISDOM_SURGICAL_DATABASE.surgicalSteps[0];
+
+  // Camera inspection presets for genuine 3D tooth examination
+  const handleCameraPreset = (preset: 'occlusal' | 'buccal' | 'lingual' | 'closeup') => {
+    const target: [number, number, number] = [sideSign * 0.034, 1.332, 0.124];
+    let pos: [number, number, number];
+
+    switch (preset) {
+      case 'occlusal':
+        // Top-down view looking directly into occlusal table, cusps, grooves & fossae
+        pos = [sideSign * 0.034, 1.385, 0.124];
+        break;
+      case 'buccal':
+        // Lateral/vestibular view showing buccal contour, height of contour & CEJ
+        pos = [sideSign * 0.090, 1.335, 0.124];
+        break;
+      case 'lingual':
+        // Medial view from lingual cortex / floor of mouth
+        pos = [sideSign * -0.005, 1.335, 0.124];
+        break;
+      case 'closeup':
+      default:
+        // Anterolateral close-up of tooth root, bifurcation & IAN canal proximity
+        pos = [sideSign * 0.060, 1.345, 0.155];
+        break;
+    }
+
+    setCameraTarget(pos, target, 0.1);
+  };
 
   return (
     <div className="relative w-full h-full select-none overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
@@ -636,6 +667,42 @@ export const WisdomSurgeryStage: React.FC = () => {
             {showFullSkull ? 'Xương: BẬT' : 'Xương: TẮT'}
           </button>
         </div>
+      </div>
+
+      {/* 1B. CAMERA INSPECTION PRESETS (GÓC QUAN SÁT RĂNG KHÔN THẬT) */}
+      <div className="absolute top-14 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 p-1 rounded-2xl border backdrop-blur-md shadow-lg bg-slate-900/85 border-slate-800 text-[10px] pointer-events-auto">
+        <span className="px-2 font-mono text-[9px] text-amber-400 font-bold tracking-wider uppercase flex items-center gap-1">
+          <Eye className="w-3 h-3 text-amber-400" />
+          Góc nhìn:
+        </span>
+        <button
+          onClick={() => handleCameraPreset('occlusal')}
+          className="px-2.5 py-1 rounded-xl font-bold transition hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-700/60 cursor-pointer"
+          title="Nhìn thẳng từ trên xuống mặt nhai, múi và rãnh trũng"
+        >
+          Mặt Nhai (Occlusal)
+        </button>
+        <button
+          onClick={() => handleCameraPreset('buccal')}
+          className="px-2.5 py-1 rounded-xl font-bold transition hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-700/60 cursor-pointer"
+          title="Nhìn từ phía má vào đường cổ răng và thân răng"
+        >
+          Phía Má (Buccal)
+        </button>
+        <button
+          onClick={() => handleCameraPreset('lingual')}
+          className="px-2.5 py-1 rounded-xl font-bold transition hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-700/60 cursor-pointer"
+          title="Nhìn từ phía lưỡi vào mặt trong và bản xương lưỡi"
+        >
+          Phía Lưỡi (Lingual)
+        </button>
+        <button
+          onClick={() => handleCameraPreset('closeup')}
+          className="px-2.5 py-1 rounded-xl font-bold transition bg-amber-600/25 text-amber-300 hover:bg-amber-600/40 border border-amber-500/40 cursor-pointer"
+          title="Cận cảnh chóp răng và thần kinh huyệt răng dưới (IAN)"
+        >
+          Cận Cảnh (Close-up)
+        </button>
       </div>
 
       {/* 2. 3D WEBGL CANVAS STAGE (CLEAN & UNOBSTRUCTED) */}
