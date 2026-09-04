@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Sparkles } from 'lucide-react';
+import { User, Sparkles, Brain } from 'lucide-react';
 import { useAnatomyStore } from '../../stores/useAnatomyStore';
 
 export const ViewModeSwitcher: React.FC = () => {
@@ -20,7 +20,7 @@ export const ViewModeSwitcher: React.FC = () => {
     >
       <button
         onClick={() => setViewMode('full-body')}
-        className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+        className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
           viewMode === 'full-body'
             ? 'bg-amber-600 text-white shadow-md'
             : 'hover:text-amber-600 dark:hover:text-amber-400 opacity-75 hover:opacity-100'
@@ -28,12 +28,12 @@ export const ViewModeSwitcher: React.FC = () => {
         title="Mô hình giải phẫu toàn cơ thể người 3D"
       >
         <User className="w-3.5 h-3.5" />
-        <span>{isVi ? 'Toàn thân' : 'Full Body'}</span>
+        <span className="hidden sm:inline">{isVi ? 'Toàn thân' : 'Full Body'}</span>
       </button>
 
       <button
         onClick={() => setViewMode('specimen')}
-        className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+        className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
           viewMode === 'specimen'
             ? 'bg-amber-600 text-white shadow-md'
             : 'hover:text-amber-600 dark:hover:text-amber-400 opacity-75 hover:opacity-100'
@@ -41,7 +41,20 @@ export const ViewModeSwitcher: React.FC = () => {
         title="Tiêu bản chuyên sâu 59 cơ quan giải phẫu"
       >
         <Sparkles className="w-3.5 h-3.5" />
-        <span>{isVi ? 'Tiêu bản sâu' : 'Specimens'}</span>
+        <span className="hidden sm:inline">{isVi ? 'Tiêu bản sâu' : 'Specimens'}</span>
+      </button>
+
+      <button
+        onClick={() => setViewMode('dental-neuro')}
+        className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+          viewMode === 'dental-neuro'
+            ? 'bg-rose-600 text-white shadow-md'
+            : 'hover:text-rose-500 dark:hover:text-rose-400 opacity-75 hover:opacity-100'
+        }`}
+        title="Phòng thí nghiệm Giải phẫu Thần kinh Đầu — Cổ — Hàm Mặt & Răng Hàm Mặt"
+      >
+        <Brain className="w-3.5 h-3.5" />
+        <span>{isVi ? 'Sọ Mặt & RHM' : 'Craniofacial'}</span>
       </button>
     </div>
   );

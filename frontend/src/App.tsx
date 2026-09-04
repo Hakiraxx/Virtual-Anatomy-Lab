@@ -23,6 +23,8 @@ import { useAuthStore } from './stores/useAuthStore';
 import { AnatomyRegistryValidator } from './utils/AnatomyRegistryValidator';
 import { AnatomyOrientationValidator } from './utils/AnatomyOrientationValidator';
 import { AnatomyValidationPipeline } from './utils/AnatomyValidationPipeline';
+import { DentalNeuroLab } from './components/dental-neuroanatomy/DentalNeuroLab';
+import { useDentalNeuroStore } from './stores/useDentalNeuroStore';
 
 export function App() {
   const fetchInitialData = useAnatomyStore((s) => s.fetchInitialData);
@@ -45,11 +47,26 @@ export function App() {
     const pathname = window.location.pathname.toLowerCase();
     if (pathname === '/' || pathname === '') {
       window.history.replaceState({ viewMode: 'full-body' }, '', '/toanthan');
+    } else if (pathname.includes('dental-neuro') || pathname.includes('craniofacial') || pathname.includes('rhm')) {
+      useAnatomyStore.setState({ viewMode: 'dental-neuro' });
+      if (pathname.includes('cn-v') || pathname.includes('trigeminal')) {
+        useDentalNeuroStore.getState().selectAnatomy('cn_5');
+      } else if (pathname.includes('v3') || pathname.includes('mandibular-nerve')) {
+        useDentalNeuroStore.getState().selectAnatomy('cn_5_v3');
+      } else if (pathname.includes('inferior-alveolar') || pathname.includes('ian')) {
+        useDentalNeuroStore.getState().selectAnatomy('nerve_ian');
+      } else if (pathname.includes('mandibular-canal')) {
+        useDentalNeuroStore.getState().toggleMandibularCanalMode();
+      } else if (pathname.includes('cn-vii') || pathname.includes('facial')) {
+        useDentalNeuroStore.getState().selectAnatomy('cn_7');
+      }
     }
 
     const handlePopState = () => {
       const currentPath = window.location.pathname.toLowerCase();
-      if (currentPath.includes('tieubansau') || currentPath.includes('tieu-ban-sau') || currentPath.includes('specimen')) {
+      if (currentPath.includes('dental-neuro') || currentPath.includes('craniofacial') || currentPath.includes('rhm')) {
+        useAnatomyStore.setState({ viewMode: 'dental-neuro' });
+      } else if (currentPath.includes('tieubansau') || currentPath.includes('tieu-ban-sau') || currentPath.includes('specimen')) {
         useAnatomyStore.setState({ viewMode: 'specimen' });
         const match = currentPath.match(/\/(?:tieubansau|tieu-ban-sau|specimens?)\/([a-z0-9_-]+)/);
         if (match && match[1]) {
@@ -104,6 +121,9 @@ export function App() {
           {/* Right Detailed Medical Dossier & Relationships Panel */}
           <AnatomyInfoPanel />
         </main>
+      ) : viewMode === 'dental-neuro' ? (
+        // MODE C: CRANIOFACIAL & DENTAL NEUROANATOMY LAB
+        <DentalNeuroLab />
       ) : (
         // MODE B: DEEP SPECIMEN ATELIER (Isolated 59 Organs with Sub-structures & Slicing)
         <main className="relative w-full h-[calc(100dvh-120px)] min-h-[460px] md:min-h-[560px] flex overflow-hidden">

@@ -80,8 +80,8 @@ interface AnatomyState {
   // Multi-gender & Whole-body Lab vs Specimen Atelier mode
   gender: 'male' | 'female';
   setGender: (g: 'male' | 'female') => void;
-  viewMode: 'full-body' | 'specimen';
-  setViewMode: (m: 'full-body' | 'specimen') => void;
+  viewMode: 'full-body' | 'specimen' | 'dental-neuro';
+  setViewMode: (m: 'full-body' | 'specimen' | 'dental-neuro') => void;
 
   // 8-Layer Dissection Engine
   layerVisibility: Record<number, boolean>;
@@ -142,9 +142,12 @@ interface AnatomyState {
   setQuizListener: (targetOrganId: string | null, onSelect?: (organId: string) => void) => void;
 }
 
-const getInitialViewMode = (): 'full-body' | 'specimen' => {
+const getInitialViewMode = (): 'full-body' | 'specimen' | 'dental-neuro' => {
   if (typeof window === 'undefined') return 'full-body';
   const path = window.location.pathname.toLowerCase();
+  if (path.includes('dental-neuro') || path.includes('craniofacial') || path.includes('rhm')) {
+    return 'dental-neuro';
+  }
   if (path.includes('tieubansau') || path.includes('tieu-ban-sau') || path.includes('specimen')) {
     return 'specimen';
   }
@@ -296,7 +299,12 @@ export const useAnatomyStore = create<AnatomyState>((set, get) => ({
   setViewMode: (viewMode) => {
     set({ viewMode });
     if (typeof window !== 'undefined') {
-      const targetPath = viewMode === 'specimen' ? '/tieubansau' : '/toanthan';
+      const targetPath =
+        viewMode === 'dental-neuro'
+          ? '/lab/dental-neuroanatomy'
+          : viewMode === 'specimen'
+          ? '/tieubansau'
+          : '/toanthan';
       if (!window.location.pathname.includes(targetPath)) {
         window.history.pushState({ viewMode }, '', targetPath);
       }
