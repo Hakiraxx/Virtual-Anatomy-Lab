@@ -35,6 +35,14 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
   const selectedAnatomyId = useDentalNeuroStore((s) => s.selectedAnatomyId);
   const selectAnatomy = useDentalNeuroStore((s) => s.selectAnatomy);
 
+  // When rendered in a mobile/tablet drawer, auto-close on selection so 3D model is visible
+  const handleItemSelect = (id: string, side?: 'right' | 'left') => {
+    selectAnatomy(id, side);
+    if (isMobileDrawer && onClose) {
+      onClose();
+    }
+  };
+
   const atelierTheme = useAnatomyStore((s) => s.atelierTheme);
   const isDark = atelierTheme === 'dark';
 
@@ -205,7 +213,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                   <button
                     key={id}
                     id={`tree_item_${id}`}
-                    onClick={() => selectAnatomy(id)}
+                    onClick={() => handleItemSelect(id)}
                     className={`w-full text-left px-2 py-1 rounded text-[11px] flex items-center justify-between transition cursor-pointer ${
                       isSelected
                         ? 'bg-amber-600 text-white font-bold shadow-sm'
@@ -225,7 +233,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                 <div className="flex items-center justify-between">
                   <button
                     id="tree_item_cn_5"
-                    onClick={() => selectAnatomy('cn_5')}
+                    onClick={() => handleItemSelect('cn_5')}
                     className={`flex-1 text-left px-2 py-1 rounded text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer ${
                       selectedAnatomyId === 'cn_5'
                         ? 'bg-amber-600 text-white shadow-sm'
@@ -255,7 +263,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                     <div className="flex items-center justify-between">
                       <button
                         id="tree_item_cn_5_v1"
-                        onClick={() => selectAnatomy('cn_5_v1')}
+                        onClick={() => handleItemSelect('cn_5_v1')}
                         className={`flex-1 text-left px-2 py-1 rounded text-[11px] flex items-center gap-1.5 transition cursor-pointer ${
                           selectedAnatomyId === 'cn_5_v1'
                             ? 'bg-sky-600 text-white font-bold shadow-sm'
@@ -276,7 +284,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                       <div className="pl-3 border-l border-sky-500/20 ml-2 space-y-0.5">
                         <button
                           id="tree_item_nerve_frontal"
-                          onClick={() => selectAnatomy('nerve_frontal')}
+                          onClick={() => handleItemSelect('nerve_frontal')}
                           className={`w-full text-left px-2 py-0.5 rounded text-[10px] cursor-pointer ${
                             selectedAnatomyId === 'nerve_frontal'
                               ? 'bg-sky-700 text-white font-bold'
@@ -287,7 +295,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                         </button>
                         <button
                           id="tree_item_nerve_supraorbital"
-                          onClick={() => selectAnatomy('nerve_supraorbital')}
+                          onClick={() => handleItemSelect('nerve_supraorbital')}
                           className={`w-full text-left px-2 py-0.5 rounded text-[10px] cursor-pointer ${
                             selectedAnatomyId === 'nerve_supraorbital'
                               ? 'bg-sky-700 text-white font-bold'
@@ -303,7 +311,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                     <div className="flex items-center justify-between">
                       <button
                         id="tree_item_cn_5_v2"
-                        onClick={() => selectAnatomy('cn_5_v2')}
+                        onClick={() => handleItemSelect('cn_5_v2')}
                         className={`flex-1 text-left px-2 py-1 rounded text-[11px] flex items-center gap-1.5 transition cursor-pointer ${
                           selectedAnatomyId === 'cn_5_v2'
                             ? 'bg-orange-600 text-white font-bold shadow-sm'
@@ -324,7 +332,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                       <div className="pl-3 border-l border-orange-500/20 ml-2 space-y-0.5">
                         <button
                           id="tree_item_nerve_infraorbital"
-                          onClick={() => selectAnatomy('nerve_infraorbital')}
+                          onClick={() => handleItemSelect('nerve_infraorbital')}
                           className={`w-full text-left px-2 py-0.5 rounded text-[10px] cursor-pointer ${
                             selectedAnatomyId === 'nerve_infraorbital'
                               ? 'bg-orange-700 text-white font-bold'
@@ -335,7 +343,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                         </button>
                         <button
                           id="tree_item_nerve_psa"
-                          onClick={() => selectAnatomy('nerve_psa')}
+                          onClick={() => handleItemSelect('nerve_psa')}
                           className={`w-full text-left px-2 py-0.5 rounded text-[10px] cursor-pointer ${
                             selectedAnatomyId === 'nerve_psa'
                               ? 'bg-orange-700 text-white font-bold'
@@ -346,7 +354,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                         </button>
                         <button
                           id="tree_item_nerve_msa"
-                          onClick={() => selectAnatomy('nerve_msa')}
+                          onClick={() => handleItemSelect('nerve_msa')}
                           className={`w-full text-left px-2 py-0.5 rounded text-[10px] cursor-pointer ${
                             selectedAnatomyId === 'nerve_msa'
                               ? 'bg-orange-700 text-white font-bold'
@@ -357,7 +365,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                         </button>
                         <button
                           id="tree_item_nerve_asa"
-                          onClick={() => selectAnatomy('nerve_asa')}
+                          onClick={() => handleItemSelect('nerve_asa')}
                           className={`w-full text-left px-2 py-0.5 rounded text-[10px] cursor-pointer ${
                             selectedAnatomyId === 'nerve_asa'
                               ? 'bg-orange-700 text-white font-bold'
@@ -368,7 +376,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                         </button>
                         <button
                           id="tree_item_nerve_greater_palatine"
-                          onClick={() => selectAnatomy('nerve_greater_palatine')}
+                          onClick={() => handleItemSelect('nerve_greater_palatine')}
                           className={`w-full text-left px-2 py-0.5 rounded text-[10px] cursor-pointer ${
                             selectedAnatomyId === 'nerve_greater_palatine'
                               ? 'bg-orange-700 text-white font-bold'
@@ -379,7 +387,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                         </button>
                         <button
                           id="tree_item_nerve_nasopalatine"
-                          onClick={() => selectAnatomy('nerve_nasopalatine')}
+                          onClick={() => handleItemSelect('nerve_nasopalatine')}
                           className={`w-full text-left px-2 py-0.5 rounded text-[10px] cursor-pointer ${
                             selectedAnatomyId === 'nerve_nasopalatine'
                               ? 'bg-orange-700 text-white font-bold'
@@ -395,7 +403,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                     <div className="flex items-center justify-between">
                       <button
                         id="tree_item_cn_5_v3"
-                        onClick={() => selectAnatomy('cn_5_v3')}
+                        onClick={() => handleItemSelect('cn_5_v3')}
                         className={`flex-1 text-left px-2 py-1 rounded text-[11px] flex items-center gap-1.5 font-bold transition cursor-pointer ${
                           selectedAnatomyId === 'cn_5_v3'
                             ? 'bg-rose-600 text-white shadow-sm'
@@ -416,19 +424,21 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                       <div className="pl-3 border-l border-rose-500/30 ml-2 space-y-0.5">
                         <button
                           id="tree_item_nerve_ian"
-                          onClick={() => selectAnatomy('nerve_ian')}
-                          className={`w-full text-left px-2 py-1 rounded text-[10px] font-bold flex items-center justify-between transition cursor-pointer ${
+                          onClick={() => handleItemSelect('nerve_ian')}
+                          className={`w-full text-left px-2 py-1 rounded text-[10px] font-bold flex items-center justify-between gap-1 transition cursor-pointer ${
                             selectedAnatomyId === 'nerve_ian'
                               ? 'bg-rose-700 text-white shadow-sm'
                               : 'text-rose-600 dark:text-rose-300 hover:bg-rose-500/10'
                           }`}
                         >
-                          <span>★ TK Huyệt răng dưới (IAN)</span>
-                          <span className="text-[8px] px-1 rounded border border-rose-500/40 font-mono">Ống hàm dưới</span>
+                          <span className="truncate">★ TK Huyệt răng dưới (IAN)</span>
+                          <span className="text-[8px] px-1.5 py-0.5 rounded border border-rose-500/40 font-mono whitespace-nowrap flex-shrink-0">
+                            Ống hàm dưới
+                          </span>
                         </button>
                         <button
                           id="tree_item_nerve_mental"
-                          onClick={() => selectAnatomy('nerve_mental')}
+                          onClick={() => handleItemSelect('nerve_mental')}
                           className={`w-full text-left px-2 py-0.5 rounded text-[10px] font-medium cursor-pointer ${
                             selectedAnatomyId === 'nerve_mental'
                               ? 'bg-rose-700 text-white font-bold'
@@ -439,7 +449,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                         </button>
                         <button
                           id="tree_item_nerve_incisive"
-                          onClick={() => selectAnatomy('nerve_incisive')}
+                          onClick={() => handleItemSelect('nerve_incisive')}
                           className={`w-full text-left px-2 py-0.5 rounded text-[10px] font-medium cursor-pointer ${
                             selectedAnatomyId === 'nerve_incisive'
                               ? 'bg-rose-700 text-white font-bold'
@@ -450,7 +460,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                         </button>
                         <button
                           id="tree_item_nerve_lingual"
-                          onClick={() => selectAnatomy('nerve_lingual')}
+                          onClick={() => handleItemSelect('nerve_lingual')}
                           className={`w-full text-left px-2 py-0.5 rounded text-[10px] font-semibold cursor-pointer ${
                             selectedAnatomyId === 'nerve_lingual'
                               ? 'bg-fuchsia-700 text-white font-bold'
@@ -461,7 +471,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                         </button>
                         <button
                           id="tree_item_nerve_buccal"
-                          onClick={() => selectAnatomy('nerve_buccal')}
+                          onClick={() => handleItemSelect('nerve_buccal')}
                           className={`w-full text-left px-2 py-0.5 rounded text-[10px] cursor-pointer ${
                             selectedAnatomyId === 'nerve_buccal'
                               ? 'bg-purple-700 text-white font-bold'
@@ -472,7 +482,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                         </button>
                         <button
                           id="tree_item_nerve_auriculotemporal"
-                          onClick={() => selectAnatomy('nerve_auriculotemporal')}
+                          onClick={() => handleItemSelect('nerve_auriculotemporal')}
                           className={`w-full text-left px-2 py-0.5 rounded text-[10px] cursor-pointer ${
                             selectedAnatomyId === 'nerve_auriculotemporal'
                               ? 'bg-purple-700 text-white font-bold'
@@ -491,23 +501,25 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
               <div className="pt-1">
                 <button
                   id="tree_item_cn_7"
-                  onClick={() => selectAnatomy('cn_7')}
+                  onClick={() => handleItemSelect('cn_7')}
                   className={`w-full text-left px-2 py-1 rounded text-[11px] font-bold flex items-center justify-between transition cursor-pointer ${
                     selectedAnatomyId === 'cn_7'
                       ? 'bg-emerald-600 text-white shadow-sm'
                       : 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10'
                   }`}
                 >
-                  <div className="flex items-center gap-1.5">
-                    <Sparkles className="w-3 h-3 text-emerald-500" />
-                    <span>CN VII — Dây thần kinh Mặt</span>
+                  <div className="flex items-center gap-1.5 min-w-0 truncate">
+                    <Sparkles className="w-3 h-3 text-emerald-500 flex-shrink-0" />
+                    <span className="truncate">CN VII — Dây thần kinh Mặt</span>
                   </div>
-                  <span className="text-[8px] px-1 rounded border border-emerald-500/40 font-mono">Mang tai</span>
+                  <span className="text-[8px] px-1.5 py-0.5 rounded border border-emerald-500/40 font-mono whitespace-nowrap flex-shrink-0">
+                    Mang tai
+                  </span>
                 </button>
                 <div className="pl-3 border-l border-emerald-500/20 ml-2 space-y-0.5 mt-0.5">
                   <button
                     id="tree_item_cn_7_temporal"
-                    onClick={() => selectAnatomy('cn_7_temporal')}
+                    onClick={() => handleItemSelect('cn_7_temporal')}
                     className={`w-full text-left px-2 py-0.5 rounded text-[10px] cursor-pointer ${
                       selectedAnatomyId === 'cn_7_temporal'
                         ? 'bg-emerald-700 text-white font-bold'
@@ -518,7 +530,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                   </button>
                   <button
                     id="tree_item_cn_7_zygomatic"
-                    onClick={() => selectAnatomy('cn_7_zygomatic')}
+                    onClick={() => handleItemSelect('cn_7_zygomatic')}
                     className={`w-full text-left px-2 py-0.5 rounded text-[10px] cursor-pointer ${
                       selectedAnatomyId === 'cn_7_zygomatic'
                         ? 'bg-emerald-700 text-white font-bold'
@@ -529,7 +541,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                   </button>
                   <button
                     id="tree_item_cn_7_buccal"
-                    onClick={() => selectAnatomy('cn_7_buccal')}
+                    onClick={() => handleItemSelect('cn_7_buccal')}
                     className={`w-full text-left px-2 py-0.5 rounded text-[10px] cursor-pointer ${
                       selectedAnatomyId === 'cn_7_buccal'
                         ? 'bg-emerald-700 text-white font-bold'
@@ -540,7 +552,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                   </button>
                   <button
                     id="tree_item_cn_7_marginal_mandibular"
-                    onClick={() => selectAnatomy('cn_7_marginal_mandibular')}
+                    onClick={() => handleItemSelect('cn_7_marginal_mandibular')}
                     className={`w-full text-left px-2 py-0.5 rounded text-[10px] cursor-pointer ${
                       selectedAnatomyId === 'cn_7_marginal_mandibular'
                         ? 'bg-emerald-700 text-white font-bold'
@@ -551,7 +563,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                   </button>
                   <button
                     id="tree_item_cn_7_cervical"
-                    onClick={() => selectAnatomy('cn_7_cervical')}
+                    onClick={() => handleItemSelect('cn_7_cervical')}
                     className={`w-full text-left px-2 py-0.5 rounded text-[10px] cursor-pointer ${
                       selectedAnatomyId === 'cn_7_cervical'
                         ? 'bg-emerald-700 text-white font-bold'
@@ -572,7 +584,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                   <button
                     key={id}
                     id={`tree_item_${id}`}
-                    onClick={() => selectAnatomy(id)}
+                    onClick={() => handleItemSelect(id)}
                     className={`w-full text-left px-2 py-1 rounded text-[11px] flex items-center justify-between transition cursor-pointer ${
                       isSelected
                         ? 'bg-amber-600 text-white font-bold shadow-sm'
@@ -617,7 +629,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                   <button
                     key={foramen.id}
                     id={`tree_item_${foramen.id}`}
-                    onClick={() => selectAnatomy(foramen.id)}
+                    onClick={() => handleItemSelect(foramen.id)}
                     className={`w-full text-left px-2 py-1 rounded text-[10px] flex items-center justify-between transition cursor-pointer ${
                       isSelected
                         ? 'bg-sky-600 text-white font-bold shadow-sm'
@@ -658,7 +670,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
             <div className={`pl-3 border-l mt-1 space-y-0.5 ${isDark ? 'border-slate-800' : 'border-[#e7ded3]'}`}>
               <button
                 id="tree_item_mandibular_foramen"
-                onClick={() => selectAnatomy('mandibular_foramen')}
+                onClick={() => handleItemSelect('mandibular_foramen')}
                 className={`w-full text-left px-2 py-0.5 rounded text-[10px] font-medium cursor-pointer ${
                   selectedAnatomyId === 'mandibular_foramen'
                     ? 'bg-amber-600 text-white font-bold'
@@ -669,7 +681,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
               </button>
               <button
                 id="tree_item_nerve_ian"
-                onClick={() => selectAnatomy('nerve_ian')}
+                onClick={() => handleItemSelect('nerve_ian')}
                 className={`w-full text-left px-2 py-0.5 rounded text-[10px] font-medium cursor-pointer ${
                   selectedAnatomyId === 'nerve_ian'
                     ? 'bg-rose-600 text-white font-bold'
@@ -680,7 +692,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
               </button>
               <button
                 id="tree_item_mental_foramen"
-                onClick={() => selectAnatomy('mental_foramen')}
+                onClick={() => handleItemSelect('mental_foramen')}
                 className={`w-full text-left px-2 py-0.5 rounded text-[10px] font-medium cursor-pointer ${
                   selectedAnatomyId === 'mental_foramen'
                     ? 'bg-sky-600 text-white font-bold'
@@ -700,7 +712,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                   <button
                     key={tooth.fdi}
                     id={`tree_item_${toothId}`}
-                    onClick={() => selectAnatomy(toothId)}
+                    onClick={() => handleItemSelect(toothId)}
                     className={`w-full text-left px-2 py-0.5 rounded text-[10px] flex items-center justify-between cursor-pointer ${
                       isSelected
                         ? 'bg-rose-600 text-white font-bold shadow-sm'
@@ -741,21 +753,21 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
             <div className={`pl-3 border-l mt-1 space-y-0.5 ${isDark ? 'border-slate-800' : 'border-[#e7ded3]'}`}>
               <button
                 id="tree_item_infraorbital_foramen"
-                onClick={() => selectAnatomy('infraorbital_foramen')}
+                onClick={() => handleItemSelect('infraorbital_foramen')}
                 className="w-full text-left px-2 py-0.5 rounded text-[10px] text-orange-500 hover:bg-orange-500/10 cursor-pointer"
               >
                 · Lỗ dưới ổ mắt & Ống dưới ổ mắt
               </button>
               <button
                 id="tree_item_greater_palatine_foramen"
-                onClick={() => selectAnatomy('greater_palatine_foramen')}
+                onClick={() => handleItemSelect('greater_palatine_foramen')}
                 className="w-full text-left px-2 py-0.5 rounded text-[10px] text-amber-500 hover:bg-amber-500/10 cursor-pointer"
               >
                 · Lỗ khẩu cái lớn (Vòm miệng)
               </button>
               <button
                 id="tree_item_incisive_foramen"
-                onClick={() => selectAnatomy('incisive_foramen')}
+                onClick={() => handleItemSelect('incisive_foramen')}
                 className="w-full text-left px-2 py-0.5 rounded text-[10px] text-yellow-500 hover:bg-yellow-500/10 cursor-pointer"
               >
                 · Lỗ răng cửa & Ống răng cửa
@@ -771,7 +783,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                   <button
                     key={tooth.fdi}
                     id={`tree_item_${toothId}`}
-                    onClick={() => selectAnatomy(toothId)}
+                    onClick={() => handleItemSelect(toothId)}
                     className={`w-full text-left px-2 py-0.5 rounded text-[10px] flex items-center justify-between cursor-pointer ${
                       isSelected
                         ? 'bg-orange-600 text-white font-bold shadow-sm'
@@ -818,7 +830,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                   <button
                     key={m.id}
                     id={`tree_item_${m.id}`}
-                    onClick={() => selectAnatomy(m.id)}
+                    onClick={() => handleItemSelect(m.id)}
                     className={`w-full text-left px-2 py-1 rounded text-[10px] flex items-center justify-between cursor-pointer ${
                       isSelected
                         ? 'bg-emerald-600 text-white font-bold shadow-sm'

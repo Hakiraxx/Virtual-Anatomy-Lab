@@ -324,16 +324,19 @@ export const DentalNeuroInfoPanel: React.FC<DentalNeuroInfoPanelProps> = ({
               </>
             )}
             <button
-              onClick={handleDeselect}
-              className="p-1 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 transition cursor-pointer ml-1"
-              title="Bỏ chọn / Đóng chi tiết"
+              onClick={() => {
+                if (onClose) onClose();
+                else handleDeselect();
+              }}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 transition cursor-pointer ml-1"
+              title="Đóng chi tiết"
             >
               <X className="w-4 h-4" />
             </button>
             {onClose && (
               <button
                 onClick={onClose}
-                className="p-1 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 transition cursor-pointer"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 transition cursor-pointer"
                 title="Thu gọn panel"
               >
                 <PanelRightClose className="w-4 h-4" />

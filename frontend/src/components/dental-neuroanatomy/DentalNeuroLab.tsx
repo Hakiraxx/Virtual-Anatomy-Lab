@@ -14,7 +14,8 @@ import {
   PanelRightClose,
   PanelRightOpen,
   FileText,
-  Layers
+  Layers,
+  ChevronDown
 } from 'lucide-react';
 import { useDentalNeuroStore, VisualizationDepth } from '../../stores/useDentalNeuroStore';
 import { useAnatomyStore } from '../../stores/useAnatomyStore';
@@ -78,9 +79,10 @@ export const DentalNeuroLab: React.FC = () => {
     return 360;
   });
 
-  const [isMobile, setIsMobile] = useState<boolean>(() => {
+  // Responsive breakpoint: isCompact covers Mobile (< 768px) and Tablet / iPad (< 1200px)
+  const [isCompact, setIsCompact] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
-      return window.innerWidth < 768;
+      return window.innerWidth < 1200;
     }
     return false;
   });
@@ -88,33 +90,43 @@ export const DentalNeuroLab: React.FC = () => {
   const [isDraggingTree, setIsDraggingTree] = useState(false);
   const [isDraggingInfo, setIsDraggingInfo] = useState(false);
 
-  // Responsive sidebar visibility states
-  const [isTreeOpen, setIsTreeOpen] = useState(true);
-  const [isInfoOpen, setIsInfoOpen] = useState(true);
-
-  // Automatically open Info panel when a structure is selected
-  useEffect(() => {
-    if (selectedAnatomyId) {
-      setIsInfoOpen(true);
+  // Responsive sidebar visibility states:
+  // On desktop (>= 1200px): tree defaults to open
+  // On tablet / iPad / mobile (< 1200px): both default to FALSE so 3D canvas gets 100% full viewport!
+  const [isTreeOpen, setIsTreeOpen] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 1200;
     }
-  }, [selectedAnatomyId]);
+    return true;
+  });
+  const [isInfoOpen, setIsInfoOpen] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 1200;
+    }
+    return false;
+  });
 
-  // Responsive default layout for viewports
+  // Responsive layout watcher for viewports
   useEffect(() => {
     const handleResize = () => {
-      const mobile = window.innerWidth < 768;
-      setIsMobile(mobile);
-      if (mobile) {
-        setIsTreeOpen(false);
-        if (!selectedAnatomyId) setIsInfoOpen(false);
-      } else if (window.innerWidth < 1024) {
+      const compact = window.innerWidth < 1200;
+      setIsCompact(compact);
+      if (compact) {
+        // When transitioning to compact / iPad / mobile, ensure sidebars don't take in-flow space
         setIsTreeOpen(false);
       }
     };
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [selectedAnatomyId]);
+  }, []);
+
+  // Automatically open Info panel on desktop when selection changes
+  useEffect(() => {
+    if (selectedAnatomyId && !isCompact) {
+      setIsInfoOpen(true);
+    }
+  }, [selectedAnatomyId, isCompact]);
 
   // Drag handler for Left Tree Splitter
   const handleTreeSplitterPointerDown = (e: React.PointerEvent) => {
@@ -181,6 +193,7 @@ export const DentalNeuroLab: React.FC = () => {
   // Search input state
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isDepthMenuOpen, setIsDepthMenuOpen] = useState(false);
 
   // Parse URL search parameters on mount (?structure=nerve.inferior-alveolar or ?structure=tooth.36)
   useEffect(() => {
@@ -344,35 +357,46 @@ export const DentalNeuroLab: React.FC = () => {
             </div>
             {/* Breadcrumb row */}
             <div className="text-[10px] text-slate-500 dark:text-slate-400 font-sans flex items-center gap-1 truncate">
-              {breadcrumbSegments.map((seg, i) => (
-                <React.Fragment key={i}>
-                  {i > 0 && <ChevronRight className="w-2.5 h-2.5 text-slate-400 flex-shrink-0" />}
-                  {seg.action ? (
-                    <button
-                      onClick={seg.action}
-                      className="hover:text-amber-600 dark:hover:text-amber-400 transition cursor-pointer truncate"
-                    >
-                      {seg.label}
-                    </button>
-                  ) : (
-                    <span
-                      className={`truncate ${
-                        i === breadcrumbSegments.length - 1
-                          ? 'font-semibold text-amber-600 dark:text-amber-400'
-                          : ''
-                      }`}
-                    >
-                      {seg.label}
-                    </span>
-                  )}
-                </React.Fragment>
-              ))}
+              {breadcrumbSegments.map((seg, i) => {
+                const isLast = i === breadcrumbSegments.length - 1;
+                const isFirst = i === 0;
+                const hideOnCompact = !isLast && !isFirst && i < breadcrumbSegments.length - 1;
+                return (
+                  <React.Fragment key={i}>
+                    {i > 0 && (
+                      <ChevronRight
+                        className={`w-2.5 h-2.5 text-slate-400 flex-shrink-0 ${
+                          hideOnCompact ? 'hidden xl:inline' : ''
+                        }`}
+                      />
+                    )}
+                    {seg.action ? (
+                      <button
+                        onClick={seg.action}
+                        className={`hover:text-amber-600 dark:hover:text-amber-400 transition cursor-pointer truncate ${
+                          hideOnCompact ? 'hidden xl:inline' : ''
+                        }`}
+                      >
+                        {seg.label}
+                      </button>
+                    ) : (
+                      <span
+                        className={`truncate ${
+                          isLast ? 'font-semibold text-amber-600 dark:text-amber-400' : ''
+                        } ${hideOnCompact ? 'hidden xl:inline' : ''}`}
+                      >
+                        {seg.label}
+                      </span>
+                    )}
+                  </React.Fragment>
+                );
+              })}
             </div>
           </div>
         </div>
 
-        {/* Center: Search input */}
-        <div className="relative flex-1 max-w-xs hidden md:block">
+        {/* Center: Search input (Desktop >= 1024px) */}
+        <div className="relative flex-1 max-w-xs hidden lg:block">
           <div className="relative">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -432,9 +456,24 @@ export const DentalNeuroLab: React.FC = () => {
 
         {/* Right: Quick Visualization Depth Presets & Specialized Modes */}
         <div className="flex items-center gap-1.5 flex-shrink-0">
-          {/* Depth Mode Pills */}
+          {/* Compact Search Trigger Button (< lg) */}
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            className={`lg:hidden p-1.5 rounded-full border transition cursor-pointer ${
+              isSearchOpen
+                ? 'bg-amber-600 border-amber-500 text-white'
+                : isDark
+                ? 'border-slate-700 bg-slate-900 text-slate-400 hover:text-white'
+                : 'border-[#dfd4c4] bg-white text-slate-600 hover:text-[#28231d]'
+            }`}
+            title="Tìm kiếm giải phẫu"
+          >
+            <Search className="w-4 h-4" />
+          </button>
+
+          {/* Depth Mode Pills (Desktop >= 1200px) */}
           <div
-            className={`hidden md:flex items-center p-0.5 rounded-full border text-xs ${
+            className={`hidden xl:flex items-center p-0.5 rounded-full border text-xs ${
               isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-[#ede3d5] border-[#dfd4c4]'
             }`}
           >
@@ -458,6 +497,62 @@ export const DentalNeuroLab: React.FC = () => {
                 {d.label}
               </button>
             ))}
+          </div>
+
+          {/* Compact Depth Selector (< 1200px) */}
+          <div className="xl:hidden relative">
+            <button
+              onClick={() => setIsDepthMenuOpen(!isDepthMenuOpen)}
+              className={`px-2 py-1 rounded-full text-[11px] font-medium border transition cursor-pointer flex items-center gap-1 ${
+                isDark ? 'bg-slate-900 border-slate-700 text-slate-300' : 'bg-white border-[#dfd4c4] text-slate-700'
+              }`}
+              title="Đổi chế độ lớp hiển thị"
+            >
+              <Layers className="w-3 h-3 text-amber-500" />
+              <span className="hidden sm:inline">
+                {visualizationDepth === 'skeletal'
+                  ? 'Xương sọ'
+                  : visualizationDepth === 'neural'
+                  ? 'Thần kinh'
+                  : visualizationDepth === 'dental'
+                  ? 'Răng hàm'
+                  : 'Xuyên thấu'}
+              </span>
+              <ChevronDown className="w-2.5 h-2.5 opacity-60" />
+            </button>
+            {isDepthMenuOpen && (
+              <div
+                className={`absolute right-0 top-8 z-50 rounded-xl shadow-2xl border p-1 min-w-[120px] ${
+                  isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-[#e7ded3]'
+                }`}
+              >
+                {(
+                  [
+                    { id: 'skeletal', label: 'Xương sọ' },
+                    { id: 'neural', label: 'Thần kinh' },
+                    { id: 'dental', label: 'Răng hàm' },
+                    { id: 'deep', label: 'Xuyên thấu' }
+                  ] as const
+                ).map((d) => (
+                  <button
+                    key={d.id}
+                    onClick={() => {
+                      setVisualizationDepth(d.id);
+                      setIsDepthMenuOpen(false);
+                    }}
+                    className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
+                      visualizationDepth === d.id
+                        ? 'bg-amber-500 text-slate-950 font-bold'
+                        : isDark
+                        ? 'hover:bg-slate-800 text-slate-200'
+                        : 'hover:bg-[#ede3d5] text-slate-800'
+                    }`}
+                  >
+                    {d.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Anesthesia Mode Button */}
@@ -528,10 +623,78 @@ export const DentalNeuroLab: React.FC = () => {
         </div>
       </header>
 
+      {/* Fullscreen Search Modal on Compact Devices (< lg) */}
+      {isSearchOpen && (
+        <div
+          onClick={() => setIsSearchOpen(false)}
+          className="lg:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col p-4 animate-fade-in"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className={`w-full max-w-lg mx-auto mt-12 rounded-2xl p-3 shadow-2xl border ${
+              isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-[#e7ded3] text-[#28231d]'
+            }`}
+          >
+            <div className="flex items-center gap-2 pb-3 border-b border-inherit">
+              <Search className="w-4 h-4 text-amber-500 flex-shrink-0" />
+              <input
+                type="text"
+                autoFocus
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Tìm dây TK, lỗ sọ, răng (CN V, IAN, lỗ cằm)..."
+                className="flex-1 bg-transparent text-sm focus:outline-none"
+              />
+              <button
+                onClick={() => {
+                  setIsSearchOpen(false);
+                  setSearchQuery('');
+                }}
+                className="p-1 text-slate-400 hover:text-current font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Results */}
+            <div className="max-h-[60vh] overflow-y-auto divide-y divide-inherit mt-2">
+              {searchResults.map((res) => (
+                <button
+                  key={res.id}
+                  onClick={() => {
+                    selectAnatomy(res.id);
+                    setIsSearchOpen(false);
+                    setSearchQuery('');
+                  }}
+                  className={`w-full text-left px-3 py-2.5 flex items-center justify-between text-xs transition cursor-pointer rounded-lg ${
+                    isDark ? 'hover:bg-slate-800' : 'hover:bg-[#ede3d5]/70'
+                  }`}
+                >
+                  <div>
+                    <div className="font-semibold text-current">{res.labelVi}</div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 font-serif italic">
+                      {res.labelEn}
+                    </div>
+                  </div>
+                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                    {res.category}
+                  </span>
+                </button>
+              ))}
+              {searchQuery.trim() && searchResults.length === 0 && (
+                <div className="py-6 text-center text-xs text-slate-400">
+                  Không tìm thấy cấu trúc phù hợp
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 2. MAIN WORKSPACE WITH RESIZABLE SPLITTERS & MOBILE DRAWERS */}
       <div className="flex-1 flex overflow-hidden relative">
-        {/* Left Column (Desktop): Collapsible & Resizable Anatomy Tree */}
-        {!isMobile && (
+        {/* Left Column (Desktop >= 1200px): Collapsible & Resizable Anatomy Tree */}
+        {!isCompact && (
           <DentalNeuroTree
             isOpen={isTreeOpen}
             onClose={() => setIsTreeOpen(false)}
@@ -539,8 +702,8 @@ export const DentalNeuroLab: React.FC = () => {
           />
         )}
 
-        {/* Left Resizer Splitter (Desktop) */}
-        {!isMobile && isTreeOpen && (
+        {/* Left Resizer Splitter (Desktop >= 1200px) */}
+        {!isCompact && isTreeOpen && (
           <div
             onPointerDown={handleTreeSplitterPointerDown}
             onDoubleClick={() => {
@@ -566,29 +729,32 @@ export const DentalNeuroLab: React.FC = () => {
           </div>
         )}
 
-        {/* Center Column: 3D Craniofacial Stage (Always 100% width on mobile, fills remaining space on desktop) */}
-        <main className="flex-1 relative h-full overflow-hidden">
-          {/* Floating Reopen Tree Button (when collapsed or on mobile) */}
-          {!isTreeOpen && (
+        {/* Center Column: 3D Craniofacial Stage (Always 100% width on mobile & tablet/iPad, fills remaining space on desktop) */}
+        <main className="flex-1 min-w-0 w-full h-full relative overflow-hidden">
+          {/* Floating Reopen Tree Button (when collapsed or on tablet/mobile) */}
+          {(!isTreeOpen || isCompact) && (
             <button
               onClick={() => setIsTreeOpen(true)}
-              className="absolute top-3 left-3 z-20 px-2.5 py-1.5 rounded-full bg-slate-900/85 border border-slate-700 text-slate-200 hover:text-white shadow-xl backdrop-blur-md transition cursor-pointer flex items-center gap-1.5 text-xs font-semibold hover:border-amber-500 animate-fade-in"
+              className="absolute top-3 left-3 z-20 px-3 py-1.5 rounded-full bg-slate-900/85 border border-slate-700 text-slate-200 hover:text-white shadow-xl backdrop-blur-md transition cursor-pointer flex items-center gap-1.5 text-xs font-semibold hover:border-amber-500 animate-fade-in"
               title="Mở cây giải phẫu"
             >
               <PanelLeftOpen className="w-3.5 h-3.5 text-amber-500" />
-              <span className="hidden sm:inline">Cây Giải Phẫu</span>
+              <span>Cây Giải Phẫu</span>
             </button>
           )}
 
-          {/* Floating Reopen Info Dossier Button (when collapsed or on mobile) */}
-          {!isInfoOpen && (
+          {/* Floating Reopen Info Dossier Button (when collapsed or on tablet/mobile) */}
+          {(!isInfoOpen || isCompact) && (
             <button
               onClick={() => setIsInfoOpen(true)}
-              className="absolute top-3 right-3 z-20 px-2.5 py-1.5 rounded-full bg-slate-900/85 border border-slate-700 text-slate-200 hover:text-white shadow-xl backdrop-blur-md transition cursor-pointer flex items-center gap-1.5 text-xs font-semibold hover:border-amber-500 animate-fade-in"
+              className="absolute top-3 right-3 z-20 px-3 py-1.5 rounded-full bg-slate-900/85 border border-slate-700 text-slate-200 hover:text-white shadow-xl backdrop-blur-md transition cursor-pointer flex items-center gap-1.5 text-xs font-semibold hover:border-amber-500 animate-fade-in"
               title="Mở hồ sơ giải phẫu"
             >
               <FileText className="w-3.5 h-3.5 text-amber-500" />
-              <span className="hidden sm:inline">Hồ Sơ Sọ Mặt</span>
+              <span>Hồ Sơ Sọ Mặt</span>
+              {selectedAnatomyId && (
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+              )}
             </button>
           )}
 
@@ -601,8 +767,8 @@ export const DentalNeuroLab: React.FC = () => {
           <DentalNeuroToolbar />
         </main>
 
-        {/* Right Resizer Splitter (Desktop) */}
-        {!isMobile && isInfoOpen && (
+        {/* Right Resizer Splitter (Desktop >= 1200px) */}
+        {!isCompact && isInfoOpen && (
           <div
             onPointerDown={handleInfoSplitterPointerDown}
             onDoubleClick={() => {
@@ -628,8 +794,8 @@ export const DentalNeuroLab: React.FC = () => {
           </div>
         )}
 
-        {/* Right Column (Desktop): Collapsible & Resizable Medical Dossier */}
-        {!isMobile && (
+        {/* Right Column (Desktop >= 1200px): Collapsible & Resizable Medical Dossier */}
+        {!isCompact && (
           <DentalNeuroInfoPanel
             isOpen={isInfoOpen}
             onClose={() => setIsInfoOpen(false)}
@@ -638,14 +804,14 @@ export const DentalNeuroLab: React.FC = () => {
         )}
       </div>
 
-      {/* 3. MOBILE SLIDE-OVER DRAWERS WITH BACKDROP */}
-      {isMobile && isTreeOpen && (
-        <div className="fixed inset-0 z-50 flex animate-fade-in">
+      {/* 3. TABLET & MOBILE SLIDE-OVER DRAWERS WITH BACKDROP */}
+      {isCompact && isTreeOpen && (
+        <div className="fixed inset-0 z-50 flex animate-fade-in pointer-events-auto">
           <div
             onClick={() => setIsTreeOpen(false)}
             className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity cursor-pointer"
           />
-          <div className="relative z-10 w-[85vw] max-w-xs h-full bg-[#fbf7f2] dark:bg-[#0c121e] shadow-2xl flex flex-col">
+          <div className="relative z-10 w-[85vw] sm:w-80 max-w-sm h-full bg-[#fbf7f2] dark:bg-[#0c121e] shadow-2xl flex flex-col border-r border-slate-800">
             <DentalNeuroTree
               isOpen={true}
               onClose={() => setIsTreeOpen(false)}
@@ -655,13 +821,13 @@ export const DentalNeuroLab: React.FC = () => {
         </div>
       )}
 
-      {isMobile && isInfoOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end animate-fade-in">
+      {isCompact && isInfoOpen && (
+        <div className="fixed inset-0 z-50 flex justify-end animate-fade-in pointer-events-auto">
           <div
             onClick={() => setIsInfoOpen(false)}
             className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity cursor-pointer"
           />
-          <div className="relative z-10 w-[92vw] max-w-sm h-full bg-[#fbf7f2] dark:bg-[#0c121e] shadow-2xl flex flex-col">
+          <div className="relative z-10 w-[92vw] sm:w-96 max-w-md h-full bg-[#fbf7f2] dark:bg-[#0c121e] shadow-2xl flex flex-col border-l border-slate-800">
             <DentalNeuroInfoPanel
               isOpen={true}
               onClose={() => setIsInfoOpen(false)}

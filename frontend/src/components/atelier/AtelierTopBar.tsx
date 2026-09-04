@@ -66,7 +66,7 @@ export const AtelierTopBar: React.FC = () => {
       </div>
 
       {/* Main Navigation Tabs */}
-      <nav className="hidden md:flex items-center gap-1">
+      <nav className="hidden xl:flex items-center gap-1">
         <button
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition ${
             isDark
