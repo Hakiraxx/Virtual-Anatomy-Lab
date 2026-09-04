@@ -27,6 +27,28 @@ import {
   BoneGutteringTrough3D
 } from './AnatomicalDentalModels3D';
 
+
+// Extract baked real nerve geometry from Z-Anatomy glTF
+function extractBakedNerveMesh(
+  rootScene: THREE.Object3D,
+  nodeName: string,
+  targetOffset: [number, number, number] = [-0.0451, 0.60, 0.08]
+): THREE.BufferGeometry | null {
+  rootScene.updateMatrixWorld(true);
+  let match: THREE.Mesh | null = null;
+  rootScene.traverse((child) => {
+    if (!match && child.name === nodeName && (child as THREE.Mesh).isMesh) {
+      match = child as THREE.Mesh;
+    }
+  });
+  if (!match) return null;
+  const geom = (match as THREE.Mesh).geometry.clone();
+  geom.applyMatrix4((match as THREE.Mesh).matrixWorld);
+  geom.translate(targetOffset[0], targetOffset[1], targetOffset[2]);
+  geom.computeVertexNormals();
+  return geom;
+}
+
 // ============================================================================
 // 1. CANONICAL 3D SKULL BACKGROUND FOR MANDIBULAR SURGERY
 // ============================================================================
@@ -132,42 +154,18 @@ const MandibularSurgicalSiteMesh: React.FC<{
     };
   }, [winterType, pellClass, pellPos]);
 
-  // Authentic IAN pathway through mandibular canal (verified against skull.glb geometry)
-  const ianPoints: [number, number, number][] = [
-    [sideSign * 0.035, 1.370, 0.075], // Origin from V3 trunk
-    [sideSign * 0.036, 1.365, 0.080], // Pterygomandibular space
-    [sideSign * 0.037, 1.360, 0.088], // Behind lingula (gai Spix)
-    [sideSign * 0.038, 1.355, 0.095], // Mandibular Foramen
-    [sideSign * 0.037, 1.346, 0.106], // Canal in ramus
-    [sideSign * 0.036, 1.336, 0.118], // Beneath R48/38
-    [sideSign * 0.034, 1.330, 0.130], // Beneath R47/37
-    [sideSign * 0.033, 1.325, 0.138], // Beneath R46/36
-    [sideSign * 0.030, 1.320, 0.150]  // Mental Foramen exit
-  ];
+  // Load verified real pre-made cranial nerve assets (Z-Anatomy CC BY-SA 4.0)
+  const cranialNervesGltf = useGLTF('/models/craniofacial/cranial-nerves/cranial_nerves_complete.glb', '/draco/');
+  const ianNodeName = sideSign > 0 ? 'Inferior alveolar nerve.r' : 'Inferior alveolar nerve.l';
+  const lingualNodeName = sideSign > 0 ? 'Lingual nerve.r' : 'Lingual nerve.l';
 
-  const ianCurve = useMemo(() => {
-    return new THREE.CatmullRomCurve3(ianPoints.map((p) => new THREE.Vector3(...p)));
-  }, [ianPoints]);
+  const realIanGeometry = useMemo(() => {
+    return extractBakedNerveMesh(cranialNervesGltf.scene, ianNodeName);
+  }, [cranialNervesGltf, ianNodeName]);
 
-  const ianGeometry = useMemo(() => {
-    return new THREE.TubeGeometry(ianCurve, 32, 0.0016, 12, false);
-  }, [ianCurve]);
-
-  // Lingual nerve along medial cortical plate
-  const lingualPoints: [number, number, number][] = [
-    [sideSign * 0.032, 1.365, 0.080],
-    [sideSign * 0.030, 1.350, 0.096],
-    [sideSign * 0.026, 1.335, 0.116], // inner plate near 3rd molar
-    [sideSign * 0.022, 1.325, 0.132]
-  ];
-
-  const lingualCurve = useMemo(() => {
-    return new THREE.CatmullRomCurve3(lingualPoints.map((p) => new THREE.Vector3(...p)));
-  }, [lingualPoints]);
-
-  const lingualGeometry = useMemo(() => {
-    return new THREE.TubeGeometry(lingualCurve, 24, 0.0012, 10, false);
-  }, [lingualCurve]);
+  const realLingualGeometry = useMemo(() => {
+    return extractBakedNerveMesh(cranialNervesGltf.scene, lingualNodeName);
+  }, [cranialNervesGltf, lingualNodeName]);
 
   // Tooth position with depth offset
   const toothPos: [number, number, number] = [
@@ -203,24 +201,24 @@ const MandibularSurgicalSiteMesh: React.FC<{
       {showNerves && (
         <group>
           {/* IAN Main Trunk inside Mandibular Canal */}
-          <mesh geometry={ianGeometry}>
+          {realIanGeometry && <mesh geometry={realIanGeometry}>
             <meshStandardMaterial
               color="#f59e0b"
               emissive="#f59e0b"
               emissiveIntensity={0.8}
               roughness={0.3}
             />
-          </mesh>
+          </mesh>}
 
           {/* Lingual Nerve running medially */}
-          <mesh geometry={lingualGeometry}>
+          {realLingualGeometry && <mesh geometry={realLingualGeometry}>
             <meshStandardMaterial
               color="#fb7185"
               emissive="#e11d48"
               emissiveIntensity={0.6}
               roughness={0.4}
             />
-          </mesh>
+          </mesh>}
 
           {/* IAN Foramen & Exit Labels */}
           <Html position={[sideSign * 0.038, 1.358, 0.095]} center>

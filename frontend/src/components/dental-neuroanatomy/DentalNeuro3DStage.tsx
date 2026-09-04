@@ -4,6 +4,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, useGLTF, Html } from '@react-three/drei';
 import { useDentalNeuroStore } from '../../stores/useDentalNeuroStore';
 import { useAnatomyStore } from '../../stores/useAnatomyStore';
+import { ANATOMY_ASSET_REGISTRY } from '../../data/AnatomyAssetRegistry';
 import {
   DENTAL_NERVE_STRUCTURES,
   CRANIAL_FORAMINA,
@@ -107,95 +108,210 @@ const DentalCameraController: React.FC<{ controlsRef: React.RefObject<any> }> = 
   return null;
 };
 
-// 3D Tube geometry for nerve curves (Refined Anatomical Caliber)
-interface NerveCurveMeshProps {
-  id: string;
-  side?: 'right' | 'left';
-  points: [number, number, number][];
-  color: string;
-  radius?: number;
-  isSelected: boolean;
-  isTracing: boolean;
-  traceProgress: number;
-  opacity: number;
+
+// ============================================================================
+// REAL PRE-MADE CRANIAL NERVE 3D MESHES (Z-Anatomy / BodyParts3D - CC BY-SA 4.0)
+// Zero procedural TubeGeometry. Verified anatomical meshes.
+// ============================================================================
+const CRANIOFACIAL_NERVE_SET = new Set([
+  'Trigeminal nerve (V).r', 'Trigeminal nerve (V).l',
+  'Sensory root of trigeminal nerve.r', 'Sensory root of trigeminal nerve.l',
+  'Motor root of trigeminal nerve.r', 'Motor root of trigeminal nerve.l',
+  'Ophthalmic nerve.r', 'Ophthalmic nerve.l',
+  'Maxillary nerve.r', 'Maxillary nerve.l',
+  'Meningeal branch of maxillary nerve.r', 'Meningeal branch of maxillary nerve.l',
+  'Mandibular nerve.j', 'Mandibular nerve.g',
+  'Anterior division of mandibular nerve.r', 'Anterior division of mandibular nerve.l',
+  'Posterior division of mandibular nerve.r', 'Posterior division of mandibular nerve.l',
+  'Inferior alveolar nerve.r', 'Inferior alveolar nerve.l',
+  'Lingual nerve.r', 'Lingual nerve.l',
+  'Mental nerve.r', 'Mental nerve.l',
+  'Buccal nerve.r', 'Buccal nerve.l',
+  'Nerve to mylohyoid muscle.r', 'Nerve to mylohyoid muscle.l',
+  'Facial nerve (VII).r', 'Facial nerve (VII).l',
+  'Glossopharyngeal nerve (IX).r', 'Glossopharyngeal nerve (IX).l',
+  'Hypoglossal nerve (XII).r', 'Hypoglossal nerve (XII).l',
+  'Vagus nerve (X).r', 'Vagus nerve (X).l',
+  'Optic nerve (II).r', 'Optic nerve (II).l',
+  'Oculomotor nerve (III).r', 'Oculomotor nerve (III).l',
+  'Trochlear nerve (IV).r', 'Trochlear nerve (IV).l',
+  'Vestibulocochlear nerve (VIII).r', 'Vestibulocochlear nerve (VIII).l'
+]);
+
+function mapNerveMeshToAnatomyId(meshName: string): { id: string; side?: 'right' | 'left' } {
+  const isRight = meshName.endsWith('.r');
+  const isLeft = meshName.endsWith('.l');
+  const side = isRight ? 'right' : isLeft ? 'left' : undefined;
+
+  if (meshName.includes('Inferior alveolar nerve')) return { id: 'nerve_ian', side };
+  if (meshName.includes('Lingual nerve')) return { id: 'nerve_lingual', side };
+  if (meshName.includes('Mental nerve')) return { id: 'nerve_mental', side };
+  if (meshName.includes('Buccal nerve')) return { id: 'nerve_buccal', side };
+  if (meshName.includes('Nerve to mylohyoid')) return { id: 'nerve_mylohyoid', side };
+  if (meshName.includes('Facial nerve')) return { id: 'cn_7', side };
+  if (meshName.includes('Maxillary nerve')) return { id: 'cn_5_v2', side };
+  if (meshName.includes('Ophthalmic nerve')) return { id: 'cn_5_v1', side };
+  if (meshName.includes('mandibular nerve') || meshName.includes('Mandibular nerve')) return { id: 'cn_5_v3', side };
+  if (meshName.includes('Trigeminal nerve')) return { id: 'cn_5', side };
+  return { id: 'cn_5', side };
+}
+
+interface RealCranialNervesSystemProps {
+  selectedAnatomyId: string | null;
+  selectedSide?: 'right' | 'left' | null;
+  lateralizationSide: 'bilateral' | 'right' | 'left';
+  activeNerveTraceId: string | null;
+  selectedTooth: any;
+  selectedToothSide: 'right' | 'left' | null;
   onSelect: (id: string, side?: 'right' | 'left') => void;
 }
 
-const NerveCurveMesh: React.FC<NerveCurveMeshProps> = ({
-  id,
-  side,
-  points,
-  color,
-  radius = 0.0014,
-  isSelected,
-  isTracing,
-  traceProgress,
-  opacity,
+const RealCranialNervesSystem: React.FC<RealCranialNervesSystemProps> = ({
+  selectedAnatomyId,
+  selectedSide,
+  lateralizationSide,
+  activeNerveTraceId,
+  selectedTooth,
+  selectedToothSide,
   onSelect
 }) => {
-  const curve = useMemo(() => {
-    const vectors = points.map((p) => new THREE.Vector3(...p));
-    return new THREE.CatmullRomCurve3(vectors, false, 'catmullrom', 0.5);
-  }, [points]);
+  const nervesGltf = useGLTF('/models/craniofacial/cranial-nerves/cranial_nerves_complete.glb', '/draco/');
 
-  const effectiveRadius = isSelected ? 0.0020 : radius;
+  // Determine target node names based on selectedAnatomyId or active tooth
+  const targetNodeNames = useMemo(() => {
+    const targets = new Set<string>();
+    if (!selectedAnatomyId && !selectedTooth) return targets;
 
-  const geometry = useMemo(() => {
-    return new THREE.TubeGeometry(curve, 48, effectiveRadius, 10, false);
-  }, [curve, effectiveRadius]);
+    if (selectedAnatomyId) {
+      const entry = ANATOMY_ASSET_REGISTRY[selectedAnatomyId];
+      if (entry?.nodeNames) {
+        if (entry.nodeNames.right) targets.add(entry.nodeNames.right);
+        if (entry.nodeNames.left) targets.add(entry.nodeNames.left);
+        if (entry.nodeNames.joint) targets.add(entry.nodeNames.joint);
+        entry.nodeNames.subNodes?.forEach((n) => targets.add(n));
+      }
 
-  // Subtle anatomical pulse effect for selected nerve
-  const meshRef = useRef<THREE.Mesh>(null);
-  useFrame(({ clock }) => {
-    if (meshRef.current && isSelected) {
-      const mat = meshRef.current.material as THREE.MeshStandardMaterial;
-      const glow = 0.3 + 0.3 * Math.sin(clock.getElapsedTime() * 3.5);
-      mat.emissiveIntensity = 0.25 + glow;
+      // Shorthand aliases
+      if (selectedAnatomyId === 'cn_5' || selectedAnatomyId === 'nerve_cn_v') {
+        ['Trigeminal nerve (V).r', 'Trigeminal nerve (V).l', 'Sensory root of trigeminal nerve.r', 'Sensory root of trigeminal nerve.l', 'Motor root of trigeminal nerve.r', 'Motor root of trigeminal nerve.l'].forEach(n => targets.add(n));
+      } else if (selectedAnatomyId === 'cn_5_v1' || selectedAnatomyId === 'nerve_v1') {
+        ['Ophthalmic nerve.r', 'Ophthalmic nerve.l'].forEach(n => targets.add(n));
+      } else if (selectedAnatomyId === 'cn_5_v2' || selectedAnatomyId === 'nerve_v2') {
+        ['Maxillary nerve.r', 'Maxillary nerve.l', 'Meningeal branch of maxillary nerve.r', 'Meningeal branch of maxillary nerve.l'].forEach(n => targets.add(n));
+      } else if (selectedAnatomyId === 'cn_5_v3' || selectedAnatomyId === 'nerve_v3') {
+        ['Mandibular nerve.j', 'Mandibular nerve.g', 'Anterior division of mandibular nerve.r', 'Anterior division of mandibular nerve.l', 'Posterior division of mandibular nerve.r', 'Posterior division of mandibular nerve.l'].forEach(n => targets.add(n));
+      } else if (selectedAnatomyId === 'nerve_ian') {
+        ['Inferior alveolar nerve.r', 'Inferior alveolar nerve.l'].forEach(n => targets.add(n));
+      } else if (selectedAnatomyId === 'nerve_lingual') {
+        ['Lingual nerve.r', 'Lingual nerve.l'].forEach(n => targets.add(n));
+      } else if (selectedAnatomyId === 'nerve_mental') {
+        ['Mental nerve.r', 'Mental nerve.l'].forEach(n => targets.add(n));
+      } else if (selectedAnatomyId === 'nerve_buccal') {
+        ['Buccal nerve.r', 'Buccal nerve.l'].forEach(n => targets.add(n));
+      } else if (selectedAnatomyId === 'cn_7' || selectedAnatomyId === 'nerve_facial_cn7') {
+        ['Facial nerve (VII).r', 'Facial nerve (VII).l'].forEach(n => targets.add(n));
+      }
     }
-  });
 
-  // Calculate position along curve for active tracing marker
-  const tracerPos = useMemo(() => {
-    if (!isTracing) return null;
-    return curve.getPointAt(traceProgress);
-  }, [curve, isTracing, traceProgress]);
+    if (selectedTooth) {
+      const isRight = selectedTooth.quadrant === 1 || selectedTooth.quadrant === 4;
+      const sfx = isRight ? '.r' : '.l';
+      if (selectedTooth.arch === 'mandibular') {
+        targets.add(`Inferior alveolar nerve${sfx}`);
+        targets.add(`Lingual nerve${sfx}`);
+        targets.add('Mandibular nerve.j');
+      } else {
+        targets.add(`Maxillary nerve${sfx}`);
+      }
+    }
+
+    return targets;
+  }, [selectedAnatomyId, selectedTooth]);
+
+  // Cloned and configured scene
+  const clonedScene = useMemo(() => {
+    const scene = nervesGltf.scene.clone(true);
+    scene.traverse((child: any) => {
+      if (!child.isMesh) return;
+
+      const isCranial = CRANIOFACIAL_NERVE_SET.has(child.name);
+      if (!isCranial) {
+        child.visible = false;
+        return;
+      }
+
+      // Lateralization filter
+      if (lateralizationSide === 'right' && child.name.endsWith('.l')) {
+        child.visible = false;
+        return;
+      }
+      if (lateralizationSide === 'left' && child.name.endsWith('.r')) {
+        child.visible = false;
+        return;
+      }
+
+      child.visible = true;
+
+      // Styling and illumination
+      const isTargeted = targetNodeNames.has(child.name);
+      const isTracing = activeNerveTraceId && targetNodeNames.has(child.name);
+
+      let color = '#facc15';
+      let emissive = '#000000';
+      let emissiveIntensity = 0.08;
+      let opacity = selectedAnatomyId || selectedTooth ? 0.20 : 0.88;
+
+      if (isTargeted || isTracing) {
+        color = '#fef08a';
+        emissive = '#fde047';
+        emissiveIntensity = 0.75;
+        opacity = 1.0;
+      } else if (child.name.includes('Trigeminal') || child.name.includes('Mandibular') || child.name.includes('Maxillary')) {
+        color = '#fbbf24';
+        emissive = '#f59e0b';
+        emissiveIntensity = selectedAnatomyId ? 0.15 : 0.25;
+      }
+
+      child.material = new THREE.MeshStandardMaterial({
+        color: new THREE.Color(color),
+        emissive: new THREE.Color(emissive),
+        emissiveIntensity,
+        roughness: 0.35,
+        metalness: 0.05,
+        transparent: opacity < 0.98,
+        opacity,
+        depthWrite: opacity > 0.5
+      });
+
+      child.castShadow = true;
+    });
+
+    return scene;
+  }, [nervesGltf, targetNodeNames, lateralizationSide, selectedAnatomyId, selectedTooth, activeNerveTraceId]);
 
   return (
-    <group>
-      <mesh
-        ref={meshRef}
-        geometry={geometry}
-        onClick={(e) => {
-          e.stopPropagation();
-          onSelect(id, side);
-        }}
-        onPointerOver={(e) => {
+    <group
+      position={[-0.0451, 0.60, 0.08]}
+      onClick={(e) => {
+        e.stopPropagation();
+        const meshName = (e.object as THREE.Mesh).name;
+        if (meshName && CRANIOFACIAL_NERVE_SET.has(meshName)) {
+          const mapped = mapNerveMeshToAnatomyId(meshName);
+          onSelect(mapped.id, mapped.side);
+        }
+      }}
+      onPointerOver={(e) => {
+        const meshName = (e.object as THREE.Mesh).name;
+        if (meshName && CRANIOFACIAL_NERVE_SET.has(meshName)) {
           e.stopPropagation();
           document.body.style.cursor = 'pointer';
-        }}
-        onPointerOut={() => {
-          document.body.style.cursor = 'auto';
-        }}
-      >
-        <meshStandardMaterial
-          color={isSelected ? '#ffffff' : color}
-          emissive={color}
-          emissiveIntensity={isSelected ? 0.45 : 0.12}
-          roughness={0.45}
-          metalness={0.05}
-          transparent={opacity < 0.98}
-          opacity={opacity}
-        />
-      </mesh>
-
-      {/* Animated Tracer Bead */}
-      {isTracing && tracerPos && (
-        <mesh position={tracerPos}>
-          <sphereGeometry args={[effectiveRadius * 2.2, 16, 16]} />
-          <meshBasicMaterial color="#ffffff" />
-          <pointLight color="#fde047" intensity={2.0} distance={0.06} />
-        </mesh>
-      )}
+        }
+      }}
+      onPointerOut={() => {
+        document.body.style.cursor = 'auto';
+      }}
+    >
+      <primitive object={clonedScene} />
     </group>
   );
 };
@@ -736,138 +852,17 @@ export const DentalNeuro3DStage: React.FC = () => {
             />
           </React.Suspense>
 
-          {/* B. Cranial & Dental Nerve 3D Pathways (Layer 6) - Lateralization supported */}
+          {/* B. Cranial & Dental Real 3D Nerve Meshes (Layer 6) - CC BY-SA 4.0 Z-Anatomy */}
           {layerVisibility[6] && (
-            <group name="CranialNerves">
-              {Object.values(DENTAL_NERVE_STRUCTURES).flatMap((nerve) => {
-                if (!nerve.path3D || nerve.path3D.length < 2) return [];
-
-                const isSelected = selectedAnatomyId === nerve.id;
-                const isTracing = activeNerveTraceId === nerve.id;
-
-                let opacity: number;
-                let nerveColor = nerve.color;
-                let radius = 0.0013;
-
-                // Check if this nerve is in the active tooth's innervation circuit
-                const isDirectToothNerve =
-                  !!selectedTooth &&
-                  (nerve.id === selectedTooth.pulpInnervationId ||
-                    nerve.id === selectedTooth.periodontalInnervationId ||
-                    nerve.id === selectedTooth.buccalGingivaInnervationId ||
-                    nerve.id === selectedTooth.lingualGingivaInnervationId);
-
-                const isParentToothTrunk =
-                  !!selectedTooth &&
-                  ((selectedTooth.arch === 'mandibular' && (nerve.id === 'cn_5_v3' || nerve.id === 'cn_5')) ||
-                    (selectedTooth.arch === 'maxillary' && (nerve.id === 'cn_5_v2' || nerve.id === 'cn_5')));
-
-                if (selectedAnatomyId) {
-                  // Direct selection / tracing: Full brilliant illumination
-                  if (isSelected || isTracing) {
-                    opacity = 1.0;
-                    nerveColor = '#fde047'; // Bright gold highlight
-                    radius = 0.0022;
-                  } else if (selectedTooth) {
-                    // Clinical Dental Innervation Pathway for Selected Tooth
-                    if (isDirectToothNerve) {
-                      opacity = 1.0;
-                      nerveColor = '#fde047'; // Radiant gold for direct pulp & gingival nerves
-                      radius = 0.0022;
-                    } else if (isParentToothTrunk) {
-                      opacity = 0.85;
-                      nerveColor = '#f59e0b'; // Warm amber for supplying cranial trunk
-                      radius = 0.0017;
-                    } else {
-                      opacity = 0.04;
-                      nerveColor = '#64748b';
-                      radius = 0.0008;
-                    }
-                  } else {
-                    // Check hierarchical relevance
-                    const isRelated =
-                      (selectedAnatomyId === 'cn_5' && (nerve.division || nerve.id.startsWith('cn_5') || ['nerve_ian', 'nerve_lingual', 'nerve_infraorbital', 'nerve_mental'].includes(nerve.id))) ||
-                      (nerve.id === 'cn_5' && (selectedAnatomyId.startsWith('cn_5_') || selectedAnatomyId.startsWith('nerve_'))) ||
-                      (nerve.division && selectedAnatomyId.toUpperCase().includes(nerve.division)) ||
-                      (nerve.parentNerveId === selectedAnatomyId) ||
-                      (selectedAnatomyId.startsWith('cn_7') && nerve.id.startsWith('cn_7'));
-
-                    if (isRelated) {
-                      opacity = 0.75;
-                      radius = 0.0015;
-                    } else {
-                      // Subtly dim unrelated nerves so the scene is crystal-clear
-                      opacity = 0.06;
-                      nerveColor = '#94a3b8';
-                      radius = 0.0009;
-                    }
-                  }
-                } else {
-                  // Overview mode (nothing selected):
-                  // Clean, high-yield presentation: Highlight key trunks (CN V, V1, V2, V3, IAN, Lingual, CN VII), keep small peripheral twigs subtle
-                  const isPrimary = ['cn_5', 'cn_5_v1', 'cn_5_v2', 'cn_5_v3', 'cn_7', 'nerve_ian', 'nerve_lingual', 'nerve_infraorbital'].includes(nerve.id);
-                  if (isPrimary) {
-                    opacity = 0.90;
-                    radius = 0.0016;
-                  } else {
-                    opacity = 0.15; // Very subtle, avoids rainbow spaghetti
-                    radius = 0.0010;
-                  }
-                }
-
-                const isMidline = nerve.path3D.every(([x]) => Math.abs(x) < 0.003);
-                const elements: React.ReactNode[] = [];
-
-                // 1. Right side branch (Patient Right, X <= 0)
-                if (lateralizationSide === 'bilateral' || lateralizationSide === 'right' || isMidline) {
-                  const isRightSelected = (isSelected || (isDirectToothNerve && selectedToothSide === 'right')) && (selectedSide === 'right' || !selectedSide || !!selectedTooth);
-                  const rightOpacity = selectedTooth && selectedToothSide === 'left' && isDirectToothNerve ? 0.04 : opacity;
-
-                  elements.push(
-                    <NerveCurveMesh
-                      key={`${nerve.id}_right`}
-                      id={nerve.id}
-                      side="right"
-                      points={nerve.path3D}
-                      color={isRightSelected ? '#fde047' : nerveColor}
-                      radius={isRightSelected ? radius * 1.15 : radius}
-                      isSelected={isRightSelected}
-                      isTracing={isTracing && (selectedSide === 'right' || !selectedSide)}
-                      traceProgress={traceProgress}
-                      opacity={rightOpacity}
-                      onSelect={handleStructureClick}
-                    />
-                  );
-                }
-
-                // 2. Left side branch (Patient Left, X >= 0, mirrored)
-                if (!isMidline && (lateralizationSide === 'bilateral' || lateralizationSide === 'left')) {
-                  const mirroredPoints = nerve.path3D.map(
-                    ([x, y, z]): [number, number, number] => [-x, y, z]
-                  );
-                  const isLeftSelected = (isSelected || (isDirectToothNerve && selectedToothSide === 'left')) && (selectedSide === 'left' || !selectedSide || !!selectedTooth);
-                  const leftOpacity = selectedTooth && selectedToothSide === 'right' && isDirectToothNerve ? 0.04 : opacity;
-
-                  elements.push(
-                    <NerveCurveMesh
-                      key={`${nerve.id}_left`}
-                      id={nerve.id}
-                      side="left"
-                      points={mirroredPoints}
-                      color={isLeftSelected ? '#fde047' : nerveColor}
-                      radius={isLeftSelected ? radius * 1.15 : radius}
-                      isSelected={isLeftSelected}
-                      isTracing={isTracing && (selectedSide === 'left' || !selectedSide)}
-                      traceProgress={traceProgress}
-                      opacity={leftOpacity}
-                      onSelect={handleStructureClick}
-                    />
-                  );
-                }
-
-                return elements;
-              })}
-            </group>
+            <RealCranialNervesSystem
+              selectedAnatomyId={selectedAnatomyId}
+              selectedSide={selectedSide}
+              lateralizationSide={lateralizationSide}
+              activeNerveTraceId={activeNerveTraceId}
+              selectedTooth={selectedTooth}
+              selectedToothSide={selectedToothSide}
+              onSelect={handleStructureClick}
+            />
           )}
 
           {/* C. Cranial Foramina 3D Ring Markers (Context-aware filtering & Lateralization) */}
