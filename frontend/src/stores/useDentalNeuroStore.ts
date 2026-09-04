@@ -5,9 +5,10 @@ import {
   DENTAL_INNERVATION_DATABASE,
   CLINICAL_ANESTHESIA_TECHNIQUES
 } from '../data/dentalNeuroData';
+import { resolveCanonicalId } from '../data/AnatomyAssetRegistry';
 
 export type VisualizationDepth = 'surface' | 'skeletal' | 'neural' | 'dental' | 'deep';
-export type SpecimenMode = 'general' | 'tooth_specimen' | 'tmj_specimen' | 'wisdom_surgery';
+export type SpecimenMode = 'general' | 'cranial_nerves' | 'tooth_specimen' | 'tmj_specimen' | 'wisdom_surgery';
 
 export interface CraniofacialQuizQuestion {
   id: string;
@@ -218,6 +219,45 @@ interface DentalNeuroState {
   nextQuizQuestion: () => void;
   exitQuiz: () => void;
 
+  // Feature Modals & Toggles
+  isTraceOpen: boolean;
+  toggleTrace: () => void;
+  isCompareOpen: boolean;
+  toggleCompare: () => void;
+  isNeuroMapOpen: boolean;
+  toggleNeuroMap: () => void;
+  isStudyOpen: boolean;
+  toggleStudy: () => void;
+  isDebugOpen: boolean;
+  toggleDebug: () => void;
+  clinicalMode: 'normal' | 'clinical' | 'pathology';
+  setClinicalMode: (mode: 'normal' | 'clinical' | 'pathology') => void;
+
+  // Skull Base & Cranial Nerve Lab Enhancements
+  boneOpacity: number; // 0.0 to 1.0
+  setBoneOpacity: (opacity: number) => void;
+  isNeuralXRay: boolean;
+  toggleNeuralXRay: () => void;
+  isSkullBaseMode: boolean;
+  setSkullBaseMode: (active: boolean) => void;
+  cranialFossa: 'anterior' | 'middle' | 'posterior' | 'all';
+  setCranialFossa: (fossa: 'anterior' | 'middle' | 'posterior' | 'all') => void;
+  isV2DentalView: boolean;
+  setV2DentalView: (active: boolean) => void;
+  isFacialNerveLab: boolean;
+  setFacialNerveLab: (active: boolean) => void;
+  isDentalNeuralMap: boolean;
+  setDentalNeuralMap: (active: boolean) => void;
+  selectedForamenId: string | null;
+  foramenPassingStructures: string[];
+  selectForamen: (foramenId: string | null) => void;
+  highlightedToothRelations: {
+    innervation: boolean;
+    vascular: boolean;
+    canal: boolean;
+  };
+  setHighlightedToothRelations: (relations: Partial<{ innervation: boolean; vascular: boolean; canal: boolean }>) => void;
+
   // Reset all
   resetAll: () => void;
 }
@@ -312,6 +352,19 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
   quizScore: 0,
   quizAnswered: false,
   quizFeedback: null,
+
+  isTraceOpen: false,
+  toggleTrace: () => set((s) => ({ isTraceOpen: !s.isTraceOpen })),
+  isCompareOpen: false,
+  toggleCompare: () => set((s) => ({ isCompareOpen: !s.isCompareOpen })),
+  isNeuroMapOpen: false,
+  toggleNeuroMap: () => set((s) => ({ isNeuroMapOpen: !s.isNeuroMapOpen })),
+  isStudyOpen: false,
+  toggleStudy: () => set((s) => ({ isStudyOpen: !s.isStudyOpen })),
+  isDebugOpen: false,
+  toggleDebug: () => set((s) => ({ isDebugOpen: !s.isDebugOpen })),
+  clinicalMode: 'normal',
+  setClinicalMode: (mode) => set({ clinicalMode: mode }),
 
   selectAnatomy: (id, side = null) => {
     let updates: Partial<DentalNeuroState> = {};
@@ -696,8 +749,18 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
     const question = CRANIOFACIAL_QUIZ_QUESTIONS[currentQuizIndex];
     if (!question) return;
 
-    const isCorrect = selectedId === question.targetAnatomyId;
+    const isCorrect =
+      selectedId === question.targetAnatomyId ||
+      resolveCanonicalId(selectedId) === resolveCanonicalId(question.targetAnatomyId);
     const newScore = isCorrect ? quizScore + 1 : quizScore;
+
+    // Save quiz attempt in localStorage
+    try {
+      const stats = JSON.parse(localStorage.getItem('medanatomy_quiz_stats') || '{"attempts":0,"correct":0}');
+      stats.attempts += 1;
+      if (isCorrect) stats.correct += 1;
+      localStorage.setItem('medanatomy_quiz_stats', JSON.stringify(stats));
+    } catch {}
 
     set({
       quizAnswered: true,
@@ -741,10 +804,23 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
     });
   },
 
-  // Specimen Actions
+  // Specimen Actions - Supporting 5 Specialized RHM Labs
   setActiveSpecimenMode: (mode) => {
     const updates: Partial<DentalNeuroState> = { activeSpecimenMode: mode };
-    if (mode === 'tooth_specimen') {
+    if (mode === 'general') {
+      updates.selectedAnatomyId = 'bone_mandible';
+      updates.visualizationDepth = 'skeletal';
+    } else if (mode === 'cranial_nerves') {
+      updates.selectedAnatomyId = 'cn_5';
+      updates.visualizationDepth = 'neural';
+      updates.layerVisibility = {
+        ...get().layerVisibility,
+        4: true,  // Skull
+        6: true,  // Cranial nerves
+        10: true, // Teeth
+        11: true  // Jaws
+      };
+    } else if (mode === 'tooth_specimen') {
       const fdi = get().selectedToothFdi || 46;
       updates.selectedAnatomyId = `tooth_${fdi}`;
       updates.selectedSide = (fdi >= 11 && fdi <= 18) || (fdi >= 41 && fdi <= 48) ? 'right' : 'left';
@@ -810,6 +886,75 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
       set({ wisdomBoneOpacity: 0.85, wisdomShowNerves: true });
     }
   },
+  boneOpacity: 0.85,
+  setBoneOpacity: (opacity) => set({ boneOpacity: Math.max(0, Math.min(1, opacity)) }),
+  isNeuralXRay: false,
+  toggleNeuralXRay: () => set((s) => ({ isNeuralXRay: !s.isNeuralXRay })),
+  isSkullBaseMode: false,
+  setSkullBaseMode: (active) => {
+    set({ isSkullBaseMode: active });
+    if (active) {
+      get().setCameraTarget([0, 1.62, 0.12], [0, 1.38, 0.08], 0.32);
+    }
+  },
+  cranialFossa: 'all',
+  setCranialFossa: (fossa) => {
+    set({ cranialFossa: fossa });
+    if (fossa === 'anterior') {
+      get().setCameraTarget([0, 1.58, 0.22], [0, 1.41, 0.14], 0.25);
+    } else if (fossa === 'middle') {
+      get().setCameraTarget([0, 1.58, 0.14], [0, 1.39, 0.08], 0.25);
+    } else if (fossa === 'posterior') {
+      get().setCameraTarget([0, 1.58, 0.02], [0, 1.37, 0.04], 0.25);
+    }
+  },
+  isV2DentalView: false,
+  setV2DentalView: (active) => {
+    set({ isV2DentalView: active });
+    if (active) {
+      get().selectAnatomy('cn_5_v2');
+      get().setCameraTarget([0.08, 1.43, 0.28], [0.02, 1.39, 0.14], 0.26);
+    }
+  },
+  isFacialNerveLab: false,
+  setFacialNerveLab: (active) => {
+    set({ isFacialNerveLab: active });
+    if (active) {
+      get().selectAnatomy('cn_7');
+      get().setCameraTarget([0.22, 1.40, 0.20], [0.06, 1.37, 0.08], 0.28);
+    }
+  },
+  isDentalNeuralMap: false,
+  setDentalNeuralMap: (active) => set({ isDentalNeuralMap: active }),
+  selectedForamenId: null,
+  foramenPassingStructures: [],
+  selectForamen: (foramenId) => {
+    if (!foramenId) {
+      set({ selectedForamenId: null, foramenPassingStructures: [] });
+      return;
+    }
+    const foramen = CRANIAL_FORAMINA[foramenId];
+    const passing = foramen
+      ? [...(foramen.structuresPassingThroughVi || []), ...(foramen.relatedNerveIds || [])]
+      : [];
+    set({
+      selectedForamenId: foramenId,
+      selectedAnatomyId: foramenId,
+      foramenPassingStructures: passing
+    });
+    if (foramen?.cameraFocus) {
+      get().setCameraTarget(
+        foramen.cameraFocus.position,
+        foramen.cameraFocus.lookAt,
+        0.22
+      );
+    }
+  },
+  highlightedToothRelations: { innervation: false, vascular: false, canal: false },
+  setHighlightedToothRelations: (relations) =>
+    set((s) => ({
+      highlightedToothRelations: { ...s.highlightedToothRelations, ...relations }
+    })),
 
   resetAll: () => {
     set({

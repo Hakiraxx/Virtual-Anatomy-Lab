@@ -353,8 +353,8 @@ export const useAnatomyStore = create<AnatomyState>((set, get) => ({
       targetVis = { 1: false, 2: false, 3: true, 4: false, 5: false, 6: false, 7: false, 8: false };
       targetOp = { 1: 0, 2: 0, 3: 1.0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 };
     } else if (mode === 'organs') {
-      targetVis = { 1: true, 2: false, 3: false, 4: false, 5: true, 6: false, 7: false, 8: true };
-      targetOp = { 1: 0.08, 2: 0, 3: 0, 4: 0, 5: 1.0, 6: 0, 7: 0, 8: 1.0 };
+      targetVis = { 1: true, 2: false, 3: false, 4: true, 5: true, 6: false, 7: false, 8: true };
+      targetOp = { 1: 0.08, 2: 0, 3: 0, 4: 0.15, 5: 1.0, 6: 0, 7: 0, 8: 1.0 };
     } else if (mode === 'vascular') {
       targetVis = { 1: true, 2: false, 3: false, 4: true, 5: false, 6: true, 7: false, 8: false };
       targetOp = { 1: 0.10, 2: 0, 3: 0, 4: 0.15, 5: 0, 6: 1.0, 7: 0, 8: 0 };

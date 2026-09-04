@@ -11,7 +11,12 @@ import {
   Activity,
   Skull,
   Zap,
-  ChevronDown
+  ChevronDown,
+  Waypoints,
+  Columns2,
+  GitBranch,
+  GraduationCap,
+  Bug
 } from 'lucide-react';
 import { useDentalNeuroStore } from '../../stores/useDentalNeuroStore';
 import { useAnatomyStore } from '../../stores/useAnatomyStore';
@@ -48,6 +53,18 @@ export const DentalNeuroToolbar: React.FC = () => {
   const setClippingPlane = useDentalNeuroStore((s) => s.setClippingPlane);
   const resetAll = useDentalNeuroStore((s) => s.resetAll);
   const setCameraTarget = useDentalNeuroStore((s) => s.setCameraTarget);
+
+  // New platform features
+  const isTraceOpen = useDentalNeuroStore((s) => s.isTraceOpen);
+  const toggleTrace = useDentalNeuroStore((s) => s.toggleTrace);
+  const isCompareOpen = useDentalNeuroStore((s) => s.isCompareOpen);
+  const toggleCompare = useDentalNeuroStore((s) => s.toggleCompare);
+  const isNeuroMapOpen = useDentalNeuroStore((s) => s.isNeuroMapOpen);
+  const toggleNeuroMap = useDentalNeuroStore((s) => s.toggleNeuroMap);
+  const isStudyOpen = useDentalNeuroStore((s) => s.isStudyOpen);
+  const toggleStudy = useDentalNeuroStore((s) => s.toggleStudy);
+  const isDebugOpen = useDentalNeuroStore((s) => s.isDebugOpen);
+  const toggleDebug = useDentalNeuroStore((s) => s.toggleDebug);
 
   const atelierTheme = useAnatomyStore((s) => s.atelierTheme);
   const isDark = atelierTheme === 'dark';
@@ -584,6 +601,76 @@ export const DentalNeuroToolbar: React.FC = () => {
         >
           <Scissors className="w-3.5 h-3.5" />
           <span>Mặt cắt</span>
+        </button>
+
+        {/* Dò Đường Giải Phẫu (Trace) */}
+        <button
+          onClick={toggleTrace}
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full transition cursor-pointer ${
+            isTraceOpen
+              ? 'bg-amber-600 text-white font-bold shadow-md'
+              : 'hover:bg-black/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300'
+          }`}
+          title="Mở bảng Dò đường dẫn giải phẫu (Anatomy Trace - Play/Pause/Follow Camera)"
+        >
+          <Waypoints className="w-3.5 h-3.5 text-amber-500" />
+          <span>Dò Đường</span>
+        </button>
+
+        {/* So Sánh Giải Phẫu (Compare) */}
+        <button
+          onClick={toggleCompare}
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full transition cursor-pointer ${
+            isCompareOpen
+              ? 'bg-amber-600 text-white font-bold shadow-md'
+              : 'hover:bg-black/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300'
+          }`}
+          title="Mở chế độ so sánh 2 khung nhìn 3D đồng bộ (Compare Anatomy)"
+        >
+          <Columns2 className="w-3.5 h-3.5 text-amber-500" />
+          <span>So Sánh</span>
+        </button>
+
+        {/* Sơ đồ Mạch Máu - Thần Kinh (Neurovascular Map) */}
+        <button
+          onClick={toggleNeuroMap}
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full transition cursor-pointer ${
+            isNeuroMapOpen
+              ? 'bg-amber-600 text-white font-bold shadow-md'
+              : 'hover:bg-black/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300'
+          }`}
+          title="Mở Sơ đồ mạch máu & thần kinh chi phối (Dental Neurovascular Map)"
+        >
+          <GitBranch className="w-3.5 h-3.5 text-amber-500" />
+          <span>Mạch - TK</span>
+        </button>
+
+        {/* Trung Tâm Học Tập (Study Manager) */}
+        <button
+          onClick={toggleStudy}
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full transition cursor-pointer ${
+            isStudyOpen
+              ? 'bg-amber-600 text-white font-bold shadow-md'
+              : 'hover:bg-black/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300'
+          }`}
+          title="Mở Trung tâm học tập: Lộ trình học, Dấu trang & Ghi chú (Study Manager)"
+        >
+          <GraduationCap className="w-3.5 h-3.5 text-amber-500" />
+          <span>Học Tập</span>
+        </button>
+
+        {/* Chẩn Đoán & Debug Giải Phẫu (Debug Panel) */}
+        <button
+          onClick={toggleDebug}
+          className={`flex items-center gap-1 px-2 py-1 rounded-full transition cursor-pointer ${
+            isDebugOpen
+              ? 'bg-amber-600 text-white font-bold shadow-md'
+              : 'hover:bg-black/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300'
+          }`}
+          title="Bật/Tắt bảng Debug & Chẩn đoán giải phẫu học (Debug Panel)"
+        >
+          <Bug className="w-3.5 h-3.5 text-amber-500" />
+          <span className="hidden sm:inline">Debug</span>
         </button>
 
         {/* Góc nhìn (Angles) */}

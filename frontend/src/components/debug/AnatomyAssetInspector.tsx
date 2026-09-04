@@ -1,127 +1,149 @@
-import React, { useState } from 'react';
-import { useAnatomyStore } from '../../stores/useAnatomyStore';
-import { ANATOMICAL_PLACEMENTS } from '../../utils/AnatomyTransformNormalizer';
-import { X, Layers, Crosshair, Box } from 'lucide-react';
+import React from 'react';
+import { ShieldCheck, Layers, Info, CheckCircle2, AlertCircle, FileCode, Box } from 'lucide-react';
+import { useDentalNeuroStore } from '../../stores/useDentalNeuroStore';
+import { CRANIAL_NERVE_VALIDATION_REGISTRY, CranialNerveAssetValidator } from '../../utils/CranialNerveAssetValidator';
 
-interface AnatomyAssetInspectorProps {
-  onClose: () => void;
-}
+export const AnatomyAssetInspector: React.FC<{ isOpen?: boolean; onClose: () => void }> = ({
+  isOpen = true,
+  onClose
+}) => {
+  const selectedAnatomyId = useDentalNeuroStore((s) => s.selectedAnatomyId);
+  const selectAnatomy = useDentalNeuroStore((s) => s.selectAnatomy);
 
-export const AnatomyAssetInspector: React.FC<AnatomyAssetInspectorProps> = ({ onClose }) => {
-  const selectedStructureId = useAnatomyStore((s) => s.selectedStructureId);
-  const selectStructure = useAnatomyStore((s) => s.selectStructure);
-  const [activeTab, setActiveTab] = useState<'selected' | 'all'>('selected');
+  if (!isOpen) return null;
 
-  const selectedPlacement = selectedStructureId ? ANATOMICAL_PLACEMENTS[selectedStructureId] : null;
+  const currentRecord = selectedAnatomyId ? CRANIAL_NERVE_VALIDATION_REGISTRY[selectedAnatomyId] : null;
+  const summary = CranialNerveAssetValidator.validateAll();
 
   return (
-    <div className="fixed top-20 right-4 z-50 w-96 max-h-[80vh] overflow-hidden flex flex-col bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl text-xs">
+    <div className="fixed inset-y-0 right-0 w-96 max-w-full bg-slate-900/95 backdrop-blur-xl border-l border-slate-700/80 shadow-2xl z-50 flex flex-col font-sans text-slate-200 animate-slide-left">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/80">
-        <div className="flex items-center gap-2 font-semibold text-slate-800 dark:text-slate-100">
-          <Crosshair className="w-4 h-4 text-emerald-500" />
-          <span>Anatomy Asset Inspector</span>
+      <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Layers className="w-5 h-5 text-amber-400" />
+          <h2 className="text-sm font-bold tracking-wide uppercase text-amber-400">
+            Anatomy Asset Inspector
+          </h2>
         </div>
         <button
           onClick={onClose}
-          className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500"
+          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition text-xs font-mono"
         >
-          <X className="w-4 h-4" />
+          ESC / ✕
         </button>
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-800/50">
-        <button
-          onClick={() => setActiveTab('selected')}
-          className={`flex-1 py-2 font-medium text-center transition-colors ${
-            activeTab === 'selected'
-              ? 'text-emerald-600 dark:text-emerald-400 border-b-2 border-emerald-500 bg-white dark:bg-slate-900'
-              : 'text-slate-500 hover:text-slate-700'
-          }`}
-        >
-          Selected Node
-        </button>
-        <button
-          onClick={() => setActiveTab('all')}
-          className={`flex-1 py-2 font-medium text-center transition-colors ${
-            activeTab === 'all'
-              ? 'text-emerald-600 dark:text-emerald-400 border-b-2 border-emerald-500 bg-white dark:bg-slate-900'
-              : 'text-slate-500 hover:text-slate-700'
-          }`}
-        >
-          All Assets ({Object.keys(ANATOMICAL_PLACEMENTS).length})
-        </button>
+      {/* Validation Status Banner (Section 26 UI Rule) */}
+      <div className="p-3 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between text-xs">
+        <span className="text-slate-400">Trạng thái tài nguyên 3D:</span>
+        <div className="flex items-center gap-2">
+          <span className="px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-500/50 font-mono font-semibold text-[11px] flex items-center gap-1">
+            <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+            {summary.verifiedCount} READY
+          </span>
+          {summary.missingCount > 0 && (
+            <span className="px-2 py-0.5 rounded-full bg-rose-950 text-rose-300 border border-rose-500/50 font-mono font-semibold text-[11px] flex items-center gap-1">
+              <AlertCircle className="w-3 h-3 text-rose-400" />
+              {summary.missingCount} MISSING
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 font-mono">
-        {activeTab === 'selected' ? (
-          selectedPlacement && selectedStructureId ? (
-            <div className="space-y-2">
-              <div className="p-2 rounded bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-                <span className="text-slate-400">Anatomy ID:</span>{' '}
-                <strong className="text-emerald-600 dark:text-emerald-400">{selectedStructureId}</strong>
-              </div>
-
-              <div className="p-2 rounded bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-                <div className="text-slate-400 mb-1">Local Position [X, Y, Z]:</div>
-                <div className="text-slate-700 dark:text-slate-200">
-                  X: {selectedPlacement.position[0].toFixed(3)}m<br />
-                  Y: {selectedPlacement.position[1].toFixed(3)}m<br />
-                  Z: {selectedPlacement.position[2].toFixed(3)}m
-                </div>
-              </div>
-
-              <div className="p-2 rounded bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-                <div className="text-slate-400 mb-1">Target Bounding Size:</div>
-                <div className="text-slate-700 dark:text-slate-200">{selectedPlacement.targetSize}m</div>
-              </div>
-
-              <div className="p-2 rounded bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-                <div className="text-slate-400 mb-1">Rotation Offset [Rad]:</div>
-                <div className="text-slate-700 dark:text-slate-200">
-                  {selectedPlacement.rotationOffset
-                    ? `[${selectedPlacement.rotationOffset.map((r) => r.toFixed(2)).join(', ')}]`
-                    : '[0.00, 0.00, 0.00]'}
-                </div>
-              </div>
-
-              <div className="p-2 rounded bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-                <div className="text-slate-400 mb-1">Anatomical Coordinates:</div>
-                <div className="text-slate-600 dark:text-slate-300">
-                  Transverse: {selectedPlacement.position[0] > 0 ? 'Dextral (+X)' : selectedPlacement.position[0] < 0 ? 'Sinistral (-X)' : 'Midline (0)'}<br />
-                  Longitudinal: {selectedPlacement.position[1].toFixed(2)}m Superior<br />
-                  Anteroposterior: {selectedPlacement.position[2] > 0 ? 'Anterior (+Z)' : 'Posterior (-Z)'}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="py-8 text-center text-slate-400">
-              <Box className="w-8 h-8 mx-auto mb-2 opacity-40" />
-              Click any 3D organ to inspect transforms.
-            </div>
-          )
-        ) : (
-          <div className="space-y-1.5">
-            {Object.entries(ANATOMICAL_PLACEMENTS).map(([id, p]) => (
-              <button
-                key={id}
-                onClick={() => selectStructure(id)}
-                className={`w-full text-left p-2 rounded flex items-center justify-between border transition-all ${
-                  selectedStructureId === id
-                    ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/30'
-                    : 'border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800/50'
-                }`}
-              >
-                <span className="font-semibold text-slate-700 dark:text-slate-300">{id}</span>
-                <span className="text-[10px] text-slate-400">
-                  [{p.position.map((v) => v.toFixed(2)).join(', ')}]
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs scrollbar-thin scrollbar-thumb-slate-700">
+        {currentRecord ? (
+          <div className="space-y-3">
+            <div className="p-3 rounded-lg bg-slate-800/80 border border-amber-500/30">
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-mono font-bold text-amber-300">{currentRecord.anatomyId}</span>
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-mono uppercase bg-emerald-900/60 text-emerald-200 border border-emerald-500/40">
+                  {currentRecord.status}
                 </span>
-              </button>
-            ))}
+              </div>
+              <div className="font-semibold text-white text-sm">{currentRecord.nameVi}</div>
+              <div className="text-slate-400 text-[11px]">{currentRecord.nameEn}</div>
+            </div>
+
+            {/* Spec Sheet Table */}
+            <div className="space-y-2 bg-slate-950/60 p-3 rounded-lg border border-slate-800">
+              <div className="grid grid-cols-3 gap-1 py-1 border-b border-slate-800/60">
+                <span className="text-slate-400">Asset Type:</span>
+                <span className="col-span-2 font-mono text-cyan-300">{currentRecord.assetType}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1 py-1 border-b border-slate-800/60">
+                <span className="text-slate-400">Mesh Node:</span>
+                <span className="col-span-2 font-mono text-amber-200">{currentRecord.meshNodeName}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1 py-1 border-b border-slate-800/60">
+                <span className="text-slate-400">File Path:</span>
+                <span className="col-span-2 font-mono text-[10px] text-slate-300 break-all">{currentRecord.assetPath}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1 py-1 border-b border-slate-800/60">
+                <span className="text-slate-400">Source:</span>
+                <span className="col-span-2 text-slate-200">{currentRecord.source}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1 py-1 border-b border-slate-800/60">
+                <span className="text-slate-400">License:</span>
+                <span className="col-span-2 text-emerald-400 font-medium">{currentRecord.license}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1 py-1 border-b border-slate-800/60">
+                <span className="text-slate-400">Coord System:</span>
+                <span className="col-span-2 font-mono text-[10px] text-slate-300">{currentRecord.coordinateSystem}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1 py-1 border-b border-slate-800/60">
+                <span className="text-slate-400">Side / Laterality:</span>
+                <span className="col-span-2 capitalize text-sky-300">{currentRecord.side}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1 py-1 border-b border-slate-800/60">
+                <span className="text-slate-400">Foramen:</span>
+                <span className="col-span-2 font-mono text-rose-300">{currentRecord.foramenRelation}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1 py-1">
+                <span className="text-slate-400">Direction:</span>
+                <span className="col-span-2 font-mono text-amber-300">{currentRecord.pathDirection}</span>
+              </div>
+            </div>
+
+            {currentRecord.statusNotes && (
+              <div className="p-2.5 rounded bg-blue-950/40 border border-blue-800/50 text-[11px] text-blue-200 flex gap-2">
+                <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+                <span>{currentRecord.statusNotes}</span>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="py-12 text-center text-slate-400">
+            <Box className="w-8 h-8 mx-auto mb-2 text-slate-600 animate-pulse" />
+            <p>Chọn một dây thần kinh sọ hoặc cấu trúc để kiểm tra thông số 3D Asset.</p>
           </div>
         )}
+
+        {/* 12 Cranial Nerves Quick Registry Selector */}
+        <div className="pt-2">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+            12 Cranial Nerves Verified List
+          </div>
+          <div className="grid grid-cols-3 gap-1.5">
+            {['cn_1', 'cn_2', 'cn_3', 'cn_4', 'cn_5', 'cn_6', 'cn_7', 'cn_8', 'cn_9', 'cn_10', 'cn_11', 'cn_12'].map((id) => {
+              const rec = CRANIAL_NERVE_VALIDATION_REGISTRY[id];
+              const isSel = selectedAnatomyId === id;
+              return (
+                <button
+                  key={id}
+                  onClick={() => selectAnatomy(id)}
+                  className={`p-1.5 rounded border text-center font-mono text-[11px] font-semibold transition ${
+                    isSel
+                      ? 'bg-amber-500 text-slate-950 border-amber-400'
+                      : 'bg-slate-800/80 text-slate-200 border-slate-700 hover:border-amber-400'
+                  }`}
+                >
+                  {id.replace('_', ' ').toUpperCase()}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );

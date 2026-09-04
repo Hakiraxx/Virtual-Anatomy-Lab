@@ -47,16 +47,30 @@ export function App() {
     const pathname = window.location.pathname.toLowerCase();
     if (pathname === '/' || pathname === '') {
       window.history.replaceState({ viewMode: 'full-body' }, '', '/toanthan');
-    } else if (pathname.includes('dental-neuro') || pathname.includes('craniofacial') || pathname.includes('rhm')) {
+    } else if (pathname.includes('dental-neuro') || pathname.includes('craniofacial') || pathname.includes('rhm') || window.location.search.includes('lab=') || window.location.search.includes('structure=')) {
       useAnatomyStore.setState({ viewMode: 'dental-neuro' });
       const params = new URLSearchParams(window.location.search);
+      const labParam = params.get('lab');
+      if (labParam === 'general' || labParam === 'cranial_nerves' || labParam === 'tooth_specimen' || labParam === 'tmj_specimen' || labParam === 'wisdom_surgery') {
+        useDentalNeuroStore.getState().setActiveSpecimenMode(labParam);
+      }
+
+      const modeParam = params.get('mode');
+      if (modeParam === 'compare') {
+        useDentalNeuroStore.getState().toggleCompare();
+      } else if (modeParam === 'trace') {
+        useDentalNeuroStore.getState().toggleTrace();
+      }
+
       const structureParam = params.get('structure');
       if (structureParam) {
-        const clean = structureParam.toLowerCase();
-        if (clean === 'nerve.inferior-alveolar' || clean === 'ian') {
+        const clean = structureParam.toLowerCase().trim();
+        if (clean === 'nerve.inferior-alveolar' || clean === 'ian' || clean === 'nerve.inferior_alveolar') {
           useDentalNeuroStore.getState().selectAnatomy('nerve_ian');
         } else if (clean === 'foramen.mental' || clean === 'mental_foramen') {
           useDentalNeuroStore.getState().selectAnatomy('mental_foramen');
+        } else if (clean === 'canal.mandibular' || clean === 'mandibular_canal') {
+          useDentalNeuroStore.getState().selectAnatomy('mandibular_canal');
         } else if (clean.startsWith('tooth.') || clean.startsWith('tooth_')) {
           const num = clean.replace(/tooth[._]/, '');
           useDentalNeuroStore.getState().selectAnatomy(`tooth_${num}`);

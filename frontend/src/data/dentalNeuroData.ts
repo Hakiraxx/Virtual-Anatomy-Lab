@@ -296,6 +296,39 @@ export const DENTAL_NERVE_STRUCTURES: Record<string, DentalNerveStructure> = {
     }
   },
 
+  'trigeminal_ganglion': {
+    id: 'trigeminal_ganglion',
+    nameVi: 'Hạch Thần kinh Sinh ba (Hạch Gasser)',
+    nameEn: 'Trigeminal Ganglion (Gasserian Ganglion)',
+    latinName: 'Ganglion trigeminale (Gasseri)',
+    type: 'cranial_nerve',
+    cranialNerveNumber: 5,
+    parentNerveId: 'cn_5',
+    originVi: 'Chỗ phình hình bán nguyệt chứa thân nơ-ron cảm giác nguyên phát của dây V',
+    originEn: 'Semilunar ganglion housing cell bodies of primary pseudounipolar sensory neurons',
+    courseVi: 'Nằm trong hốc Meckel (Cavum trigeminale) trên ấn ngón tay mặt trước phần đá xương thái dương',
+    courseEn: 'Rests in Meckel cave (cavum trigeminale) in a dural recess on the petrous apex in middle cranial fossa',
+    foramenId: 'meckel_cave',
+    innervationVi: 'Trạm tiếp vận cảm giác của toàn bộ 3 phân nhánh V1, V2, V3',
+    innervationEn: 'Primary sensory station serving ophthalmic, maxillary, and mandibular divisions',
+    clinicalAnatomyVi: 'Điều trị đau dây V trơ bằng phong bế hạch Gasser qua da qua lỗ bầu dục bằng sóng cao tần (Radiofrequency rhizotomy) hoặc tiêm glycerol.',
+    clinicalAnatomyEn: 'Target for percutaneous radiofrequency ablation or glycerol injection via foramen ovale for intractable trigeminal neuralgia.',
+    color: '#eab308',
+    path3D: [
+      [-0.022, 1.398, 0.065],
+      [-0.026, 1.405, 0.065]
+    ],
+    cameraFocus: { position: [-0.08, 1.42, 0.22], lookAt: [-0.026, 1.405, 0.065], distance: 0.20 },
+    references: {
+      terminologiaAnatomica: 'A14.2.01.013',
+      netterPlate: 124,
+      graysPage: '603',
+      reviewStatus: 'VERIFIED',
+      reviewedBy: 'Bộ môn Giải phẫu & RHM',
+      reviewedAt: '2026-09-04'
+    }
+  },
+
   // --- CN V1: OPHTHALMIC DIVISION ---
   'cn_5_v1': {
     id: 'cn_5_v1',
@@ -1537,6 +1570,56 @@ export const CRANIAL_FORAMINA: Record<string, CranialForamen> = {
     clinicalSignificanceVi: 'Tụt hạnh nhân tiểu não qua lỗ lớn (Tụt não do tăng áp lực nội sọ) chèn ép trung tâm hô hấp và tuần hoàn hành não dẫn đến tử vong nhanh chóng.',
     clinicalSignificanceEn: 'Tonsillar herniation through foramen magnum compresses respiratory centres in medulla, causing rapid fatality.',
     cameraFocus: { position: [0.00, 1.36, 0.20], lookAt: [0.000, 1.330, 0.020] }
+  },
+
+  'internal_acoustic_meatus': {
+    id: 'internal_acoustic_meatus',
+    nameVi: 'Lỗ Ống tai trong (IAM)',
+    nameEn: 'Internal Acoustic Meatus (IAM)',
+    latinName: 'Porus acusticus internus',
+    boneVi: 'Mặt sau phần đá xương thái dương',
+    boneEn: 'Posterior surface of petrous temporal bone',
+    position: [-0.028, 1.370, 0.052],
+    structuresPassingThroughVi: [
+      'Dây thần kinh mặt (CN VII)',
+      'Dây thần kinh tiền đình - ốc tai (CN VIII)',
+      'Thần kinh trung gian (Nervus intermedius của Wrisberg)',
+      'Động mạch mê đạo (Labyrinthine artery)'
+    ],
+    structuresPassingThroughEn: [
+      'Facial nerve (CN VII)',
+      'Vestibulocochlear nerve (CN VIII)',
+      'Nervus intermedius of Wrisberg',
+      'Labyrinthine artery'
+    ],
+    relatedNerveIds: ['cn_7', 'cn_8'],
+    clinicalSignificanceVi: 'U bao dây thần kinh tiền đình (Vestibular schwannoma / Acoustic neuroma) phát triển tại lỗ ống tai trong gây giảm thính lực, ù tai, mất thăng bằng và liệt mặt tiến triển.',
+    clinicalSignificanceEn: 'Site of vestibular schwannoma (acoustic neuroma) presentation with sensorineural hearing loss, tinnitus, and facial weakness.',
+    cameraFocus: { position: [-0.06, 1.38, 0.18], lookAt: [-0.028, 1.370, 0.052] }
+  },
+
+  'inferior_orbital_fissure': {
+    id: 'inferior_orbital_fissure',
+    nameVi: 'Khe Ổ mắt dưới (IOF)',
+    nameEn: 'Inferior Orbital Fissure (IOF)',
+    latinName: 'Fissura orbitalis inferior',
+    boneVi: 'Giữa cánh lớn xương bướm và xương hàm trên',
+    boneEn: 'Between greater wing of sphenoid and maxilla',
+    position: [-0.028, 1.395, 0.115],
+    structuresPassingThroughVi: [
+      'Thần kinh hàm trên (nhánh dưới ổ mắt và gò má của CN V2)',
+      'Động mạch và tĩnh mạch dưới ổ mắt',
+      'Các nhánh của đám rối tĩnh mạch chân bướm'
+    ],
+    structuresPassingThroughEn: [
+      'Maxillary nerve branches (infraorbital and zygomatic of CN V2)',
+      'Infraorbital artery and vein',
+      'Emissary connections to pterygoid plexus'
+    ],
+    relatedNerveIds: ['cn_5_v2', 'nerve_infraorbital'],
+    clinicalSignificanceVi: 'Nối hố chân bướm khẩu cái và hố dưới thái dương với ổ mắt. Chấn thương vỡ sàn ổ mắt (Blowout fracture) thường lan tới khe ổ mắt dưới.',
+    clinicalSignificanceEn: 'Transmits neurovascular structures from pterygopalatine fossa to orbit; involved in orbital blowout fractures.',
+    cameraFocus: { position: [-0.07, 1.41, 0.24], lookAt: [-0.028, 1.395, 0.115] }
   }
 };
 

@@ -272,5 +272,87 @@ export const ANATOMICAL_LANDMARKS: Record<string, AnatomicalLandmark> = {
     region: 'lower_limb',
     position: [0.09, 0.08, 0.0],
     description: 'Mắt cá trong - ngoài và xương sên bên phải.'
+  },
+  // RHM Craniofacial & Dental Surgical Landmarks
+  mental_foramen_r: {
+    id: 'mental_foramen_r',
+    nameVi: 'Lỗ cằm phải (Right Mental Foramen)',
+    nameEn: 'Right Mental Foramen',
+    region: 'head',
+    position: [0.028, 1.33, 0.088],
+    description: 'Lỗ nằm ở mặt ngoài thân xương hàm dưới phải, nơi thần kinh cằm chui ra.'
+  },
+  mental_foramen_l: {
+    id: 'mental_foramen_l',
+    nameVi: 'Lỗ cằm trái (Left Mental Foramen)',
+    nameEn: 'Left Mental Foramen',
+    region: 'head',
+    position: [-0.028, 1.33, 0.088],
+    description: 'Lỗ nằm ở mặt ngoài thân xương hàm dưới trái, nơi thần kinh cằm chui ra.'
+  },
+  mandibular_foramen_r: {
+    id: 'mandibular_foramen_r',
+    nameVi: 'Lỗ hàm dưới & Gai Spix phải',
+    nameEn: 'Right Mandibular Foramen & Lingula',
+    region: 'head',
+    position: [0.035, 1.35, 0.032],
+    description: 'Lỗ ở mặt trong cành cao xương hàm dưới phải, mốc gây tê gai Spix.'
+  },
+  mandibular_foramen_l: {
+    id: 'mandibular_foramen_l',
+    nameVi: 'Lỗ hàm dưới & Gai Spix trái',
+    nameEn: 'Left Mandibular Foramen & Lingula',
+    region: 'head',
+    position: [-0.035, 1.35, 0.032],
+    description: 'Lỗ ở mặt trong cành cao xương hàm dưới trái, mốc gây tê gai Spix.'
+  },
+  foramen_ovale_r: {
+    id: 'foramen_ovale_r',
+    nameVi: 'Lỗ bầu dục phải (Right Foramen Ovale)',
+    nameEn: 'Right Foramen Ovale',
+    region: 'head',
+    position: [0.024, 1.45, 0.015],
+    description: 'Lỗ ở cánh lớn xương bướm cho dây V3 thoát ra.'
+  },
+  foramen_ovale_l: {
+    id: 'foramen_ovale_l',
+    nameVi: 'Lỗ bầu dục trái (Left Foramen Ovale)',
+    nameEn: 'Left Foramen Ovale',
+    region: 'head',
+    position: [-0.024, 1.45, 0.015],
+    description: 'Lỗ ở cánh lớn xương bướm cho dây V3 thoát ra.'
+  },
+  tmj_condyle_r: {
+    id: 'tmj_condyle_r',
+    nameVi: 'Chỏm lồi cầu xương hàm dưới phải (Right Condyle)',
+    nameEn: 'Right Mandibular Condyle',
+    region: 'head',
+    position: [0.055, 1.366, 0.068],
+    description: 'Tiếp khớp với hõm khớp xương thái dương và đĩa khớp TMJ phải.'
+  },
+  tmj_condyle_l: {
+    id: 'tmj_condyle_l',
+    nameVi: 'Chỏm lồi cầu xương hàm dưới trái (Left Condyle)',
+    nameEn: 'Left Mandibular Condyle',
+    region: 'head',
+    position: [-0.055, 1.366, 0.068],
+    description: 'Tiếp khớp với hõm khớp xương thái dương và đĩa khớp TMJ trái.'
+  },
+  molar_48_site: {
+    id: 'molar_48_site',
+    nameVi: 'Huyệt ổ răng R.48 (Hàm dưới phải)',
+    nameEn: 'Tooth #48 Alveolar Socket Site',
+    region: 'head',
+    position: [0.028, 1.335, 0.065],
+    description: 'Vị trí răng khôn hàm dưới phải cạnh góc hàm và ống răng dưới.'
+  },
+  molar_38_site: {
+    id: 'molar_38_site',
+    nameVi: 'Huyệt ổ răng R.38 (Hàm dưới trái)',
+    nameEn: 'Tooth #38 Alveolar Socket Site',
+    region: 'head',
+    position: [-0.028, 1.335, 0.065],
+    description: 'Vị trí răng khôn hàm dưới trái cạnh góc hàm và ống răng dưới.'
   }
+
 };

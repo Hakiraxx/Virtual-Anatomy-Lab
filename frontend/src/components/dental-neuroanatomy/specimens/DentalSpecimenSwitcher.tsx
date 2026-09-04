@@ -36,9 +36,16 @@ export const DentalSpecimenSwitcher: React.FC = () => {
     {
       id: 'general',
       labelVi: 'Tổng Thể Sọ Mặt',
-      subVi: 'CN V & Dây TK',
+      subVi: 'Xương & Nền Sọ',
       icon: <Brain className="w-3.5 h-3.5" />,
-      badge: 'Gốc Sọ'
+      badge: 'Nền Sọ'
+    },
+    {
+      id: 'cranial_nerves',
+      labelVi: 'Thần Kinh Sọ',
+      subVi: 'CN V, VII & Dây TK',
+      icon: <Sparkles className="w-3.5 h-3.5" />,
+      badge: 'Dây TK'
     },
     {
       id: 'tooth_specimen',

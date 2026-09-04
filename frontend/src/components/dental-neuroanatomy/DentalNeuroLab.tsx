@@ -34,6 +34,12 @@ import { DentalSpecimenSwitcher } from './specimens/DentalSpecimenSwitcher';
 import { ToothSpecimenStage } from './specimens/ToothSpecimenStage';
 import { TMJSpecimenStage } from './specimens/TMJSpecimenStage';
 import { WisdomSurgeryStage } from './specimens/WisdomSurgeryStage';
+import { AnatomyTraceController } from '../3d/AnatomyTraceController';
+import { AnatomyCompareViewer } from '../3d/AnatomyCompareViewer';
+import { DentalNeurovascularMap } from './DentalNeurovascularMap';
+import { ClinicalPathologyToggle } from './ClinicalPathologyToggle';
+import { AnatomyStudyManager } from '../ui/AnatomyStudyManager';
+import { AnatomyDebugPanel } from '../debug/AnatomyDebugPanel';
 
 export const DentalNeuroLab: React.FC = () => {
   const activeSpecimenMode = useDentalNeuroStore((s) => s.activeSpecimenMode);
@@ -42,6 +48,19 @@ export const DentalNeuroLab: React.FC = () => {
   const selectAnatomy = useDentalNeuroStore((s) => s.selectAnatomy);
   const selectedToothFdi = useDentalNeuroStore((s) => s.selectedToothFdi);
   const wisdomToothId = useDentalNeuroStore((s) => s.wisdomToothId);
+
+  const isTraceOpen = useDentalNeuroStore((s) => s.isTraceOpen);
+  const toggleTrace = useDentalNeuroStore((s) => s.toggleTrace);
+  const isCompareOpen = useDentalNeuroStore((s) => s.isCompareOpen);
+  const toggleCompare = useDentalNeuroStore((s) => s.toggleCompare);
+  const isNeuroMapOpen = useDentalNeuroStore((s) => s.isNeuroMapOpen);
+  const toggleNeuroMap = useDentalNeuroStore((s) => s.toggleNeuroMap);
+  const isStudyOpen = useDentalNeuroStore((s) => s.isStudyOpen);
+  const toggleStudy = useDentalNeuroStore((s) => s.toggleStudy);
+  const isDebugOpen = useDentalNeuroStore((s) => s.isDebugOpen);
+  const toggleDebug = useDentalNeuroStore((s) => s.toggleDebug);
+  const clinicalMode = useDentalNeuroStore((s) => s.clinicalMode);
+  const setClinicalMode = useDentalNeuroStore((s) => s.setClinicalMode);
 
   const visualizationDepth = useDentalNeuroStore((s) => s.visualizationDepth);
   const setVisualizationDepth = useDentalNeuroStore((s) => s.setVisualizationDepth);
@@ -210,7 +229,7 @@ export const DentalNeuroLab: React.FC = () => {
     const structureParam = params.get('structure');
 
     if (
-      specimenParam === 'general' ||
+      specimenParam === 'general' || specimenParam === 'cranial_nerves' ||
       specimenParam === 'tooth_specimen' ||
       specimenParam === 'tmj_specimen' ||
       specimenParam === 'wisdom_surgery'
@@ -358,7 +377,9 @@ export const DentalNeuroLab: React.FC = () => {
     ];
 
     if (activeSpecimenMode === 'general') {
-      list.push({ label: 'Dây TK & Nền Sọ' });
+      list.push({ label: 'Tổng Thể Sọ Mặt' });
+    } else if (activeSpecimenMode === 'cranial_nerves') {
+      list.push({ label: 'Thần Kinh Sọ (CN V - XII)' });
       if (selectedAnatomyId) {
         const nerve = DENTAL_NERVE_STRUCTURES[selectedAnatomyId];
         if (nerve) {
@@ -367,8 +388,6 @@ export const DentalNeuroLab: React.FC = () => {
           const foramen = CRANIAL_FORAMINA[selectedAnatomyId];
           if (foramen) {
             list.push({ label: foramen.nameVi });
-          } else if (selectedAnatomyId.startsWith('tooth_')) {
-            list.push({ label: selectedAnatomyId.replace('tooth_', 'Răng ') });
           }
         }
       }
@@ -882,7 +901,7 @@ export const DentalNeuroLab: React.FC = () => {
           )}
 
           {/* Active 3D Specimen Stage */}
-          {activeSpecimenMode === 'general' ? (
+          {activeSpecimenMode === 'general' || activeSpecimenMode === 'cranial_nerves' ? (
             <>
               <DentalNeuro3DStage />
               {/* Interactive 3D Quiz Overlay Modal */}
@@ -965,6 +984,24 @@ export const DentalNeuroLab: React.FC = () => {
               onClose={() => setIsInfoOpen(false)}
               isMobileDrawer={true}
             />
+          </div>
+        </div>
+      )}
+      {/* 4. MedAnatomy Interactive Modals & Overlays */}
+      <AnatomyTraceController isOpen={isTraceOpen} onClose={toggleTrace} />
+      <AnatomyCompareViewer isOpen={isCompareOpen} onClose={toggleCompare} />
+      <AnatomyStudyManager isOpen={isStudyOpen} onClose={toggleStudy} />
+      <AnatomyDebugPanel isOpen={isDebugOpen} onClose={toggleDebug} />
+      {isNeuroMapOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in">
+          <div className="w-full max-w-lg relative">
+            <button
+              onClick={toggleNeuroMap}
+              className="absolute top-2 right-2 p-1.5 rounded-full text-slate-400 hover:text-white z-10 cursor-pointer"
+            >
+              ✕
+            </button>
+            <DentalNeurovascularMap toothFdi={selectedToothFdi} isOpen={isNeuroMapOpen} onClose={toggleNeuroMap} />
           </div>
         </div>
       )}

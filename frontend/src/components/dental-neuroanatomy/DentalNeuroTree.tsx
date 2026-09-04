@@ -35,9 +35,15 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
   const selectedAnatomyId = useDentalNeuroStore((s) => s.selectedAnatomyId);
   const selectAnatomy = useDentalNeuroStore((s) => s.selectAnatomy);
 
+  const selectForamen = useDentalNeuroStore((s) => s.selectForamen);
+
   // When rendered in a mobile/tablet drawer, auto-close on selection so 3D model is visible
   const handleItemSelect = (id: string, side?: 'right' | 'left') => {
-    selectAnatomy(id, side);
+    if (CRANIAL_FORAMINA[id]) {
+      selectForamen(id);
+    } else {
+      selectAnatomy(id, side);
+    }
     if (isMobileDrawer && onClose) {
       onClose();
     }
@@ -254,11 +260,16 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
               <Brain className="w-3.5 h-3.5 text-amber-500" />
               <span>12 Đôi Dây Thần Kinh Sọ</span>
             </div>
-            {expandedSections.cranial_nerves ? (
-              <ChevronDown className="w-3.5 h-3.5" />
-            ) : (
-              <ChevronRight className="w-3.5 h-3.5" />
-            )}
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 font-mono font-bold">
+                12 READY
+              </span>
+              {expandedSections.cranial_nerves ? (
+                <ChevronDown className="w-3.5 h-3.5" />
+              ) : (
+                <ChevronRight className="w-3.5 h-3.5" />
+              )}
+            </div>
           </button>
 
           {expandedSections.cranial_nerves && (
@@ -318,6 +329,22 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
 
                 {expandedSections.cn_v && (
                   <div className="pl-3 border-l border-amber-500/30 ml-2 mt-0.5 space-y-0.5">
+                    {/* HẠCH GASSER */}
+                    <button
+                      id="tree_item_trigeminal_ganglion"
+                      onClick={() => handleItemSelect('trigeminal_ganglion')}
+                      className={`w-full text-left px-2 py-1 rounded text-[10px] font-bold flex items-center justify-between gap-1 transition cursor-pointer ${
+                        selectedAnatomyId === 'trigeminal_ganglion'
+                          ? 'bg-amber-600 text-white shadow-sm'
+                          : 'text-amber-600 dark:text-amber-400 hover:bg-amber-500/10'
+                      }`}
+                    >
+                      <span className="truncate">★ Hạch Gasser (Trigeminal Ganglion)</span>
+                      <span className="text-[8px] px-1 py-0.5 rounded border border-amber-500/40 font-mono">
+                        Hốc Meckel
+                      </span>
+                    </button>
+
                     {/* V1 OPHTHALMIC */}
                     <div className="flex items-center justify-between">
                       <button
@@ -556,6 +583,30 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                 )}
               </div>
 
+              {/* CN VI — ABDUCENS */}
+              {(() => {
+                const item = DENTAL_NERVE_STRUCTURES['cn_6'];
+                if (!item) return null;
+                const isSelected = selectedAnatomyId === 'cn_6';
+                return (
+                  <button
+                    key="cn_6"
+                    id="tree_item_cn_6"
+                    onClick={() => handleItemSelect('cn_6')}
+                    className={`w-full text-left px-2 py-1 rounded text-[11px] flex items-center justify-between transition cursor-pointer ${
+                      isSelected
+                        ? 'bg-amber-600 text-white font-bold shadow-sm'
+                        : isDark
+                        ? 'hover:bg-slate-800/50 text-slate-300'
+                        : 'hover:bg-[#ede3d5]/60 text-slate-700'
+                    }`}
+                  >
+                    <span>{item.nameVi}</span>
+                    <span className="text-[9px] font-mono opacity-70">CN {item.cranialNerveNumber}</span>
+                  </button>
+                );
+              })()}
+
               {/* CN VII — FACIAL NERVE */}
               <div className="pt-1">
                 <button
@@ -633,6 +684,30 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                   </button>
                 </div>
               </div>
+
+              {/* CN VIII — VESTIBULOCOCHLEAR */}
+              {(() => {
+                const item = DENTAL_NERVE_STRUCTURES['cn_8'];
+                if (!item) return null;
+                const isSelected = selectedAnatomyId === 'cn_8';
+                return (
+                  <button
+                    key="cn_8"
+                    id="tree_item_cn_8"
+                    onClick={() => handleItemSelect('cn_8')}
+                    className={`w-full text-left px-2 py-1 rounded text-[11px] flex items-center justify-between transition cursor-pointer ${
+                      isSelected
+                        ? 'bg-amber-600 text-white font-bold shadow-sm'
+                        : isDark
+                        ? 'hover:bg-slate-800/50 text-slate-300'
+                        : 'hover:bg-[#ede3d5]/60 text-slate-700'
+                    }`}
+                  >
+                    <span>{item.nameVi}</span>
+                    <span className="text-[9px] font-mono opacity-70">CN {item.cranialNerveNumber}</span>
+                  </button>
+                );
+              })()}
 
               {/* CN IX, X, XI, XII */}
               {['cn_9', 'cn_10', 'cn_11', 'cn_12'].map((id) => {

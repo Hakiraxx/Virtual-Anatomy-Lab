@@ -21,6 +21,8 @@ import { AnatomyAssetInspector } from '../debug/AnatomyAssetInspector';
 import { AnatomyVisibilityManager } from '../../utils/AnatomyVisibilityManager';
 import { ConnectedVesselsNetwork } from './ConnectedVesselsNetwork';
 import { ConnectedNervesNetwork } from './ConnectedNervesNetwork';
+import { RealVisceraNetwork } from './RealVisceraNetwork';
+import { RealSkeletonNetwork } from './RealSkeletonNetwork';
 
 interface NormalizedOrganProps {
   organKey: string;
@@ -116,7 +118,7 @@ const HumanBodySilhouette: React.FC<{
     normalizedSkin.traverse((child: any) => {
       if (child.isMesh && child.material) {
         const mat = (Array.isArray(child.material) ? child.material[0] : child.material) as THREE.MeshStandardMaterial;
-        const isSilhouette = opacity <= 0.1;
+        const isSilhouette = opacity <= 0.4;
         mat.transparent = true;
         mat.opacity = opacity;
         mat.depthWrite = !isSilhouette && opacity > 0.4;
@@ -126,6 +128,9 @@ const HumanBodySilhouette: React.FC<{
         mat.roughness = 0.6;
         mat.metalness = 0.05;
         mat.needsUpdate = true;
+
+        // Disable raycasting when skin is a translucent silhouette to allow selecting deeper organs
+        child.raycast = isSilhouette ? () => null : THREE.Mesh.prototype.raycast;
       }
     });
   }, [normalizedSkin, opacity, clippingPlanes]);
@@ -136,8 +141,10 @@ const HumanBodySilhouette: React.FC<{
     <primitive
       object={normalizedSkin}
       onPointerDown={(e: ThreeEvent<MouseEvent>) => {
-        e.stopPropagation();
-        onSelect();
+        if (opacity > 0.4) {
+          e.stopPropagation();
+          onSelect();
+        }
       }}
     />
   );
@@ -501,12 +508,12 @@ export const FullBodyViewer: React.FC = () => {
       {/* 3D Canvas Viewport */}
       <div className="flex-1 w-full h-full cursor-grab active:cursor-grabbing">
         <Canvas
-          shadows={typeof window !== 'undefined' ? window.innerWidth >= 768 : true}
-          dpr={[1, typeof window !== 'undefined' && window.innerWidth < 768 ? 1.5 : 2]}
+          shadows={false}
+          dpr={[1, 1.35]}
           camera={{ position: [0, 0.95, 3.1], fov: 38 }}
           gl={{
             powerPreference: 'high-performance',
-            antialias: typeof window !== 'undefined' ? window.innerWidth >= 768 : true,
+            antialias: true,
             alpha: true,
             preserveDrawingBuffer: false,
             localClippingEnabled: true,
@@ -516,12 +523,10 @@ export const FullBodyViewer: React.FC = () => {
         >
           <Environment preset="studio" />
 
-          <ambientLight intensity={isDark ? 0.7 : 0.9} />
+          <ambientLight intensity={isDark ? 0.75 : 0.95} />
           <directionalLight
             position={[4, 7, 5]}
             intensity={1.7}
-            castShadow={typeof window !== 'undefined' ? window.innerWidth >= 768 : true}
-            shadow-mapSize={typeof window !== 'undefined' && window.innerWidth < 768 ? [512, 512] : [1024, 1024]}
           />
           <directionalLight position={[-4, 4, -4]} intensity={0.65} color="#38bdf8" />
           <directionalLight position={[0, -2, 2]} intensity={0.4} color="#f59e0b" />
@@ -613,712 +618,55 @@ export const FullBodyViewer: React.FC = () => {
                 />
               )}
 
-              {/* LAYER 4: Skeletal System (Continuous Axial Skeleton) */}
-              <NormalizedOrganMesh
-                organKey="skull"
-                modelPath="/models/skull.glb"
-                structureId="skull"
-                layerIndex={4}
-                isSelected={selectedStructureId === 'skull'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[4] ?? 1.0}
-                layerVisible={layerVisibility[4] ?? true}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="spine"
-                modelPath="/models/spine.glb"
-                structureId="spine"
-                layerIndex={4}
-                isSelected={selectedStructureId === 'spine'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[4] ?? 1.0}
-                layerVisible={layerVisibility[4] ?? true}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="ribcage"
-                modelPath="/models/ribcage.glb"
-                structureId="ribcage"
-                layerIndex={4}
-                isSelected={selectedStructureId === 'ribcage'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[4] ?? 1.0}
-                layerVisible={layerVisibility[4] ?? true}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="pelvis"
-                modelPath="/models/pelvis.glb"
-                structureId="pelvis"
-                layerIndex={4}
-                isSelected={selectedStructureId === 'pelvis'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[4] ?? 1.0}
-                layerVisible={layerVisibility[4] ?? true}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              {/* LAYER 4: Appendicular Skeleton — Bilateral Limbs & Articulations */}
-              {/* Shoulder Joints (Left & Right) */}
-              <NormalizedOrganMesh
-                organKey="shoulder_left"
-                modelPath="/models/shoulder.glb"
-                structureId="shoulder_joint"
-                layerIndex={4}
-                isSelected={selectedStructureId === 'shoulder_joint' || selectedStructureId === 'shoulder_left'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[4] ?? 1.0}
-                layerVisible={layerVisibility[4] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="shoulder_right"
-                modelPath="/models/shoulder.glb"
-                structureId="shoulder_joint"
-                layerIndex={4}
-                isSelected={selectedStructureId === 'shoulder_joint' || selectedStructureId === 'shoulder_right'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[4] ?? 1.0}
-                layerVisible={layerVisibility[4] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-
-              {/* Arm Bones / Humerus (Left & Right) */}
-              <NormalizedOrganMesh
-                organKey="humerus_left"
-                modelPath="/models/long-bone.glb"
-                structureId="humerus"
-                layerIndex={4}
-                isSelected={selectedStructureId === 'humerus' || selectedStructureId === 'humerus_left'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[4] ?? 1.0}
-                layerVisible={layerVisibility[4] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="humerus_right"
-                modelPath="/models/long-bone.glb"
-                structureId="humerus"
-                layerIndex={4}
-                isSelected={selectedStructureId === 'humerus' || selectedStructureId === 'humerus_right'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[4] ?? 1.0}
-                layerVisible={layerVisibility[4] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-
-              {/* Forearm Bones / Radius & Ulna (Left & Right) */}
-              <NormalizedOrganMesh
-                organKey="forearm_left"
-                modelPath="/models/long-bone.glb"
-                structureId="forearm"
-                layerIndex={4}
-                isSelected={selectedStructureId === 'forearm' || selectedStructureId === 'forearm_left'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[4] ?? 1.0}
-                layerVisible={layerVisibility[4] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="forearm_right"
-                modelPath="/models/long-bone.glb"
-                structureId="forearm"
-                layerIndex={4}
-                isSelected={selectedStructureId === 'forearm' || selectedStructureId === 'forearm_right'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[4] ?? 1.0}
-                layerVisible={layerVisibility[4] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-
-              {/* Hand & Wrist Skeletons (Left & Right) */}
-              <NormalizedOrganMesh
-                organKey="hand_left"
-                modelPath="/models/hand.glb"
-                structureId="hand_skeleton"
-                layerIndex={4}
-                isSelected={selectedStructureId === 'hand_skeleton' || selectedStructureId === 'hand_left'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[4] ?? 1.0}
-                layerVisible={layerVisibility[4] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="hand_right"
-                modelPath="/models/hand.glb"
-                structureId="hand_skeleton"
-                layerIndex={4}
-                isSelected={selectedStructureId === 'hand_skeleton' || selectedStructureId === 'hand_right'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[4] ?? 1.0}
-                layerVisible={layerVisibility[4] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-
-              {/* Hip Joints (Left & Right) */}
-              <NormalizedOrganMesh
-                organKey="hip_left"
-                modelPath="/models/hip.glb"
-                structureId="hip_joint"
-                layerIndex={4}
-                isSelected={selectedStructureId === 'hip_joint' || selectedStructureId === 'hip_left'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[4] ?? 1.0}
-                layerVisible={layerVisibility[4] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="hip_right"
-                modelPath="/models/hip.glb"
-                structureId="hip_joint"
-                layerIndex={4}
-                isSelected={selectedStructureId === 'hip_joint' || selectedStructureId === 'hip_right'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[4] ?? 1.0}
-                layerVisible={layerVisibility[4] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-
-              {/* Femurs / Thigh Bones (Left & Right) */}
-              <NormalizedOrganMesh
-                organKey="femur_left"
-                modelPath="/models/long-bone.glb"
-                structureId="femur"
-                layerIndex={4}
-                isSelected={selectedStructureId === 'femur' || selectedStructureId === 'femur_left'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[4] ?? 1.0}
-                layerVisible={layerVisibility[4] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="femur_right"
-                modelPath="/models/long-bone.glb"
-                structureId="femur"
-                layerIndex={4}
-                isSelected={selectedStructureId === 'femur' || selectedStructureId === 'femur_right'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[4] ?? 1.0}
-                layerVisible={layerVisibility[4] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-
-              {/* Knee Joints & Patella (Left & Right) */}
-              <NormalizedOrganMesh
-                organKey="knee_left"
-                modelPath="/models/knee.glb"
-                structureId="knee_joint"
-                layerIndex={4}
-                isSelected={selectedStructureId === 'knee_joint' || selectedStructureId === 'knee_left'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[4] ?? 1.0}
-                layerVisible={layerVisibility[4] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="knee_right"
-                modelPath="/models/knee.glb"
-                structureId="knee_joint"
-                layerIndex={4}
-                isSelected={selectedStructureId === 'knee_joint' || selectedStructureId === 'knee_right'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[4] ?? 1.0}
-                layerVisible={layerVisibility[4] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-
-              {/* Lower Leg Bones / Tibia & Fibula (Left & Right) */}
-              <NormalizedOrganMesh
-                organKey="tibia_left"
-                modelPath="/models/long-bone.glb"
-                structureId="tibia"
-                layerIndex={4}
-                isSelected={selectedStructureId === 'tibia' || selectedStructureId === 'tibia_left'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[4] ?? 1.0}
-                layerVisible={layerVisibility[4] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="tibia_right"
-                modelPath="/models/long-bone.glb"
-                structureId="tibia"
-                layerIndex={4}
-                isSelected={selectedStructureId === 'tibia' || selectedStructureId === 'tibia_right'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[4] ?? 1.0}
-                layerVisible={layerVisibility[4] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-
-              {/* Feet & Ankles (Left & Right) */}
-              <NormalizedOrganMesh
-                organKey="foot_left"
-                modelPath="/models/foot.glb"
-                structureId="foot_skeleton"
-                layerIndex={4}
-                isSelected={selectedStructureId === 'foot_skeleton' || selectedStructureId === 'foot_left'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[4] ?? 1.0}
-                layerVisible={layerVisibility[4] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="foot_right"
-                modelPath="/models/foot.glb"
-                structureId="foot_skeleton"
-                layerIndex={4}
-                isSelected={selectedStructureId === 'foot_skeleton' || selectedStructureId === 'foot_right'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[4] ?? 1.0}
-                layerVisible={layerVisibility[4] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-
-              {/* LAYER 5: Visceral Organs (Cardiopulmonary, Digestive, Renal) */}
-              <NormalizedOrganMesh
-                organKey="heart"
-                modelPath="/models/heart-v7.glb"
-                structureId="heart"
-                layerIndex={5}
-                isSelected={selectedStructureId === 'heart'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[5] ?? 1.0}
-                layerVisible={layerVisibility[5] ?? true}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="lungs"
-                modelPath="/models/lungs.glb"
-                structureId="lungs"
-                layerIndex={5}
-                isSelected={selectedStructureId === 'lungs'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[5] ?? 1.0}
-                layerVisible={layerVisibility[5] ?? true}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="liver"
-                modelPath="/models/liver.glb"
-                structureId="liver"
-                layerIndex={5}
-                isSelected={selectedStructureId === 'liver'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[5] ?? 1.0}
-                layerVisible={layerVisibility[5] ?? true}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="stomach"
-                modelPath="/models/stomach.glb"
-                structureId="stomach"
-                layerIndex={5}
-                isSelected={selectedStructureId === 'stomach'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[5] ?? 1.0}
-                layerVisible={layerVisibility[5] ?? true}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="kidneys"
-                modelPath="/models/kidneys.glb"
-                structureId="kidneys"
-                layerIndex={5}
-                isSelected={selectedStructureId === 'kidneys'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[5] ?? 1.0}
-                layerVisible={layerVisibility[5] ?? true}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="bladder"
-                modelPath="/models/bladder.glb"
-                structureId="bladder"
-                layerIndex={5}
-                isSelected={selectedStructureId === 'bladder'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[5] ?? 1.0}
-                layerVisible={layerVisibility[5] ?? true}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="larynx"
-                modelPath="/models/larynx.glb"
-                structureId="larynx"
-                layerIndex={5}
-                isSelected={selectedStructureId === 'larynx'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[5] ?? 1.0}
-                layerVisible={layerVisibility[5] ?? true}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="gallbladder"
-                modelPath="/models/gallbladder.glb"
-                structureId="gallbladder"
-                layerIndex={5}
-                isSelected={selectedStructureId === 'gallbladder'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[5] ?? 1.0}
-                layerVisible={layerVisibility[5] ?? true}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="pancreas"
-                modelPath="/models/pancreas.glb"
-                structureId="pancreas"
-                layerIndex={5}
-                isSelected={selectedStructureId === 'pancreas'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[5] ?? 1.0}
-                layerVisible={layerVisibility[5] ?? true}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="intestine"
-                modelPath="/models/intestine.glb"
-                structureId="intestine"
-                layerIndex={5}
-                isSelected={selectedStructureId === 'intestine'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[5] ?? 1.0}
-                layerVisible={layerVisibility[5] ?? true}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-
-              {/* LAYER 6: Cardiovascular System & Full-Body Angiology Network */}
-              {layerVisibility[6] && (
-                <ConnectedVesselsNetwork opacity={vesselNetworkOpacity} />
-              )}
-              {/* Cardiac Pump Central Anchor when in Vascular Mode */}
-              {layerVisibility[6] && !layerVisibility[5] && (
-                <NormalizedOrganMesh
-                  organKey="heart"
-                  modelPath="/models/heart-v7.glb"
-                  structureId="heart"
-                  layerIndex={6}
-                  isSelected={selectedStructureId === 'heart'}
-                  isIsolated={isIsolated}
-                  selectedId={selectedStructureId}
-                  layerOpacity={0.65}
-                  layerVisible={true}
-                  clippingPlanes={clippingPlanes}
-                  onSelect={handleSelectStructure}
-                />
-              )}
-              <NormalizedOrganMesh
-                organKey="aorta_arch"
-                modelPath="/models/aortic-arch.glb"
-                structureId="aorta_arch"
-                layerIndex={6}
-                isSelected={selectedStructureId === 'aorta_arch'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[6] ?? 1.0}
-                layerVisible={layerVisibility[6] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="coronary_arteries"
-                modelPath="/models/coronary-arteries.glb"
-                structureId="coronary_arteries"
-                layerIndex={6}
-                isSelected={selectedStructureId === 'coronary_arteries'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[6] ?? 1.0}
-                layerVisible={layerVisibility[6] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="circle_of_willis"
-                modelPath="/models/circle-of-willis.glb"
-                structureId="circle_of_willis"
-                layerIndex={6}
-                isSelected={selectedStructureId === 'circle_of_willis'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[6] ?? 1.0}
-                layerVisible={layerVisibility[6] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="portal_vein"
-                modelPath="/models/portal-vein.glb"
-                structureId="portal_vein"
-                layerIndex={6}
-                isSelected={selectedStructureId === 'portal_vein'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[6] ?? 1.0}
-                layerVisible={layerVisibility[6] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              {/* Bilateral Leg Veins (Left and Right Legs) */}
-              <NormalizedOrganMesh
-                organKey="leg_veins_left"
-                modelPath="/models/leg-veins.glb"
-                structureId="leg_veins"
-                layerIndex={6}
-                isSelected={selectedStructureId === 'leg_veins'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[6] ?? 1.0}
-                layerVisible={layerVisibility[6] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="leg_veins_right"
-                modelPath="/models/leg-veins.glb"
-                structureId="leg_veins"
-                layerIndex={6}
-                isSelected={selectedStructureId === 'leg_veins'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[6] ?? 1.0}
-                layerVisible={layerVisibility[6] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-
-              {/* LAYER 7: Nervous System (Brain, Brainstem, Spinal Cord, Plexuses & Nerve Network) */}
-              {layerVisibility[7] && (
-                <ConnectedNervesNetwork opacity={layerOpacity[7] ?? 1.0} />
-              )}
-              <NormalizedOrganMesh
-                organKey="brain"
-                modelPath="/models/brain.glb"
-                structureId="brain"
-                layerIndex={7}
-                isSelected={selectedStructureId === 'brain'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[7] ?? 1.0}
-                layerVisible={layerVisibility[7] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="brainstem"
-                modelPath="/models/brainstem.glb"
-                structureId="brainstem"
-                layerIndex={7}
-                isSelected={selectedStructureId === 'brainstem'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[7] ?? 1.0}
-                layerVisible={layerVisibility[7] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="spinal_cord"
-                modelPath="/models/spinal-cord.glb"
-                structureId="spinal_cord"
-                layerIndex={7}
-                isSelected={selectedStructureId === 'spinal_cord'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[7] ?? 1.0}
-                layerVisible={layerVisibility[7] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="cranial_nerves"
-                modelPath="/models/cranial-nerves.glb"
-                structureId="cranial_nerves"
-                layerIndex={7}
-                isSelected={selectedStructureId === 'cranial_nerves'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[7] ?? 1.0}
-                layerVisible={layerVisibility[7] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="brachial_plexus"
-                modelPath="/models/brachial-plexus.glb"
-                structureId="brachial_plexus"
-                layerIndex={7}
-                isSelected={selectedStructureId === 'brachial_plexus'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[7] ?? 1.0}
-                layerVisible={layerVisibility[7] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="lumbosacral_plexus"
-                modelPath="/models/lumbosacral-plexus.glb"
-                structureId="lumbosacral_plexus"
-                layerIndex={7}
-                isSelected={selectedStructureId === 'lumbosacral_plexus'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[7] ?? 1.0}
-                layerVisible={layerVisibility[7] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="nerves_system"
-                modelPath="/models/nerves-md.glb"
-                structureId="nerves_system"
-                layerIndex={7}
-                isSelected={selectedStructureId === 'nerves_system'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[7] ?? 1.0}
-                layerVisible={layerVisibility[7] ?? false}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-
-              {/* LAYER 8: Endocrine System (Pituitary, Adrenals) */}
-              <NormalizedOrganMesh
-                organKey="pituitary"
-                modelPath="/models/pituitary.glb"
-                structureId="pituitary"
-                layerIndex={8}
-                isSelected={selectedStructureId === 'pituitary'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[8] ?? 1.0}
-                layerVisible={layerVisibility[8] ?? true}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="adrenal"
-                modelPath="/models/adrenal.glb"
-                structureId="adrenal"
-                layerIndex={8}
-                isSelected={selectedStructureId === 'adrenal'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[8] ?? 1.0}
-                layerVisible={layerVisibility[8] ?? true}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-
-              {/* REPRODUCTIVE SYSTEM (Male vs Female Real Models) */}
-              {gender === 'male' ? (
-                <>
-                  <NormalizedOrganMesh
-                    organKey="testis"
-                    modelPath="/models/testis.glb"
-                    structureId="testis"
-                    layerIndex={5}
-                    isSelected={selectedStructureId === 'testis'}
-                    isIsolated={isIsolated}
+              {/* Continuous Anatomical Systems from Z-Anatomy (CC-BY-SA 4.0, pelvic origin at Y=0, offset by +0.99 to ground feet) */}
+              <group name="ZAnatomySystems" position={[0, 0.99, 0]}>
+                {/* LAYER 4: Continuous Anatomical Skeletal System (1,948 Bones) */}
+                {layerVisibility[4] && (
+                  <RealSkeletonNetwork
+                    opacity={layerOpacity[4] ?? 1.0}
                     selectedId={selectedStructureId}
-                    layerOpacity={layerOpacity[5] ?? 1.0}
-                    layerVisible={layerVisibility[5] ?? true}
+                    isIsolated={isIsolated}
                     clippingPlanes={clippingPlanes}
                     onSelect={handleSelectStructure}
                   />
-                  <NormalizedOrganMesh
-                    organKey="prostate"
-                    modelPath="/models/prostate.glb"
-                    structureId="prostate"
-                    layerIndex={5}
-                    isSelected={selectedStructureId === 'prostate'}
-                    isIsolated={isIsolated}
+                )}
+
+                {/* LAYER 5: Visceral Organs (Cardiopulmonary, Digestive, Renal, Hepatobiliary, Spleen, Heart) */}
+                {layerVisibility[5] && (
+                  <RealVisceraNetwork
+                    opacity={layerOpacity[5] ?? 1.0}
                     selectedId={selectedStructureId}
-                    layerOpacity={layerOpacity[5] ?? 1.0}
-                    layerVisible={layerVisibility[5] ?? true}
+                    isIsolated={isIsolated}
                     clippingPlanes={clippingPlanes}
                     onSelect={handleSelectStructure}
                   />
-                  <NormalizedOrganMesh
-                    organKey="penis"
-                    modelPath="/models/penis.glb"
-                    structureId="penis"
-                    layerIndex={5}
-                    isSelected={selectedStructureId === 'penis'}
-                    isIsolated={isIsolated}
+                )}
+
+                {/* LAYER 6: Cardiovascular System & Full-Body Angiology Network (676 Meshes: Arteries, Veins, Heart Chambers) */}
+                {layerVisibility[6] && (
+                  <ConnectedVesselsNetwork
+                    opacity={vesselNetworkOpacity}
                     selectedId={selectedStructureId}
-                    layerOpacity={layerOpacity[5] ?? 1.0}
-                    layerVisible={layerVisibility[5] ?? true}
+                    isIsolated={isIsolated}
                     clippingPlanes={clippingPlanes}
                     onSelect={handleSelectStructure}
                   />
-                </>
-              ) : (
+                )}
+
+                {/* LAYER 7: Nervous System (702 Meshes: Brain, Brainstem, Spinal Cord, Peripheral & Cranial Nerves) */}
+                {layerVisibility[7] && (
+                  <ConnectedNervesNetwork
+                    opacity={layerOpacity[7] ?? 1.0}
+                    selectedId={selectedStructureId}
+                    isIsolated={isIsolated}
+                    clippingPlanes={clippingPlanes}
+                    onSelect={handleSelectStructure}
+                  />
+                )}
+              </group>
+
+              {/* FEMALE REPRODUCTIVE SYSTEM (Rendered specifically when female gender is selected) */}
+              {gender === 'female' && (
                 <>
                   <NormalizedOrganMesh
                     organKey="uterus"
@@ -1400,34 +748,6 @@ export const FullBodyViewer: React.FC = () => {
                   />
                 </>
               )}
-
-              {/* LAYER 8: Endocrine & Lymphatic */}
-              <NormalizedOrganMesh
-                organKey="thyroid"
-                modelPath="/models/thyroid.glb"
-                structureId="thyroid"
-                layerIndex={8}
-                isSelected={selectedStructureId === 'thyroid'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[8] ?? 1.0}
-                layerVisible={layerVisibility[8] ?? true}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
-              <NormalizedOrganMesh
-                organKey="spleen"
-                modelPath="/models/spleen.glb"
-                structureId="spleen"
-                layerIndex={8}
-                isSelected={selectedStructureId === 'spleen'}
-                isIsolated={isIsolated}
-                selectedId={selectedStructureId}
-                layerOpacity={layerOpacity[8] ?? 1.0}
-                layerVisible={layerVisibility[8] ?? true}
-                clippingPlanes={clippingPlanes}
-                onSelect={handleSelectStructure}
-              />
             </group>
           </React.Suspense>
 
