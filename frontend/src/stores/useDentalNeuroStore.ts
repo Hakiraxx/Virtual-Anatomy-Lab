@@ -7,6 +7,7 @@ import {
 } from '../data/dentalNeuroData';
 
 export type VisualizationDepth = 'surface' | 'skeletal' | 'neural' | 'dental' | 'deep';
+export type SpecimenMode = 'general' | 'tooth_specimen' | 'tmj_specimen' | 'wisdom_surgery';
 
 export interface CraniofacialQuizQuestion {
   id: string;
@@ -132,6 +133,32 @@ interface DentalNeuroState {
     messageEn: string;
   } | null;
 
+  // Specialized Specimen Modes
+  activeSpecimenMode: SpecimenMode;
+
+  // 1. Tooth Specimen State
+  selectedToothFdi: number;
+  toothCrossSection: 'solid' | 'longitudinal' | 'pulp_isolated';
+  toothEnamelOpacity: number;
+  toothShowPdl: boolean;
+
+  // 2. TMJ Specimen State
+  tmjJawState: number; // 0.0 to 1.0 (opening percentage)
+  tmjMotionMode: 'opening' | 'protrusion' | 'lateral';
+  tmjPathology: 'normal' | 'tmd_reduction' | 'tmd_non_reduction' | 'tmd_dislocation';
+  tmjShowMuscles: boolean;
+  tmjShowLigaments: boolean;
+  tmjActiveMuscleId: string | null;
+
+  // 3. Wisdom Surgery Specimen State
+  wisdomToothId: 'tooth_38' | 'tooth_48';
+  wisdomWinterType: 'mesioangular' | 'horizontal' | 'vertical' | 'distoangular';
+  wisdomPellGregoryClass: 'I' | 'II' | 'III';
+  wisdomPellGregoryPos: 'A' | 'B' | 'C';
+  wisdomSurgicalStep: number; // 1 to 6
+  wisdomShowNerves: boolean;
+  wisdomBoneOpacity: number;
+
   // Actions
   selectAnatomy: (id: string | null, side?: 'right' | 'left' | null) => void;
   focusAnatomy: (id: string) => void;
@@ -153,6 +180,26 @@ interface DentalNeuroState {
     lookAt: [number, number, number],
     distance?: number
   ) => void;
+
+  // Specimen Actions
+  setActiveSpecimenMode: (mode: SpecimenMode) => void;
+  setSelectedToothFdi: (fdi: number) => void;
+  setToothCrossSection: (mode: 'solid' | 'longitudinal' | 'pulp_isolated') => void;
+  setToothEnamelOpacity: (opacity: number) => void;
+  setToothShowPdl: (show: boolean) => void;
+  setTmjJawState: (progress: number) => void;
+  setTmjMotionMode: (mode: 'opening' | 'protrusion' | 'lateral') => void;
+  setTmjPathology: (pathology: 'normal' | 'tmd_reduction' | 'tmd_non_reduction' | 'tmd_dislocation') => void;
+  setTmjShowMuscles: (show: boolean) => void;
+  setTmjShowLigaments: (show: boolean) => void;
+  setTmjActiveMuscleId: (id: string | null) => void;
+  setWisdomToothId: (id: 'tooth_38' | 'tooth_48') => void;
+  setWisdomWinterType: (type: 'mesioangular' | 'horizontal' | 'vertical' | 'distoangular') => void;
+  setWisdomPellGregoryClass: (c: 'I' | 'II' | 'III') => void;
+  setWisdomPellGregoryPos: (pos: 'A' | 'B' | 'C') => void;
+  setWisdomSurgicalStep: (step: number) => void;
+  setWisdomShowNerves: (show: boolean) => void;
+  setWisdomBoneOpacity: (opacity: number) => void;
 
   // Tracing controls
   startTrace: (nerveId: string) => void;
@@ -223,6 +270,27 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
   isMandibularCanalMode: false,
   isAnesthesiaMode: false,
   activeAnesthesiaId: null,
+
+  // Specimen Modes Default Values
+  activeSpecimenMode: 'general',
+  selectedToothFdi: 46,
+  toothCrossSection: 'longitudinal',
+  toothEnamelOpacity: 0.65,
+  toothShowPdl: true,
+  tmjJawState: 0.0,
+  tmjMotionMode: 'opening',
+  tmjPathology: 'normal',
+  tmjShowMuscles: true,
+  tmjShowLigaments: true,
+  tmjActiveMuscleId: null,
+  wisdomToothId: 'tooth_48',
+  wisdomWinterType: 'mesioangular',
+  wisdomPellGregoryClass: 'II',
+  wisdomPellGregoryPos: 'B',
+  wisdomSurgicalStep: 1,
+  wisdomShowNerves: true,
+  wisdomBoneOpacity: 0.45,
+
   lateralizationSide: 'bilateral',
   selectedSide: 'right',
   showForaminaMarkers: false, // Default false: clinical view without artificial locator rings
@@ -538,6 +606,26 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
       quizFeedback: null
     });
   },
+
+  // Specimen Actions
+  setActiveSpecimenMode: (mode) => set({ activeSpecimenMode: mode }),
+  setSelectedToothFdi: (fdi) => set({ selectedToothFdi: fdi, selectedAnatomyId: `tooth_${fdi}` }),
+  setToothCrossSection: (mode) => set({ toothCrossSection: mode }),
+  setToothEnamelOpacity: (opacity) => set({ toothEnamelOpacity: opacity }),
+  setToothShowPdl: (show) => set({ toothShowPdl: show }),
+  setTmjJawState: (progress) => set({ tmjJawState: Math.max(0, Math.min(1, progress)) }),
+  setTmjMotionMode: (mode) => set({ tmjMotionMode: mode }),
+  setTmjPathology: (pathology) => set({ tmjPathology: pathology }),
+  setTmjShowMuscles: (show) => set({ tmjShowMuscles: show }),
+  setTmjShowLigaments: (show) => set({ tmjShowLigaments: show }),
+  setTmjActiveMuscleId: (id) => set({ tmjActiveMuscleId: id }),
+  setWisdomToothId: (id) => set({ wisdomToothId: id }),
+  setWisdomWinterType: (type) => set({ wisdomWinterType: type }),
+  setWisdomPellGregoryClass: (c) => set({ wisdomPellGregoryClass: c }),
+  setWisdomPellGregoryPos: (pos) => set({ wisdomPellGregoryPos: pos }),
+  setWisdomSurgicalStep: (step) => set({ wisdomSurgicalStep: step }),
+  setWisdomShowNerves: (show) => set({ wisdomShowNerves: show }),
+  setWisdomBoneOpacity: (opacity) => set({ wisdomBoneOpacity: opacity }),
 
   resetAll: () => {
     set({

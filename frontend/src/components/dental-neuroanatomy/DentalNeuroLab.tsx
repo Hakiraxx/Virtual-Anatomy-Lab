@@ -30,8 +30,13 @@ import { DentalNeuro3DStage } from './DentalNeuro3DStage';
 import { DentalNeuroInfoPanel } from './DentalNeuroInfoPanel';
 import { DentalNeuroToolbar } from './DentalNeuroToolbar';
 import { DentalNeuroQuiz } from './DentalNeuroQuiz';
+import { DentalSpecimenSwitcher } from './specimens/DentalSpecimenSwitcher';
+import { ToothSpecimenStage } from './specimens/ToothSpecimenStage';
+import { TMJSpecimenStage } from './specimens/TMJSpecimenStage';
+import { WisdomSurgeryStage } from './specimens/WisdomSurgeryStage';
 
 export const DentalNeuroLab: React.FC = () => {
+  const activeSpecimenMode = useDentalNeuroStore((s) => s.activeSpecimenMode);
   const selectedAnatomyId = useDentalNeuroStore((s) => s.selectedAnatomyId);
   const selectAnatomy = useDentalNeuroStore((s) => s.selectAnatomy);
 
@@ -691,7 +696,30 @@ export const DentalNeuroLab: React.FC = () => {
         </div>
       )}
 
-      {/* 2. MAIN WORKSPACE WITH RESIZABLE SPLITTERS & MOBILE DRAWERS */}
+      {/* 2. SPECIMEN LEVEL SWITCHER STRIP (Bộ Tiêu Bản Chuyên Sâu RHM) */}
+      <div
+        className={`px-3 sm:px-4 py-1.5 border-b flex items-center justify-between gap-3 z-25 transition-colors duration-200 overflow-x-auto scrollbar-none flex-nowrap ${
+          isDark
+            ? 'bg-[#0b0f17]/95 border-slate-800/80'
+            : 'bg-[#f4ecdf]/95 border-[#e7ded3]'
+        }`}
+      >
+        <DentalSpecimenSwitcher />
+        <div className="hidden md:flex items-center gap-2 text-[11px] font-mono text-slate-400 whitespace-nowrap pr-2">
+          <span>Tiêu Bản:</span>
+          <span className="font-bold text-amber-500">
+            {activeSpecimenMode === 'general'
+              ? 'Toàn bộ rễ & dây thần kinh sọ RHM'
+              : activeSpecimenMode === 'tooth_specimen'
+              ? 'Cắt lớp 3D Men - Ngà - Tủy Răng FDI'
+              : activeSpecimenMode === 'tmj_specimen'
+              ? 'Động học Khớp TDH & 4 Cơ Nhai'
+              : 'Tiểu phẫu Răng 8 & An toàn IAN'}
+          </span>
+        </div>
+      </div>
+
+      {/* 3. MAIN WORKSPACE WITH RESIZABLE SPLITTERS & MOBILE DRAWERS */}
       <div className="flex-1 flex overflow-hidden relative">
         {/* Left Column (Desktop >= 1200px): Collapsible & Resizable Anatomy Tree */}
         {!isCompact && (
@@ -758,13 +786,22 @@ export const DentalNeuroLab: React.FC = () => {
             </button>
           )}
 
-          <DentalNeuro3DStage />
-
-          {/* Interactive 3D Quiz Overlay Modal */}
-          <DentalNeuroQuiz />
-
-          {/* Standard MedAnatomy-style Context Toolbar */}
-          <DentalNeuroToolbar />
+          {/* Active 3D Specimen Stage */}
+          {activeSpecimenMode === 'general' ? (
+            <>
+              <DentalNeuro3DStage />
+              {/* Interactive 3D Quiz Overlay Modal */}
+              <DentalNeuroQuiz />
+              {/* Standard MedAnatomy-style Context Toolbar */}
+              <DentalNeuroToolbar />
+            </>
+          ) : activeSpecimenMode === 'tooth_specimen' ? (
+            <ToothSpecimenStage />
+          ) : activeSpecimenMode === 'tmj_specimen' ? (
+            <TMJSpecimenStage />
+          ) : (
+            <WisdomSurgeryStage />
+          )}
         </main>
 
         {/* Right Resizer Splitter (Desktop >= 1200px) */}

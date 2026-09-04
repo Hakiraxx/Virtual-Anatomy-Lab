@@ -18,7 +18,13 @@ import {
   X,
   PanelRightClose,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  CheckCircle2,
+  ShieldAlert,
+  Volume2,
+  Activity,
+  Scissors,
+  Layers
 } from 'lucide-react';
 import { useDentalNeuroStore } from '../../stores/useDentalNeuroStore';
 import { useAnatomyStore } from '../../stores/useAnatomyStore';
@@ -30,6 +36,12 @@ import {
   CLINICAL_ANESTHESIA_TECHNIQUES,
   ANATOMICAL_RELATIONS
 } from '../../data/dentalNeuroData';
+import {
+  DENTAL_SPECIMENS_DATABASE,
+  TMJ_SPECIMEN_DATA,
+  MASTICATORY_MUSCLES_DETAIL,
+  WISDOM_SURGICAL_DATABASE
+} from '../../data/dentalSpecimensData';
 
 interface DentalNeuroInfoPanelProps {
   isOpen?: boolean;
@@ -102,6 +114,382 @@ export const DentalNeuroInfoPanel: React.FC<DentalNeuroInfoPanelProps> = ({
   const handleDeselect = () => {
     selectAnatomy(null);
   };
+
+  const activeSpecimenMode = useDentalNeuroStore((s) => s.activeSpecimenMode);
+  const selectedToothFdi = useDentalNeuroStore((s) => s.selectedToothFdi);
+  const setSelectedToothFdi = useDentalNeuroStore((s) => s.setSelectedToothFdi);
+  const wisdomToothId = useDentalNeuroStore((s) => s.wisdomToothId);
+  const setWisdomToothId = useDentalNeuroStore((s) => s.setWisdomToothId);
+  const wisdomWinterType = useDentalNeuroStore((s) => s.wisdomWinterType);
+  const setWisdomWinterType = useDentalNeuroStore((s) => s.setWisdomWinterType);
+  const wisdomPellGregoryClass = useDentalNeuroStore((s) => s.wisdomPellGregoryClass);
+  const wisdomPellGregoryPos = useDentalNeuroStore((s) => s.wisdomPellGregoryPos);
+  const wisdomSurgicalStep = useDentalNeuroStore((s) => s.wisdomSurgicalStep);
+  const tmjJawState = useDentalNeuroStore((s) => s.tmjJawState);
+  const tmjMotionMode = useDentalNeuroStore((s) => s.tmjMotionMode);
+  const tmjPathology = useDentalNeuroStore((s) => s.tmjPathology);
+  const setTmjPathology = useDentalNeuroStore((s) => s.setTmjPathology);
+  const tmjActiveMuscleId = useDentalNeuroStore((s) => s.tmjActiveMuscleId);
+  const setTmjActiveMuscleId = useDentalNeuroStore((s) => s.setTmjActiveMuscleId);
+
+  // 1. SPECIMEN MODE: TOOTH FDI CLINICAL & ENDODONTIC DOSSIER
+  if (activeSpecimenMode === 'tooth_specimen') {
+    const toothDetail = DENTAL_SPECIMENS_DATABASE[selectedToothFdi] || DENTAL_SPECIMENS_DATABASE[46];
+    return (
+      <aside
+        style={!isMobileDrawer ? { width: isOpen ? `${customWidth}px` : 0 } : undefined}
+        className={`h-full border-l flex flex-col z-20 select-none overflow-hidden ${
+          isMobileDrawer ? 'w-full' : isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none border-l-0'
+        } ${isDark ? 'bg-[#0c121e]/95 border-slate-800 text-slate-200' : 'bg-[#fbf7f2]/95 border-[#e7ded3] text-[#28231d]'}`}
+      >
+        {/* Header */}
+        <div className={`p-3.5 border-b flex-shrink-0 ${isDark ? 'bg-slate-950/70 border-slate-800/80' : 'bg-[#f3ece2]/70 border-[#e7ded3]'}`}>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                THẺ RĂNG LÂM SÀNG & NỘI NHA
+              </span>
+              <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-500 border border-rose-500/30">
+                FDI {toothDetail.fdi}
+              </span>
+            </div>
+            {onClose ? (
+              <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer">
+                <PanelRightClose className="w-4 h-4" />
+              </button>
+            ) : (
+              <button onClick={handleDeselect} className="p-1 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer">
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          <h2 className="text-base font-serif font-bold text-current mt-1.5 leading-snug">{toothDetail.nameVi}</h2>
+          <p className="text-xs font-serif italic text-slate-500 dark:text-slate-400">{toothDetail.nameEn}</p>
+        </div>
+
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto p-3.5 space-y-4 text-xs font-sans">
+          {/* Quick Stats Grid */}
+          <div className="grid grid-cols-3 gap-2">
+            <div className={`p-2 rounded-xl border text-center ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white/80 border-[#e7ded3]'}`}>
+              <div className="text-[9px] text-slate-400 font-mono">CHÂN RĂNG</div>
+              <div className="text-base font-bold text-amber-500">{toothDetail.rootCount}</div>
+            </div>
+            <div className={`p-2 rounded-xl border text-center ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white/80 border-[#e7ded3]'}`}>
+              <div className="text-[9px] text-slate-400 font-mono">SỐ ỐNG TỦY</div>
+              <div className="text-base font-bold text-rose-500">{toothDetail.canalCount}</div>
+            </div>
+            <div className={`p-2 rounded-xl border text-center ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white/80 border-[#e7ded3]'}`}>
+              <div className="text-[9px] text-slate-400 font-mono">DÀI CHÂN</div>
+              <div className="text-base font-bold text-sky-500">{toothDetail.rootLengthMm} mm</div>
+            </div>
+          </div>
+
+          {/* Ống tủy & Vertucci */}
+          <div className={`p-3 rounded-2xl border space-y-2 ${isDark ? 'bg-slate-900/40 border-slate-800' : 'bg-white/60 border-[#e7ded3]'}`}>
+            <h3 className="font-bold text-xs uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5" />
+              <span>Hệ Thống Ống Tủy & Phân Loại Vertucci</span>
+            </h3>
+            <div className="text-[11px] font-mono text-slate-300">
+              <span className="font-bold text-current">Các ống tủy:</span> {toothDetail.canalNames.join(', ')}
+            </div>
+            <div className="text-[11px] text-slate-400 leading-relaxed">
+              <span className="font-bold text-amber-500">Phân loại:</span> {toothDetail.vertucciClass}
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed bg-black/5 dark:bg-white/5 p-2 rounded-lg">
+              {toothDetail.vertucciDescriptionVi}
+            </p>
+          </div>
+
+          {/* Mở tủy (Access Cavity) & Clamp */}
+          <div className={`p-3 rounded-2xl border space-y-2 ${isDark ? 'bg-slate-900/40 border-slate-800' : 'bg-white/60 border-[#e7ded3]'}`}>
+            <h3 className="font-bold text-xs uppercase tracking-wider text-sky-600 dark:text-sky-400 flex items-center gap-1.5">
+              <Scissors className="w-3.5 h-3.5" />
+              <span>Đường Vào Tủy & Kẹp Đê Cao Su</span>
+            </h3>
+            <div className="text-[11px]">
+              <span className="font-bold text-slate-400">Hình dạng lỗ mở:</span>{' '}
+              <span className="font-semibold text-current">{toothDetail.accessCavityShape}</span>
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+              {toothDetail.accessCavityDetailsVi}
+            </p>
+            <div className="pt-2 border-t border-inherit">
+              <div className="text-[11px]">
+                <span className="font-bold text-emerald-500">Kẹp đê khuyến nghị:</span>{' '}
+                <span className="font-mono font-bold text-current">{toothDetail.rubberDamClampVi}</span>
+              </div>
+              <div className="text-[10px] text-slate-400 mt-0.5">
+                Thay thế: {toothDetail.rubberDamClampAlternatives.join(', ')}
+              </div>
+            </div>
+          </div>
+
+          {/* Gây tê khuyến nghị */}
+          <div className={`p-3 rounded-2xl border space-y-2 ${isDark ? 'bg-slate-900/40 border-slate-800' : 'bg-white/60 border-[#e7ded3]'}`}>
+            <h3 className="font-bold text-xs uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+              <Syringe className="w-3.5 h-3.5" />
+              <span>Kỹ Thuật Gây Tê Khuyến Nghị</span>
+            </h3>
+            <ul className="space-y-1">
+              {toothDetail.recommendedAnesthesia.map((anes, i) => (
+                <li key={i} className="text-[11px] flex items-center gap-1.5 text-slate-300">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
+                  <span>{anes}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Cảnh báo rủi ro lâm sàng */}
+          <div className="p-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 space-y-1.5 text-rose-300">
+            <div className="font-bold text-xs flex items-center gap-1.5 text-rose-400">
+              <AlertTriangle className="w-3.5 h-3.5" />
+              <span>Nguy Cơ Tai Biến Nội Nha</span>
+            </div>
+            <ul className="space-y-1 text-[11px]">
+              {toothDetail.clinicalRisksVi.map((risk, i) => (
+                <li key={i} className="flex items-start gap-1">
+                  <span className="text-rose-400">•</span>
+                  <span>{risk}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </aside>
+    );
+  }
+
+  // 2. SPECIMEN MODE: TMJ & TMD CLINICAL DOSSIER
+  if (activeSpecimenMode === 'tmj_specimen') {
+    const selectedMuscle = tmjActiveMuscleId
+      ? MASTICATORY_MUSCLES_DETAIL.find((m) => m.id === tmjActiveMuscleId)
+      : null;
+    return (
+      <aside
+        style={!isMobileDrawer ? { width: isOpen ? `${customWidth}px` : 0 } : undefined}
+        className={`h-full border-l flex flex-col z-20 select-none overflow-hidden ${
+          isMobileDrawer ? 'w-full' : isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none border-l-0'
+        } ${isDark ? 'bg-[#0c121e]/95 border-slate-800 text-slate-200' : 'bg-[#fbf7f2]/95 border-[#e7ded3] text-[#28231d]'}`}
+      >
+        {/* Header */}
+        <div className={`p-3.5 border-b flex-shrink-0 ${isDark ? 'bg-slate-950/70 border-slate-800/80' : 'bg-[#f3ece2]/70 border-[#e7ded3]'}`}>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/30">
+              HỒ SƠ KHỚP THÁI DƯƠNG HÀM & CƠ NHAI
+            </span>
+            {onClose ? (
+              <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer">
+                <PanelRightClose className="w-4 h-4" />
+              </button>
+            ) : (
+              <button onClick={handleDeselect} className="p-1 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer">
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          <h2 className="text-base font-serif font-bold text-current mt-1.5 leading-snug">{TMJ_SPECIMEN_DATA.nameVi}</h2>
+          <p className="text-xs font-serif italic text-slate-500 dark:text-slate-400">{TMJ_SPECIMEN_DATA.nameEn}</p>
+        </div>
+
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto p-3.5 space-y-4 text-xs font-sans">
+          {/* Đĩa khớp 4 vùng */}
+          <div className={`p-3 rounded-2xl border space-y-2 ${isDark ? 'bg-slate-900/40 border-slate-800' : 'bg-white/60 border-[#e7ded3]'}`}>
+            <h3 className="font-bold text-xs uppercase tracking-wider text-sky-400 flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5" />
+              <span>4 Vùng Giải Phẫu Đĩa Khớp Lưỡng Lõm</span>
+            </h3>
+            <div className="space-y-1.5">
+              {TMJ_SPECIMEN_DATA.discZones.map((z, i) => (
+                <div key={i} className="p-2 rounded-lg bg-black/5 dark:bg-white/5">
+                  <div className="flex items-center justify-between text-[11px] font-bold text-current">
+                    <span>{z.zone}</span>
+                    <span className="font-mono text-amber-500">{z.thicknessMm} mm</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-0.5 leading-relaxed">{z.characteristicsVi}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Dây chằng khớp */}
+          <div className={`p-3 rounded-2xl border space-y-2 ${isDark ? 'bg-slate-900/40 border-slate-800' : 'bg-white/60 border-[#e7ded3]'}`}>
+            <h3 className="font-bold text-xs uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+              <Activity className="w-3.5 h-3.5" />
+              <span>Hệ Thống Dây Chằng Giữ Khớp</span>
+            </h3>
+            <div className="space-y-1.5">
+              {TMJ_SPECIMEN_DATA.ligaments.map((l, i) => (
+                <div key={i} className="text-[11px] space-y-0.5">
+                  <div className="font-bold text-current">{l.nameVi}</div>
+                  <p className="text-[10px] text-slate-400 leading-relaxed">{l.functionVi}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Chi tiết Cơ nhai đang chọn */}
+          {selectedMuscle && (
+            <div className="p-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 space-y-2">
+              <div className="font-bold text-xs flex items-center gap-1.5 text-rose-400">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>{selectedMuscle.nameVi}</span>
+              </div>
+              <div className="text-[11px] space-y-1 text-slate-300">
+                <div><span className="font-bold text-slate-400">Nguyên ủy:</span> {selectedMuscle.originVi}</div>
+                <div><span className="font-bold text-slate-400">Bám tận:</span> {selectedMuscle.insertionVi}</div>
+                <div><span className="font-bold text-slate-400">Thần kinh:</span> {selectedMuscle.innervationVi}</div>
+                <div><span className="font-bold text-slate-400">Tác động:</span> {selectedMuscle.actionVi}</div>
+                <div className="p-1.5 rounded bg-black/20 text-rose-200 text-[10px]">
+                  <span className="font-bold">Điểm đau chiếu (Trigger Point):</span> {selectedMuscle.triggerPointPainVi}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Cơ chế TMD hiện tại */}
+          <div className="p-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 space-y-1.5">
+            <div className="font-bold text-xs text-amber-400 flex items-center gap-1.5">
+              <AlertTriangle className="w-3.5 h-3.5" />
+              <span>Chẩn Đoán Lâm Sàng & Xử Trí TMD</span>
+            </div>
+            {(() => {
+              const currentTmd = TMJ_SPECIMEN_DATA.tmdPathologies.find((p) => p.id === tmjPathology);
+              if (!currentTmd) return <p className="text-[11px] text-slate-300">Khớp hoạt động bình thường, vận động trơn tru không tiếng kêu.</p>;
+              return (
+                <div className="space-y-1.5 text-[11px] text-slate-200">
+                  <div className="font-bold text-current">{currentTmd.nameVi}</div>
+                  <div className="text-amber-300 font-mono text-[10px]">{currentTmd.soundSignVi}</div>
+                  <p className="text-[10px] text-slate-400 leading-relaxed">{currentTmd.pathophysiologyVi}</p>
+                  <div className="p-1.5 rounded bg-amber-950/40 text-amber-200 text-[10px]">
+                    <span className="font-bold">Hướng xử trí:</span> {currentTmd.clinicalManagementVi}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      </aside>
+    );
+  }
+
+  // 3. SPECIMEN MODE: WISDOM SURGERY & NERVE SAFETY DOSSIER
+  if (activeSpecimenMode === 'wisdom_surgery') {
+    const currentWinter =
+      WISDOM_SURGICAL_DATABASE.winterTypes.find((w) => w.id === wisdomWinterType) ||
+      WISDOM_SURGICAL_DATABASE.winterTypes[0];
+    const currentStep =
+      WISDOM_SURGICAL_DATABASE.surgicalSteps.find((s) => s.stepNumber === wisdomSurgicalStep) ||
+      WISDOM_SURGICAL_DATABASE.surgicalSteps[0];
+
+    return (
+      <aside
+        style={!isMobileDrawer ? { width: isOpen ? `${customWidth}px` : 0 } : undefined}
+        className={`h-full border-l flex flex-col z-20 select-none overflow-hidden ${
+          isMobileDrawer ? 'w-full' : isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none border-l-0'
+        } ${isDark ? 'bg-[#0c121e]/95 border-slate-800 text-slate-200' : 'bg-[#fbf7f2]/95 border-[#e7ded3] text-[#28231d]'}`}
+      >
+        {/* Header */}
+        <div className={`p-3.5 border-b flex-shrink-0 ${isDark ? 'bg-slate-950/70 border-slate-800/80' : 'bg-[#f3ece2]/70 border-[#e7ded3]'}`}>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30">
+              HỒ SƠ TIỂU PHẪU RĂNG KHÔN
+            </span>
+            {onClose ? (
+              <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer">
+                <PanelRightClose className="w-4 h-4" />
+              </button>
+            ) : (
+              <button onClick={handleDeselect} className="p-1 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer">
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          <h2 className="text-base font-serif font-bold text-current mt-1.5 leading-snug">
+            Phẫu Thuật R.{wisdomToothId === 'tooth_48' ? '48 (Hàm dưới phải)' : '38 (Hàm dưới trái)'}
+          </h2>
+          <p className="text-xs font-serif italic text-slate-500 dark:text-slate-400">
+            Winter: {currentWinter.labelVi} • Pell-Gregory: Class {wisdomPellGregoryClass} Vị trí {wisdomPellGregoryPos}
+          </p>
+        </div>
+
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto p-3.5 space-y-4 text-xs font-sans">
+          {/* Phân loại & Chiến lược cắt thân */}
+          <div className={`p-3 rounded-2xl border space-y-2 ${isDark ? 'bg-slate-900/40 border-slate-800' : 'bg-white/60 border-[#e7ded3]'}`}>
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-xs uppercase tracking-wider text-amber-500">
+                Chiến Lược Phẫu Thuật
+              </span>
+              <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-400">
+                Độ khó: {currentWinter.surgicalDifficulty}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 leading-relaxed">{currentWinter.notesVi}</p>
+            <div className="p-2 rounded-lg bg-black/5 dark:bg-white/5 text-[11px] space-y-1">
+              <div className="font-bold text-current">Phương án cắt chia thân (Odontotomy):</div>
+              <p className="text-amber-400 leading-relaxed">{currentWinter.sectioningStrategyVi}</p>
+            </div>
+          </div>
+
+          {/* An toàn thần kinh IAN */}
+          <div className="p-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 space-y-2">
+            <div className="font-bold text-xs flex items-center gap-1.5 text-rose-400">
+              <ShieldAlert className="w-3.5 h-3.5" />
+              <span>Đánh Giá Rủi Ro Thần Kinh IAN</span>
+            </div>
+            <p className="text-[11px] text-slate-300 leading-relaxed">
+              Tổn thương thần kinh huyệt răng dưới (IAN) gây tê môi dưới và cằm cùng bên (triệu chứng Vincent).
+            </p>
+            <div className="space-y-1">
+              {WISDOM_SURGICAL_DATABASE.ianRadiologicRiskSigns.slice(0, 3).map((sign, i) => (
+                <div key={i} className="text-[10px] p-1.5 rounded bg-black/20 text-rose-200">
+                  <div className="font-bold">{sign.signVi}</div>
+                  <div className="text-amber-300 font-mono">{sign.oddsRatioRisk}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* An toàn thần kinh Lưỡi (Lingual Nerve) */}
+          <div className="p-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 space-y-1.5">
+            <div className="font-bold text-xs flex items-center gap-1.5 text-amber-400">
+              <AlertTriangle className="w-3.5 h-3.5" />
+              <span>Bảo Vệ Thần Kinh Lưỡi (Lingual Nerve)</span>
+            </div>
+            <p className="text-[11px] text-slate-300 leading-relaxed">
+              Dây thần kinh lưỡi chạy áp sát mặt trong bản xương góc hàm (&lt; 1.5mm).
+            </p>
+            <ul className="text-[10px] space-y-1 text-slate-300 list-disc pl-4">
+              <li>Đường rạch vạt luôn lệch ra MẶT NGOÀI, không bao giờ rạch vào mặt lưỡi.</li>
+              <li>Đặt cây bóc tách bảo vệ màng xương phía lưỡi khi dùng mũi khoan mở xương.</li>
+              <li>Tránh kẹp hoặc bóc tách thô bạo vào sàn miệng.</li>
+            </ul>
+          </div>
+
+          {/* Bước phẫu thuật hiện tại */}
+          <div className={`p-3 rounded-2xl border space-y-1.5 ${isDark ? 'bg-slate-900/40 border-slate-800' : 'bg-white/60 border-[#e7ded3]'}`}>
+            <div className="font-bold text-xs uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Bước {currentStep.stepNumber}: {currentStep.titleVi}</span>
+            </div>
+            <div className="text-[11px] text-slate-300">
+              <span className="font-bold text-slate-400">Dụng cụ:</span> {currentStep.instrumentVi}
+            </div>
+            <div className="text-[11px] text-emerald-300">
+              <span className="font-bold">Thao tác an toàn:</span> {currentStep.keySafetyActionVi}
+            </div>
+            <div className="text-[10px] text-rose-400 pt-1 border-t border-inherit">
+              <span className="font-bold">Cạm bẫy:</span> {currentStep.anatomicalPitfallVi}
+            </div>
+          </div>
+        </div>
+      </aside>
+    );
+  }
 
   // When nothing is selected, show an engaging, high-yield overview navigator
   if (!selectedAnatomyId) {
