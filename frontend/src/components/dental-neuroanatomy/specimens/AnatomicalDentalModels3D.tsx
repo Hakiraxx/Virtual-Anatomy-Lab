@@ -468,6 +468,9 @@ export interface RealDentalSectionProps {
   showPdl?: boolean;
   showBone?: boolean;
   showNerve?: boolean;
+  showEnamel?: boolean;
+  showDentin?: boolean;
+  showPulp?: boolean;
   sectionPlane?: 'sagittal' | 'coronal' | 'axial' | 'oblique';
   sectionOffset?: number;
   sectionInverted?: boolean;
@@ -481,15 +484,17 @@ export const RealDentalAnatomySectionMesh: React.FC<RealDentalSectionProps> = ({
   showPdl = true,
   showBone = true,
   showNerve = true,
+  showEnamel = true,
+  showDentin = true,
+  showPulp = true,
   sectionPlane = 'sagittal',
   sectionOffset = 0.0,
   sectionInverted = false,
   scale = 1.5
 }) => {
-  // Determine laterality from FDI numbering
-  // Quadrants 1 & 4 (e.g. 16, 46, 48) are RIGHT side
-  // Quadrants 2 & 3 (e.g. 26, 36, 38) are LEFT side
+  // Determine laterality and jaw from FDI numbering
   const isRightSide = (fdi >= 11 && fdi <= 18) || (fdi >= 41 && fdi <= 48);
+  const isMandible = (fdi >= 31 && fdi <= 38) || (fdi >= 41 && fdi <= 48);
 
   // Load verified medical 3D scan models
   const modelUrl = isRightSide
@@ -499,12 +504,14 @@ export const RealDentalAnatomySectionMesh: React.FC<RealDentalSectionProps> = ({
   const { scene: toothScene } = useGLTF(modelUrl);
   const skullGltf = useGLTF('/models/craniofacial/skull/skull_complete.glb', '/draco/');
 
-  // Extract real anatomical crown and root geometries from verified 3D assets
-  const { crownGeom, rootGeom } = useMemo(() => {
+  // Extract real anatomical crown, root, and internal pulp geometries
+  const { crownGeom, rootGeom, dentinGeom, pulpGeom } = useMemo(() => {
     let cg: THREE.BufferGeometry | null = null;
     let rg: THREE.BufferGeometry | null = null;
+    let dg: THREE.BufferGeometry | null = null;
+    let pg: THREE.BufferGeometry | null = null;
 
-    if (fdi === 48 || fdi === 38) {
+    if (fdi === 48 || fdi === 38 || fdi === 18 || fdi === 28) {
       toothScene.traverse((child: any) => {
         if (child.isMesh) {
           if (child.name.includes('Crown')) {
@@ -514,21 +521,59 @@ export const RealDentalAnatomySectionMesh: React.FC<RealDentalSectionProps> = ({
           }
         }
       });
-      return { crownGeom: cg, rootGeom: rg };
+      const validCg = cg as THREE.BufferGeometry | null;
+      const validRg = rg as THREE.BufferGeometry | null;
+      if (validCg && validRg) {
+        if (!isMandible) {
+          validCg.rotateZ(Math.PI);
+          validCg.computeVertexNormals();
+          validRg.rotateZ(Math.PI);
+          validRg.computeVertexNormals();
+        }
+        // Create internal pulp canal core for 3rd molar
+        const pCore = validRg.clone();
+        pCore.scale(0.38, 0.85, 0.38);
+        pCore.translate(0, 0.001, 0);
+        return { crownGeom: validCg, rootGeom: validRg, dentinGeom: validRg, pulpGeom: pCore };
+      }
+      return { crownGeom: validCg, rootGeom: validRg, dentinGeom: null, pulpGeom: null };
     }
 
     // Extract authentic 3D tooth mesh from skull_complete.glb
     const targetNodeName = ToothPositionResolver.getMeshNodeName(fdi);
     let targetMesh: THREE.Mesh | null = null;
 
+    const matchClean = (a: string, b: string) => {
+      if (!a || !b) return false;
+      return a.toLowerCase().replace(/[^a-z0-9]/g, '') === b.toLowerCase().replace(/[^a-z0-9]/g, '');
+    };
+
     skullGltf.scene.traverse((child: any) => {
-      if (child.isMesh && child.name === targetNodeName) {
-        targetMesh = child;
+      if (child.isMesh && !targetMesh) {
+        const childFdi = ToothPositionResolver.getFdiFromMeshNodeName(child.name);
+        if (childFdi === fdi) {
+          targetMesh = child;
+        } else if (targetNodeName && matchClean(child.name, targetNodeName)) {
+          targetMesh = child;
+        }
       }
     });
 
-    if (targetMesh && (targetMesh as THREE.Mesh).geometry) {
-      const fullGeom = (targetMesh as THREE.Mesh).geometry.clone();
+    const mesh = targetMesh as THREE.Mesh | null;
+    if (mesh && mesh.geometry) {
+      const fullGeom = mesh.geometry.clone();
+
+      // Apply the node's authentic local rotation & scale to geometry so anatomical orientation & laterality are preserved
+      mesh.updateWorldMatrix(true, false);
+      const localMatrix = new THREE.Matrix4().compose(
+        new THREE.Vector3(0, 0, 0),
+        mesh.quaternion,
+        mesh.scale
+      );
+      fullGeom.applyMatrix4(localMatrix);
+      fullGeom.computeVertexNormals();
+
+      // Center geometry at local origin
       fullGeom.computeBoundingBox();
       const center = fullGeom.boundingBox ? fullGeom.boundingBox.getCenter(new THREE.Vector3()) : new THREE.Vector3();
       fullGeom.translate(-center.x, -center.y, -center.z);
@@ -539,9 +584,10 @@ export const RealDentalAnatomySectionMesh: React.FC<RealDentalSectionProps> = ({
       const normFactor = maxDim > 0 ? targetHeight / maxDim : 1;
       fullGeom.scale(normFactor, normFactor, normFactor);
 
-      // If mirrored left tooth, un-mirror for natural isolated display
-      if (!isRightSide) {
-        fullGeom.scale(-1, 1, 1);
+      // In isolated morphological view, orient maxillary teeth with crown UP and root DOWN
+      // Rotate around local Z (buccolingual) by 180 deg to maintain buccal face (+Z) and preserve laterality
+      if (!isMandible) {
+        fullGeom.rotateZ(Math.PI);
       }
 
       // Look for sub-meshes (crown vs root) if present under targetMesh
@@ -552,39 +598,54 @@ export const RealDentalAnatomySectionMesh: React.FC<RealDentalSectionProps> = ({
         if (child.isMesh && child !== targetMesh && child.geometry) {
           const lower = (child.name || '').toLowerCase();
           if (lower.includes('crown') && !subCrown) {
-            subCrown = child.geometry.clone();
+            const sc = child.geometry.clone();
+            sc.applyMatrix4(localMatrix);
+            sc.computeVertexNormals();
+            sc.translate(-center.x, -center.y, -center.z);
+            sc.scale(normFactor, normFactor, normFactor);
+            if (!isMandible) sc.rotateZ(Math.PI);
+            subCrown = sc;
           } else if (lower.includes('root') && !subRoot) {
-            subRoot = child.geometry.clone();
+            const sr = child.geometry.clone();
+            sr.applyMatrix4(localMatrix);
+            sr.computeVertexNormals();
+            sr.translate(-center.x, -center.y, -center.z);
+            sr.scale(normFactor, normFactor, normFactor);
+            if (!isMandible) sr.rotateZ(Math.PI);
+            subRoot = sr;
           }
         }
       });
 
       if (subCrown && subRoot) {
-        const sc: THREE.BufferGeometry = subCrown;
-        const sr: THREE.BufferGeometry = subRoot;
-        sc.computeBoundingBox();
-        sr.computeBoundingBox();
-        cg = sc;
-        rg = sr;
+        const scGeom = subCrown as THREE.BufferGeometry;
+        const srGeom = subRoot as THREE.BufferGeometry;
+        cg = scGeom;
+        rg = srGeom;
+        dg = srGeom;
+        // Internal pulp chamber & canal core
+        const pCore = srGeom.clone();
+        pCore.scale(0.38, 0.88, 0.38);
+        pCore.translate(0, 0.0005, 0);
+        pg = pCore;
       } else {
-        // Unified single authentic mesh: render once, no duplicate overlap
+        // Unified single authentic mesh: create outer enamel, inner dentin, and innermost pulp
         cg = fullGeom;
         rg = null;
+        const dCore = fullGeom.clone();
+        dCore.scale(0.92, 0.94, 0.92);
+        dg = dCore;
+        const pCore = fullGeom.clone();
+        pCore.scale(0.36, 0.80, 0.36);
+        pCore.translate(0, -0.0008, 0);
+        pg = pCore;
       }
     } else {
-      toothScene.traverse((child: any) => {
-        if (child.isMesh) {
-          if (child.name.includes('Crown')) {
-            cg = child.geometry.clone();
-          } else if (child.name.includes('Roots')) {
-            rg = child.geometry.clone();
-          }
-        }
-      });
+      console.warn(`[RealDentalAnatomySectionMesh] Mesh node not found in skull_complete.glb for FDI ${fdi}`);
     }
 
-    return { crownGeom: cg, rootGeom: rg };
-  }, [fdi, isRightSide, toothScene, skullGltf]);
+    return { crownGeom: cg, rootGeom: rg, dentinGeom: dg, pulpGeom: pg };
+  }, [fdi, isRightSide, isMandible, toothScene, skullGltf]);
 
   // Compute active geometry's exact bounding box
   const bbox = useMemo(() => {
@@ -693,32 +754,47 @@ export const RealDentalAnatomySectionMesh: React.FC<RealDentalSectionProps> = ({
 
     // 1. Natural Dental Enamel (MeshPhysicalMaterial with clearcoat & transmission)
     const enamelMat = new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color('#f5efeb'),
-      roughness: 0.26,
+      color: new THREE.Color('#fcfaf7'), // Pearlescent Ivory Enamel
+      roughness: 0.18,
       metalness: 0.02,
-      clearcoat: 0.35,
-      clearcoatRoughness: 0.12,
-      transmission: isTransp ? 0.45 : 0.04,
-      thickness: 0.003,
+      clearcoat: 0.55,
+      clearcoatRoughness: 0.08,
+      transmission: isTransp ? 0.35 : 0.06,
+      thickness: 0.004,
       ior: 1.63,
-      transparent: isTransp,
-      opacity: activeEnamelOpacity,
+      transparent: isTransp || !showEnamel,
+      opacity: showEnamel ? activeEnamelOpacity : 0.0,
+      visible: showEnamel,
       side: THREE.DoubleSide,
       clippingPlanes: planes,
       clipShadows: true
     });
 
-    // 2. Natural Root Cementum & Internal Dentin
-    const cementumMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color('#e5d7c3'),
-      roughness: 0.58,
-      metalness: 0.03,
+    // 2. Natural Root Cementum & Internal Dentin (Warmer matte amber-yellow)
+    const dentinMat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color('#ecd9a8'), // Warm golden organic dentin
+      roughness: 0.72,
+      metalness: 0.02,
+      visible: showDentin,
       side: THREE.DoubleSide,
       clippingPlanes: planes,
       clipShadows: true
     });
 
-    // 3. Alveolar Bone Socket (Cribriform plate of mandibular bone)
+    // 3. Vascular Pulp Chamber & Root Canals (Rich crimson)
+    const pulpMat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color('#b91c1c'), // Rich anatomical vascular crimson
+      emissive: new THREE.Color('#991b1b'),
+      emissiveIntensity: 0.45,
+      roughness: 0.38,
+      metalness: 0.05,
+      visible: showPulp,
+      side: THREE.DoubleSide,
+      clippingPlanes: planes,
+      clipShadows: true
+    });
+
+    // 4. Alveolar Bone Socket (Cribriform plate of jaw bone)
     const boneMat = new THREE.MeshStandardMaterial({
       color: new THREE.Color('#ece1d0'),
       roughness: 0.72,
@@ -730,7 +806,7 @@ export const RealDentalAnatomySectionMesh: React.FC<RealDentalSectionProps> = ({
       clipShadows: true
     });
 
-    // 4. Periodontal Ligament Space (Vascular fibrous attachment)
+    // 5. Periodontal Ligament Space (Vascular fibrous attachment)
     const pdlMat = new THREE.MeshStandardMaterial({
       color: new THREE.Color('#06b6d4'),
       roughness: 0.40,
@@ -741,13 +817,13 @@ export const RealDentalAnatomySectionMesh: React.FC<RealDentalSectionProps> = ({
       clipShadows: true
     });
 
-    return { enamelMat, cementumMat, boneMat, pdlMat };
-  }, [enamelOpacity, sectionMode, clippingPlanes]);
+    return { enamelMat, dentinMat, pulpMat, boneMat, pdlMat };
+  }, [enamelOpacity, sectionMode, clippingPlanes, showEnamel, showDentin, showPulp]);
 
   return (
     <group scale={scale} position={[0, 0, 0]}>
-      {/* 1. REAL ANATOMICAL CROWN MESH (or full tooth when unified) */}
-      {crownGeom && (
+      {/* 1. REAL ANATOMICAL CROWN MESH (Enamel Layer) */}
+      {showEnamel && crownGeom && (
         <mesh
           geometry={crownGeom}
           material={materials.enamelMat}
@@ -756,32 +832,42 @@ export const RealDentalAnatomySectionMesh: React.FC<RealDentalSectionProps> = ({
         />
       )}
 
-      {/* 2. REAL ANATOMICAL ROOT MESH (only rendered when separate from crown) */}
-      {rootGeom && (
+      {/* 2. REAL ANATOMICAL ROOT & DENTIN MESH */}
+      {showDentin && (rootGeom || dentinGeom) && (
         <mesh
-          geometry={rootGeom}
-          material={materials.cementumMat}
+          geometry={rootGeom || dentinGeom!}
+          material={materials.dentinMat}
           castShadow
           receiveShadow
         />
       )}
 
-      {/* 3. REAL ALVEOLAR BONE SOCKET (Surrounding tooth roots in mandible) */}
-      {showBone && rootGeom && (
+      {/* 3. VASCULAR PULP CHAMBER & ROOT CANALS */}
+      {showPulp && pulpGeom && (
+        <mesh
+          geometry={pulpGeom}
+          material={materials.pulpMat}
+          castShadow
+          receiveShadow
+        />
+      )}
+
+      {/* 4. REAL ALVEOLAR BONE SOCKET (Confined to root body/apex) */}
+      {showBone && (rootGeom || dentinGeom) && (
         <group position={[0, -0.003, 0]}>
           <mesh
-            geometry={rootGeom}
+            geometry={rootGeom || dentinGeom!}
             material={materials.boneMat}
             scale={[1.12, 1.02, 1.12]}
           />
         </group>
       )}
 
-      {/* 4. REAL PERIODONTAL LIGAMENT (PDL) CAVITY */}
-      {showPdl && rootGeom && (
+      {/* 5. REAL PERIODONTAL LIGAMENT (PDL) CAVITY */}
+      {showPdl && (rootGeom || dentinGeom) && (
         <group position={[0, -0.001, 0]}>
           <mesh
-            geometry={rootGeom}
+            geometry={rootGeom || dentinGeom!}
             material={materials.pdlMat}
             scale={[1.04, 1.01, 1.04]}
           />

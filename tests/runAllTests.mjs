@@ -3,6 +3,7 @@ import { runRouteAuditTests } from './routes/routeAudit.test.mjs';
 import { runAssetAuditTests } from './assets/assetAudit.test.mjs';
 import { runAnatomicalAssertionTests } from './anatomy/anatomicalAssertions.test.mjs';
 import { runToothAlignmentTests } from './anatomy/toothAlignment.test.mjs';
+import { runToothMappingAuditTests } from './anatomy/toothMappingAudit.test.mjs';
 
 async function main() {
   console.log('========================================================================');
@@ -15,7 +16,8 @@ async function main() {
     runRouteAuditTests,
     runAssetAuditTests,
     runAnatomicalAssertionTests,
-    runToothAlignmentTests
+    runToothAlignmentTests,
+    runToothMappingAuditTests
   ];
 
   let totalPassed = 0;
@@ -53,7 +55,7 @@ async function main() {
     console.error(`\n❌ AUDIT FAILED with ${totalFailed} failing assertions.`);
     process.exit(1);
   } else {
-    console.log(`\n🌟 ALL 4 AUDIT SUITES PASSED WITH 100% SUCCESS RATE.`);
+    console.log(`\n🌟 ALL AUDIT SUITES PASSED WITH 100% SUCCESS RATE.`);
     process.exit(0);
   }
 }

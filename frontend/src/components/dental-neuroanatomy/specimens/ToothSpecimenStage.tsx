@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { useDentalNeuroStore } from '../../../stores/useDentalNeuroStore';
 import { useAnatomyStore } from '../../../stores/useAnatomyStore';
-import { DENTAL_SPECIMENS_DATABASE } from '../../../data/dentalSpecimensData';
+import { DENTAL_SPECIMENS_DATABASE, getDentalSpecimen } from '../../../data/dentalSpecimensData';
 import { DENTAL_INNERVATION_DATABASE } from '../../../data/dentalNeuroData';
 import { createCraniofacialOrganGroup } from '../DentalNeuro3DStage';
 import { RealDentalAnatomySectionMesh, AnatomicalMolarMesh } from './AnatomicalDentalModels3D';
@@ -34,8 +34,25 @@ const CanonicalDentalArchView: React.FC<{
   onSelectTooth: (fdi: number) => void;
   boneOpacity?: number;
   isContextOnly?: boolean;
-}> = ({ selectedFdi, onSelectTooth, boneOpacity = 1.0, isContextOnly = false }) => {
+}> = ({ selectedFdi, onSelectTooth, boneOpacity = 0.20, isContextOnly = false }) => {
   const skullGltf = useGLTF('/models/craniofacial/skull/skull_complete.glb', '/draco/');
+
+  // Identify adjacent teeth (Mesial & Distal) for context preservation
+  const adjacentFdis = useMemo(() => {
+    const toothRecord = TOOTH_REGISTRY[selectedFdi];
+    const set = new Set<number>();
+    if (toothRecord) {
+      if (toothRecord.mesialAdjacent) {
+        const m = ToothPositionResolver.resolve(toothRecord.mesialAdjacent);
+        if (m) set.add(m.fdi);
+      }
+      if (toothRecord.distalAdjacent) {
+        const d = ToothPositionResolver.resolve(toothRecord.distalAdjacent);
+        if (d) set.add(d.fdi);
+      }
+    }
+    return set;
+  }, [selectedFdi]);
 
   const cleanedArch = useMemo(() => {
     const scene = skullGltf.scene.clone(true);
@@ -45,7 +62,7 @@ const CanonicalDentalArchView: React.FC<{
       const name = child.name || '';
       const lower = name.toLowerCase();
 
-      // Hide non-cranial bones
+      // Hide all non-head bones: vertebrae, ribs, limbs, pelvis
       const isExtracranialBody =
         lower.includes('vertebra') ||
         lower.includes('rib') ||
@@ -76,46 +93,77 @@ const CanonicalDentalArchView: React.FC<{
         return;
       }
 
-      child.visible = true;
-
       const toothFdi = ToothPositionResolver.getFdiFromMeshNodeName(child.name);
       if (toothFdi) {
         child.userData.toothFdi = toothFdi;
+        child.visible = true;
         const isSelected = toothFdi === selectedFdi;
-        child.material = new THREE.MeshStandardMaterial({
-          color: new THREE.Color(isSelected ? '#f59e0b' : '#fafafa'),
-          emissive: new THREE.Color(isSelected ? '#d97706' : '#000000'),
-          emissiveIntensity: isSelected ? 0.95 : 0.0,
-          roughness: isSelected ? 0.20 : 0.35,
-          metalness: isSelected ? 0.08 : 0.02,
-          transparent: false,
-          opacity: 1.0,
-          depthWrite: true
-        });
+        const isAdjacent = adjacentFdis.has(toothFdi);
+
+        if (isSelected) {
+          // 1. SELECTED TOOTH: 100% Opacity, subtle warm amber emissive highlight
+          child.material = new THREE.MeshStandardMaterial({
+            color: new THREE.Color('#fbbf24'),
+            emissive: new THREE.Color('#d97706'),
+            emissiveIntensity: 0.55,
+            roughness: 0.20,
+            metalness: 0.04,
+            transparent: false,
+            opacity: 1.0,
+            depthWrite: true
+          });
+        } else if (isAdjacent) {
+          // 2. ADJACENT TEETH (Mesial & Distal): 30-40% Opacity for clear anatomical context
+          child.material = new THREE.MeshStandardMaterial({
+            color: new THREE.Color('#e2e8f0'),
+            roughness: 0.40,
+            metalness: 0.02,
+            transparent: true,
+            opacity: 0.35,
+            depthWrite: true
+          });
+        } else {
+          // 3. REMOTE TEETH: 6-8% subtle ghost outline so the arch contour is visible without clutter
+          child.material = new THREE.MeshStandardMaterial({
+            color: new THREE.Color('#94a3b8'),
+            roughness: 0.60,
+            metalness: 0.01,
+            transparent: true,
+            opacity: 0.08,
+            depthWrite: false
+          });
+        }
         return;
       }
 
-      // Bone material
-      child.material = new THREE.MeshStandardMaterial({
-        color: new THREE.Color('#f4ede2'),
-        roughness: 0.55,
-        metalness: 0.04,
-        transparent: boneOpacity < 0.98,
-        opacity: boneOpacity,
-        depthWrite: boneOpacity > 0.5
-      });
+      // Bone Material: Mandible and Maxilla at 15-25% opacity, remote skull very subtle
+      const isJawBone = lower.includes('mandib') || lower.includes('maxill');
+      if (isJawBone) {
+        child.visible = true;
+        child.material = new THREE.MeshStandardMaterial({
+          color: new THREE.Color('#f4ede2'),
+          roughness: 0.65,
+          metalness: 0.02,
+          transparent: true,
+          opacity: Math.min(boneOpacity, 0.22),
+          depthWrite: false
+        });
+      } else {
+        // Distant cranial skull bones: very subtle or hidden to avoid visual distraction
+        child.visible = true;
+        child.material = new THREE.MeshStandardMaterial({
+          color: new THREE.Color('#e2e8f0'),
+          roughness: 0.70,
+          metalness: 0.02,
+          transparent: true,
+          opacity: 0.04,
+          depthWrite: false
+        });
+      }
     });
 
     return scene;
-  }, [skullGltf, selectedFdi, boneOpacity]);
-
-  const selectedToothPos = useMemo(() => {
-    return ToothPositionResolver.getPosition(selectedFdi, 'craniofacial');
-  }, [selectedFdi]);
-
-  const selectedToothRecord = useMemo(() => {
-    return TOOTH_REGISTRY[selectedFdi] || null;
-  }, [selectedFdi]);
+  }, [skullGltf, selectedFdi, adjacentFdis, boneOpacity]);
 
   return (
     <group
@@ -165,7 +213,7 @@ const ToothStageCameraController: React.FC<{
   }>({
     isAnimating: false,
     startTime: 0,
-    duration: 750,
+    duration: 500,
     startPos: new THREE.Vector3(),
     endPos: new THREE.Vector3(),
     startTarget: new THREE.Vector3(),
@@ -187,25 +235,40 @@ const ToothStageCameraController: React.FC<{
       const [tx, ty, tz] = toothRecord.craniofacialPos;
       const isRight = toothRecord.side === 'RIGHT';
 
+      // Exact tooth center target
       targetVec = new THREE.Vector3(tx, ty, tz);
 
-      // Frame tooth keeping mesial, distal, and alveolar bone in context (~6.5cm distance)
-      const dx = isRight ? -0.048 : 0.048;
-      const dy = toothRecord.jaw === 'MANDIBLE' ? 0.018 : -0.018;
-      const dz = 0.058;
+      // Frame tooth dynamically so it occupies 55-65% screen height (~0.067m distance)
+      const dx = isRight ? -0.040 : 0.040;
+      const dy = toothRecord.jaw === 'MANDIBLE' ? 0.020 : -0.020;
+      const dz = 0.050;
 
       posVec = new THREE.Vector3(tx + dx, ty + dy, tz + dz);
     } else {
-      // Isolated view centered at origin [0, 0, 0]
+      // Isolated view: tooth scaled by 2.2x (~0.0484m height).
+      // Distance 0.145-0.155m ensures tooth occupies 55-65% of viewport height without cropping crown/roots
+      const d = 0.148;
       targetVec = new THREE.Vector3(0, 0, 0);
 
-      if (preset === 'occlusal') posVec = new THREE.Vector3(0, 0.08, 0.001);
-      else if (preset === 'buccal') posVec = new THREE.Vector3(0, 0, 0.07);
-      else if (preset === 'lingual') posVec = new THREE.Vector3(0, 0, -0.07);
-      else if (preset === 'mesial') posVec = new THREE.Vector3(0.07, 0, 0);
-      else if (preset === 'distal') posVec = new THREE.Vector3(-0.07, 0, 0);
-      else if (preset === 'apical') posVec = new THREE.Vector3(0, -0.08, 0.001);
-      else posVec = new THREE.Vector3(0.055, 0.025, 0.065);
+      if (preset === 'occlusal') {
+        posVec = new THREE.Vector3(0, d, 0.001);
+      } else if (preset === 'apical') {
+        posVec = new THREE.Vector3(0, -d, 0.001);
+      } else if (preset === 'buccal') {
+        posVec = new THREE.Vector3(0, 0, d);
+      } else if (preset === 'lingual') {
+        posVec = new THREE.Vector3(0, 0, -d);
+      } else if (preset === 'mesial') {
+        posVec = new THREE.Vector3(d, 0, 0);
+      } else if (preset === 'distal') {
+        posVec = new THREE.Vector3(-d, 0, 0);
+      } else if (preset === 'root') {
+        targetVec = new THREE.Vector3(0, -0.015, 0);
+        posVec = new THREE.Vector3(0.05, -0.11, 0.10);
+      } else {
+        // 3/4 Isometric Perspective (Recommended default for morphology inspection)
+        posVec = new THREE.Vector3(0.095, 0.055, 0.115);
+      }
     }
 
     const currentPos = camera.position.clone();
@@ -214,7 +277,7 @@ const ToothStageCameraController: React.FC<{
     animRef.current = {
       isAnimating: true,
       startTime: performance.now(),
-      duration: 750,
+      duration: 500,
       startPos: currentPos,
       endPos: posVec,
       startTarget: currentTarget,
@@ -287,10 +350,22 @@ export const ToothSpecimenStage: React.FC = () => {
   const toothCameraPreset = useDentalNeuroStore((s) => s.toothCameraPreset);
   const setToothCameraPreset = useDentalNeuroStore((s) => s.setToothCameraPreset);
 
+  const toothShowEnamel = useDentalNeuroStore((s) => s.toothShowEnamel);
+  const setToothShowEnamel = useDentalNeuroStore((s) => s.setToothShowEnamel);
+
+  const toothShowDentin = useDentalNeuroStore((s) => s.toothShowDentin);
+  const setToothShowDentin = useDentalNeuroStore((s) => s.setToothShowDentin);
+
+  const toothShowPulp = useDentalNeuroStore((s) => s.toothShowPulp);
+  const setToothShowPulp = useDentalNeuroStore((s) => s.setToothShowPulp);
+
+  const isCleanView = useDentalNeuroStore((s) => s.isCleanView);
+  const toggleCleanView = useDentalNeuroStore((s) => s.toggleCleanView);
+
   const currentToothRecord =
     TOOTH_REGISTRY[selectedToothFdi] || TOOTH_REGISTRY[46];
   const currentToothSpecimen =
-    DENTAL_SPECIMENS_DATABASE[selectedToothFdi] || DENTAL_SPECIMENS_DATABASE[46];
+    getDentalSpecimen(selectedToothFdi);
   const currentToothData = {
     fdi: currentToothRecord.fdi,
     universal: currentToothRecord.universalNumber,
@@ -314,64 +389,76 @@ export const ToothSpecimenStage: React.FC = () => {
     if (viewMode === 'arch') {
       const [x, y, z] = ToothPositionResolver.getPosition(selectedToothFdi, 'craniofacial');
       const isRight = (selectedToothFdi >= 11 && selectedToothFdi <= 18) || (selectedToothFdi >= 41 && selectedToothFdi <= 48);
-      return [x + (isRight ? -0.04 : 0.04), y + 0.02, z + 0.08] as [number, number, number];
+      return [x + (isRight ? -0.040 : 0.040), y + 0.020, z + 0.050] as [number, number, number];
     }
-    // Preset camera angles for comprehensive 360 inspection
-    if (toothCameraPreset === 'occlusal') return [0, 0.08, 0.001] as [number, number, number];
-    if (toothCameraPreset === 'buccal') return [0, 0, 0.07] as [number, number, number];
-    if (toothCameraPreset === 'lingual') return [0, 0, -0.07] as [number, number, number];
-    if (toothCameraPreset === 'mesial') return [0.07, 0, 0] as [number, number, number];
-    if (toothCameraPreset === 'distal') return [-0.07, 0, 0] as [number, number, number];
-    if (toothCameraPreset === 'apical') return [0, -0.08, 0.001] as [number, number, number];
+    // Preset camera angles for comprehensive 360 inspection (55-65% screen height coverage)
+    const d = 0.148;
+    if (toothCameraPreset === 'occlusal') return [0, d, 0.001] as [number, number, number];
+    if (toothCameraPreset === 'buccal') return [0, 0, d] as [number, number, number];
+    if (toothCameraPreset === 'lingual') return [0, 0, -d] as [number, number, number];
+    if (toothCameraPreset === 'mesial') return [d, 0, 0] as [number, number, number];
+    if (toothCameraPreset === 'distal') return [-d, 0, 0] as [number, number, number];
+    if (toothCameraPreset === 'apical') return [0, -d, 0.001] as [number, number, number];
+    if (toothCameraPreset === 'root') return [0.05, -0.11, 0.10] as [number, number, number];
 
-    return [0.06, 0.03, 0.08] as [number, number, number];
+    return [0.095, 0.055, 0.115] as [number, number, number];
   }, [viewMode, selectedToothFdi, toothCameraPreset]);
 
   return (
     <div className="relative w-full h-full select-none overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
       {/* 1. TOP LEFT FDI SELECTOR & QUICK CHANGER */}
       <div className="absolute top-4 left-4 z-20 flex flex-col gap-2 pointer-events-auto max-w-sm">
-        <div
-          className={`p-3 rounded-2xl border backdrop-blur-md shadow-xl ${
-            isDark ? 'bg-slate-900/90 border-slate-800 text-slate-100' : 'bg-[#f7f2ea]/90 border-[#dfd5c6] text-slate-900'
-          }`}
-        >
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-500 border border-amber-500/30">
-              FDI #{currentToothRecord.fdi} | Universal #{currentToothRecord.universalNumber} | Palmer {currentToothRecord.palmer}
-            </span>
-            <span className="text-[10px] font-mono text-emerald-400 font-bold flex items-center gap-1">
-              <ShieldCheck className="w-3 h-3" />
-              100% REAL 3D ASSET
-            </span>
+        {!isCleanView ? (
+          <div
+            className={`p-3 rounded-2xl border backdrop-blur-md shadow-xl ${
+              isDark ? 'bg-slate-900/90 border-slate-800 text-slate-100' : 'bg-[#f7f2ea]/90 border-[#dfd5c6] text-slate-900'
+            }`}
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-500 border border-amber-500/30">
+                FDI #{currentToothRecord.fdi} | Universal #{currentToothRecord.universalNumber} | Palmer {currentToothRecord.palmer}
+              </span>
+              <span className="text-[10px] font-mono text-emerald-400 font-bold flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3" />
+                100% REAL 3D
+              </span>
+            </div>
+
+            <h2 className="text-sm font-bold font-serif text-current">
+              {currentToothRecord.nameVi}
+            </h2>
+            <p className="text-[11px] text-slate-400 italic font-serif">
+              {currentToothRecord.nameEn} ({currentToothRecord.latinName})
+            </p>
+
+            {/* Quick FDI Jump Pill Buttons */}
+            <div className="flex flex-wrap gap-1 mt-2.5">
+              {[46, 36, 16, 26, 11, 21, 41, 31, 48, 38].map((fdiNum) => (
+                <button
+                  key={fdiNum}
+                  onClick={() => setSelectedToothFdi(fdiNum)}
+                  className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition cursor-pointer ${
+                    selectedToothFdi === fdiNum
+                      ? 'bg-amber-500 text-slate-950 shadow-md scale-105'
+                      : 'bg-black/5 dark:bg-white/5 text-slate-400 hover:text-current'
+                  }`}
+                >
+                  R.{fdiNum} {fdiNum === 46 ? '★' : ''}
+                </button>
+              ))}
+            </div>
           </div>
-
-          <h2 className="text-sm font-bold font-serif text-current">
-            {currentToothRecord.nameVi}
-          </h2>
-          <p className="text-[11px] text-slate-400 italic font-serif">
-            {currentToothRecord.nameEn} ({currentToothRecord.latinName})
-          </p>
-
-          {/* Quick FDI Jump Pill Buttons */}
-          <div className="flex flex-wrap gap-1 mt-2.5">
-            {[46, 36, 16, 26, 11, 21, 41, 31, 48, 38].map((fdiNum) => (
-              <button
-                key={fdiNum}
-                onClick={() => setSelectedToothFdi(fdiNum)}
-                className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition cursor-pointer ${
-                  selectedToothFdi === fdiNum
-                    ? 'bg-amber-500 text-slate-950 shadow-md scale-105'
-                    : 'bg-black/5 dark:bg-white/5 text-slate-400 hover:text-current'
-                }`}
-              >
-                R.{fdiNum} {fdiNum === 46 ? '★' : ''}
-              </button>
-            ))}
+        ) : (
+          /* Sleek HUD chip in Clean View */
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border backdrop-blur-md shadow-xl bg-slate-900/80 border-slate-800 text-xs">
+            <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold font-mono text-[10px]">
+              FDI #{currentToothRecord.fdi}
+            </span>
+            <span className="font-semibold text-slate-200">{currentToothRecord.nameVi}</span>
           </div>
-        </div>
+        )}
 
-        {/* View Mode Switcher: Arch 3D vs Isolated Cross Section */}
+        {/* View Mode Switcher: Arch 3D vs Isolated Cross Section vs Clean View */}
         <div
           className={`p-1.5 rounded-2xl border backdrop-blur-md shadow-xl flex items-center gap-1 ${
             isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-[#f7f2ea]/90 border-[#dfd5c6]'
@@ -379,31 +466,43 @@ export const ToothSpecimenStage: React.FC = () => {
         >
           <button
             onClick={() => setViewMode('isolated')}
-            className={`flex-1 py-1.5 px-3 rounded-xl text-[10px] font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-1.5 px-2.5 rounded-xl text-[10px] font-bold transition cursor-pointer flex items-center justify-center gap-1 ${
               viewMode === 'isolated'
                 ? 'bg-amber-600 text-white shadow-md'
                 : 'text-slate-400 hover:text-current'
             }`}
           >
-            <Scissors className="w-3.5 h-3.5" />
-            <span>Cắt Lớp 3D Thật</span>
+            <Scissors className="w-3 h-3" />
+            <span>Cắt Lớp 3D</span>
           </button>
           <button
             onClick={() => setViewMode('arch')}
-            className={`flex-1 py-1.5 px-3 rounded-xl text-[10px] font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-1.5 px-2.5 rounded-xl text-[10px] font-bold transition cursor-pointer flex items-center justify-center gap-1 ${
               viewMode === 'arch'
                 ? 'bg-amber-600 text-white shadow-md'
                 : 'text-slate-400 hover:text-current'
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5" />
+            <Sparkles className="w-3 h-3" />
             <span>Cung Hàm 3D</span>
+          </button>
+          <button
+            onClick={toggleCleanView}
+            className={`py-1.5 px-2 rounded-xl text-[10px] font-bold transition cursor-pointer flex items-center justify-center gap-1 ${
+              isCleanView
+                ? 'bg-emerald-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-current'
+            }`}
+            title="Bật/Tắt chế độ xem tối giản Clean View"
+          >
+            <Eye className="w-3 h-3" />
+            <span className="hidden sm:inline">{isCleanView ? 'Tối Giản' : 'Gọn'}</span>
           </button>
         </div>
       </div>
 
       {/* 2. TOP RIGHT TOOLBAR: 3D SECTION PLANE & VIEW PRESETS */}
-      {viewMode === 'isolated' && (
+      {viewMode === 'isolated' && !isCleanView && (
         <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 pointer-events-auto w-72">
           {/* Section Plane & Depth Controls */}
           <div
@@ -454,19 +553,19 @@ export const ToothSpecimenStage: React.FC = () => {
                   ))}
                 </div>
 
-                {/* Section Depth Percentage Slider */}
+                {/* Depth Slider & Quick Presets */}
                 <div className="space-y-1.5 mb-2.5">
                   <div className="flex items-center justify-between text-[10px]">
-                    <span className="text-slate-400">Độ Sâu Mặt Cắt 3D:</span>
+                    <span className="text-slate-400">Độ Sâu Cắt Lớp:</span>
                     <span className="font-mono font-bold text-amber-400">
-                      {Math.round(toothSectionOffset * 100)}%
-                      <span className="text-[9px] text-slate-400 font-normal ml-1">
-                        {toothSectionOffset === 0
-                          ? '(Nguyên khối)'
-                          : toothSectionOffset <= 0.25
+                      {Math.round(toothSectionOffset * 100)}%{' '}
+                      <span className="text-[9px] text-slate-400 font-normal">
+                        {toothSectionOffset === 0.0
+                          ? '(Nguyên vẹn)'
+                          : toothSectionOffset <= 0.35
                           ? '(Cắt nông)'
-                          : toothSectionOffset <= 0.5
-                          ? '(Chính giữa)'
+                          : toothSectionOffset <= 0.65
+                          ? '(Mặt cắt tủy)'
                           : '(Cắt sâu)'}
                       </span>
                     </span>
@@ -533,7 +632,50 @@ export const ToothSpecimenStage: React.FC = () => {
               />
             </div>
 
-            {/* Layer Toggles */}
+            {/* Microanatomy Layer Toggles (Enamel, Dentin, Pulp) */}
+            <div className="space-y-1 mb-2">
+              <div className="text-[9px] font-mono text-slate-400">LỚP CẤU TRÚC VI THỂ:</div>
+              <div className="grid grid-cols-3 gap-1">
+                <button
+                  onClick={() => setToothShowEnamel(!toothShowEnamel)}
+                  className={`py-1 px-1 rounded-lg text-[9px] font-bold border transition cursor-pointer flex flex-col items-center justify-center ${
+                    toothShowEnamel
+                      ? 'bg-amber-500/20 border-amber-500/40 text-amber-300'
+                      : 'border-slate-700 bg-black/20 text-slate-500 line-through'
+                  }`}
+                  title="Bật/Tắt Men Răng"
+                >
+                  <span>Men Răng</span>
+                  <span className="text-[8px] opacity-75">{toothShowEnamel ? 'Bật' : 'Ẩn'}</span>
+                </button>
+                <button
+                  onClick={() => setToothShowDentin(!toothShowDentin)}
+                  className={`py-1 px-1 rounded-lg text-[9px] font-bold border transition cursor-pointer flex flex-col items-center justify-center ${
+                    toothShowDentin
+                      ? 'bg-amber-500/20 border-amber-500/40 text-amber-300'
+                      : 'border-slate-700 bg-black/20 text-slate-500 line-through'
+                  }`}
+                  title="Bật/Tắt Ngà Răng"
+                >
+                  <span>Ngà Răng</span>
+                  <span className="text-[8px] opacity-75">{toothShowDentin ? 'Bật' : 'Ẩn'}</span>
+                </button>
+                <button
+                  onClick={() => setToothShowPulp(!toothShowPulp)}
+                  className={`py-1 px-1 rounded-lg text-[9px] font-bold border transition cursor-pointer flex flex-col items-center justify-center ${
+                    toothShowPulp
+                      ? 'bg-rose-500/20 border-rose-500/40 text-rose-300'
+                      : 'border-slate-700 bg-black/20 text-slate-500 line-through'
+                  }`}
+                  title="Bật/Tắt Tủy Răng & Ống Tủy"
+                >
+                  <span>Tủy Răng</span>
+                  <span className="text-[8px] opacity-75">{toothShowPulp ? 'Bật' : 'Ẩn'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Bone & PDL Toggles */}
             <div className="grid grid-cols-2 gap-1.5 text-[10px]">
               <button
                 onClick={() => setToothShowBone(!toothShowBone)}
@@ -571,15 +713,17 @@ export const ToothSpecimenStage: React.FC = () => {
               <Compass className="w-3 h-3" />
               GÓC NHÌN LÂM SÀNG (360° PRESETS)
             </div>
-            <div className="grid grid-cols-3 gap-1">
+            <div className="grid grid-cols-4 gap-1">
               {(
                 [
+                  { id: 'default', label: 'Góc 3/4' },
                   { id: 'occlusal', label: 'Mặt Nhai' },
                   { id: 'buccal', label: 'Mặt Ngoài' },
                   { id: 'lingual', label: 'Mặt Trong' },
                   { id: 'mesial', label: 'Mặt Gần' },
                   { id: 'distal', label: 'Mặt Xa' },
-                  { id: 'apical', label: 'Chóp Răng' }
+                  { id: 'apical', label: 'Chóp Răng' },
+                  { id: 'root', label: 'Chân Răng' }
                 ] as const
               ).map((preset) => (
                 <button
@@ -610,13 +754,14 @@ export const ToothSpecimenStage: React.FC = () => {
           powerPreference: 'high-performance'
         }}
       >
-        <ambientLight intensity={1.2} />
-        <directionalLight position={[0.5, 1.8, 0.5]} intensity={2.2} castShadow />
-        <directionalLight position={[-0.5, 0.2, -0.5]} intensity={1.0} />
-        <directionalLight position={[0, -0.5, 0.5]} intensity={0.6} />
+        {/* Studio Three-Point Lighting for crisp anatomical definition */}
+        <ambientLight intensity={0.85} />
+        <directionalLight position={[1.5, 2.5, 2.0]} intensity={2.0} castShadow />
+        <directionalLight position={[-1.5, 0.5, -1.0]} intensity={0.9} />
+        <directionalLight position={[0, -1.5, -2.0]} intensity={0.65} />
         <pointLight
           position={[cameraTarget[0], cameraTarget[1] + 0.05, cameraTarget[2] + 0.05]}
-          intensity={1.0}
+          intensity={0.8}
           color="#fff"
         />
 
@@ -629,7 +774,7 @@ export const ToothSpecimenStage: React.FC = () => {
         />
 
         {viewMode === 'arch' ? (
-          /* View Mode A: Real 3D Dental Arch Context */
+          /* View Mode A: Real 3D Dental Arch Context with low-opacity bone and adjacent tooth focus */
           <group position={[0, 0, 0]}>
             <CanonicalDentalArchView
               selectedFdi={selectedToothFdi}
@@ -637,7 +782,7 @@ export const ToothSpecimenStage: React.FC = () => {
                 setSelectedToothFdi(fdi);
                 useDentalNeuroStore.getState().selectAnatomy(`tooth.${fdi}`);
               }}
-              boneOpacity={0.88}
+              boneOpacity={0.20}
             />
           </group>
         ) : (
@@ -651,7 +796,7 @@ export const ToothSpecimenStage: React.FC = () => {
                     setSelectedToothFdi(fdi);
                     useDentalNeuroStore.getState().selectAnatomy(`tooth.${fdi}`);
                   }}
-                  boneOpacity={0.20}
+                  boneOpacity={0.15}
                   isContextOnly={true}
                 />
               </group>
@@ -665,6 +810,9 @@ export const ToothSpecimenStage: React.FC = () => {
               showPdl={toothShowPdl}
               showBone={toothShowBone}
               showNerve={toothShowNerve}
+              showEnamel={toothShowEnamel}
+              showDentin={toothShowDentin}
+              showPulp={toothShowPulp}
               sectionPlane={toothSectionPlane}
               sectionOffset={toothSectionOffset}
               sectionInverted={toothSectionInverted}
@@ -685,8 +833,8 @@ export const ToothSpecimenStage: React.FC = () => {
         />
       </Canvas>
 
-      {/* 4. BOTTOM FLOATING SCIENTIFIC DOSSIER DRAWER */}
-      {viewMode === 'isolated' && (
+      {/* 4. BOTTOM FLOATING SCIENTIFIC DOSSIER DRAWER (Hidden in Clean View) */}
+      {viewMode === 'isolated' && !isCleanView && (
         <div
           className={`absolute bottom-4 left-4 z-20 max-w-sm rounded-2xl border backdrop-blur-md shadow-2xl p-3 text-[11px] pointer-events-auto transition-all ${
             isDark ? 'bg-slate-900/90 border-slate-800 text-slate-200' : 'bg-[#f7f2ea]/90 border-[#dfd5c6] text-slate-800'
@@ -724,15 +872,15 @@ export const ToothSpecimenStage: React.FC = () => {
               <div className="space-y-1 pt-1 border-t border-inherit/50 text-[10px]">
                 <div className="flex justify-between items-center">
                   <span>• Men Răng (Enamel Crown):</span>
-                  <span className="text-emerald-400 font-mono font-semibold">REAL 3D MESH (2,239 Faces)</span>
+                  <span className="text-emerald-400 font-mono font-semibold">REAL 3D MESH</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span>• Chân Răng & Ngà (Roots & Cementum):</span>
-                  <span className="text-emerald-400 font-mono font-semibold">REAL 3D MESH (2,269 Faces)</span>
+                  <span>• Chân Răng & Ngà (Roots & Dentin):</span>
+                  <span className="text-emerald-400 font-mono font-semibold">REAL 3D MESH</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span>• Ổ Xương Răng (Alveolar Bone Socket):</span>
-                  <span className="text-emerald-400 font-mono font-semibold">REAL MANDIBLE CRIBRIFORM</span>
+                  <span>• Tủy Răng & Ống Tủy (Pulp & Canals):</span>
+                  <span className="text-rose-400 font-mono font-semibold">ANATOMICAL CORE</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span>• Mặt Cắt Khối Nội Nha (3D Section):</span>
@@ -749,25 +897,31 @@ export const ToothSpecimenStage: React.FC = () => {
         </div>
       )}
 
-      {/* 5. BOTTOM LEGEND BAR */}
-      <div className="hidden sm:flex absolute bottom-4 right-4 z-20 items-center gap-3 px-4 py-2 rounded-full border backdrop-blur-md shadow-2xl text-[11px] font-medium pointer-events-auto bg-slate-900/90 border-slate-800 text-slate-200">
-        <span className="flex items-center gap-1.5 text-slate-200">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#f6f2ec] border border-white inline-block" />
-          Men Răng
-        </span>
-        <span className="flex items-center gap-1.5 text-amber-300">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#e5d5be] inline-block" />
-          Chân Răng / Ngà
-        </span>
-        <span className="flex items-center gap-1.5 text-orange-300">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#ece1d0] inline-block" />
-          Ổ Xương Ổ Răng
-        </span>
-        <span className="flex items-center gap-1.5 text-cyan-400">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#06b6d4] inline-block" />
-          Khoang Nha Chu (PDL)
-        </span>
-      </div>
+      {/* 5. BOTTOM LEGEND BAR (Hidden in Clean View) */}
+      {!isCleanView && (
+        <div className="hidden sm:flex absolute bottom-4 right-4 z-20 items-center gap-3 px-4 py-2 rounded-full border backdrop-blur-md shadow-2xl text-[11px] font-medium pointer-events-auto bg-slate-900/90 border-slate-800 text-slate-200">
+          <span className="flex items-center gap-1.5 text-slate-200">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#fcfaf7] border border-white inline-block" />
+            Men Răng
+          </span>
+          <span className="flex items-center gap-1.5 text-amber-300">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#ecd9a8] inline-block" />
+            Ngà Răng
+          </span>
+          <span className="flex items-center gap-1.5 text-rose-400">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#b91c1c] inline-block" />
+            Tủy Răng
+          </span>
+          <span className="flex items-center gap-1.5 text-orange-300">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#ece1d0] inline-block" />
+            Ổ Xương Răng
+          </span>
+          <span className="flex items-center gap-1.5 text-cyan-400">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#06b6d4] inline-block" />
+            PDL
+          </span>
+        </div>
+      )}
     </div>
   );
 };

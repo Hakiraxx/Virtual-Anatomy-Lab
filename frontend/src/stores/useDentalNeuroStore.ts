@@ -148,7 +148,11 @@ interface DentalNeuroState {
   toothSectionInverted: boolean;
   toothShowBone: boolean;
   toothShowNerve: boolean;
-  toothCameraPreset: 'default' | 'occlusal' | 'buccal' | 'lingual' | 'mesial' | 'distal' | 'apical' | null;
+  toothCameraPreset: 'default' | 'occlusal' | 'buccal' | 'lingual' | 'mesial' | 'distal' | 'apical' | 'root' | null;
+  toothShowEnamel: boolean;
+  toothShowDentin: boolean;
+  toothShowPulp: boolean;
+  isCleanView: boolean;
 
   // 2. TMJ Specimen State
   tmjJawState: number; // 0.0 to 1.0 (opening percentage)
@@ -202,7 +206,11 @@ interface DentalNeuroState {
   toggleToothSectionInverted: () => void;
   setToothShowBone: (show: boolean) => void;
   setToothShowNerve: (show: boolean) => void;
-  setToothCameraPreset: (preset: 'default' | 'occlusal' | 'buccal' | 'lingual' | 'mesial' | 'distal' | 'apical' | null) => void;
+  setToothCameraPreset: (preset: 'default' | 'occlusal' | 'buccal' | 'lingual' | 'mesial' | 'distal' | 'apical' | 'root' | null) => void;
+  setToothShowEnamel: (show: boolean) => void;
+  setToothShowDentin: (show: boolean) => void;
+  setToothShowPulp: (show: boolean) => void;
+  toggleCleanView: () => void;
   setTmjJawState: (progress: number) => void;
   setTmjMotionMode: (mode: 'opening' | 'protrusion' | 'lateral') => void;
   setTmjPathology: (pathology: 'normal' | 'tmd_reduction' | 'tmd_non_reduction' | 'tmd_dislocation') => void;
@@ -275,8 +283,70 @@ interface DentalNeuroState {
   resetAll: () => void;
 }
 
+const getInitialDentalNeuroState = () => {
+  if (typeof window === 'undefined') {
+    return {
+      activeSpecimenMode: 'general' as SpecimenMode,
+      selectedAnatomyId: 'cn_5',
+      selectedToothFdi: 46,
+      selectedSide: 'right' as const
+    };
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const specimenParam = params.get('specimen') || params.get('lab');
+  const structureParam = params.get('structure');
+
+  let activeSpecimenMode: SpecimenMode = 'general';
+  let selectedAnatomyId: string | null = 'cn_5';
+  let selectedToothFdi = 46;
+  let selectedSide: 'right' | 'left' = 'right';
+
+  if (
+    specimenParam === 'general' ||
+    specimenParam === 'cranial_nerves' ||
+    specimenParam === 'tooth_specimen' ||
+    specimenParam === 'tmj_specimen' ||
+    specimenParam === 'wisdom_surgery'
+  ) {
+    activeSpecimenMode = specimenParam as SpecimenMode;
+  }
+
+  if (structureParam) {
+    const clean = structureParam.toLowerCase().trim();
+    if (clean.startsWith('tooth.') || clean.startsWith('tooth_')) {
+      const num = parseInt(clean.replace(/tooth[._]/, ''), 10);
+      if (!isNaN(num)) {
+        selectedToothFdi = num;
+        selectedAnatomyId = `tooth.${num}`;
+        activeSpecimenMode = 'tooth_specimen';
+        selectedSide = (num >= 11 && num <= 18) || (num >= 41 && num <= 48) ? 'right' : 'left';
+      }
+    } else if (clean === 'nerve.inferior-alveolar' || clean === 'ian' || clean === 'nerve.inferior_alveolar' || clean === 'nerve_ian') {
+      selectedAnatomyId = 'nerve_ian';
+    } else if (clean === 'foramen.mental' || clean === 'mental_foramen') {
+      selectedAnatomyId = 'mental_foramen';
+    } else if (clean === 'canal.mandibular' || clean === 'mandibular_canal') {
+      selectedAnatomyId = 'mandibular_canal';
+    } else if (clean === 'bone.mandible' || clean === 'bone_mandible' || clean === 'mandible') {
+      selectedAnatomyId = 'bone_mandible';
+    } else {
+      selectedAnatomyId = clean.replace(/\./g, '_');
+    }
+  }
+
+  return {
+    activeSpecimenMode,
+    selectedAnatomyId,
+    selectedToothFdi,
+    selectedSide
+  };
+};
+
+const initialDentalState = getInitialDentalNeuroState();
+
 export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
-  selectedAnatomyId: 'cn_5',
+  selectedAnatomyId: initialDentalState.selectedAnatomyId,
   focusedAnatomyId: null,
   hoveredAnatomyId: null,
   cameraTarget: null,
@@ -329,8 +399,8 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
   activeAnesthesiaId: null,
 
   // Specimen Modes Default Values
-  activeSpecimenMode: 'general',
-  selectedToothFdi: 46,
+  activeSpecimenMode: initialDentalState.activeSpecimenMode,
+  selectedToothFdi: initialDentalState.selectedToothFdi,
   toothCrossSection: 'longitudinal',
   toothEnamelOpacity: 0.65,
   toothShowPdl: true,
@@ -340,6 +410,10 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
   toothShowBone: true,
   toothShowNerve: true,
   toothCameraPreset: null,
+  toothShowEnamel: true,
+  toothShowDentin: true,
+  toothShowPulp: true,
+  isCleanView: false,
   tmjJawState: 0.0,
   tmjMotionMode: 'opening',
   tmjPathology: 'normal',
@@ -357,7 +431,7 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
   wisdomViewMode: 'standard',
 
   lateralizationSide: 'bilateral',
-  selectedSide: 'right',
+  selectedSide: initialDentalState.selectedSide,
   showForaminaMarkers: false, // Default false: clinical view without artificial locator rings
   showTeethMarkers: false, // Disabled by default to prevent floating spheres clutter
   clippingPlane: {
@@ -392,16 +466,23 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
     if (resolvedTooth) {
       const fdi = resolvedTooth.fdi;
       const autoSide: 'right' | 'left' = resolvedTooth.side === 'RIGHT' ? 'right' : 'left';
+      const isWisdom = (fdi === 38 || fdi === 48) && get().activeSpecimenMode === 'wisdom_surgery';
       updates = {
         selectedToothFdi: fdi,
-        selectedAnatomyId: resolvedTooth.id, // Canonical: "tooth.46"
+        selectedAnatomyId: resolvedTooth.id, // Canonical: "tooth.21", "tooth.46"
+        activeSpecimenMode: isWisdom ? 'wisdom_surgery' : 'tooth_specimen',
         wisdomToothId: fdi === 38 ? 'tooth_38' : fdi === 48 ? 'tooth_48' : get().wisdomToothId,
-        selectedSide: side || autoSide
+        selectedSide: side || autoSide,
+        // Reset dependent stale state for newly selected tooth
+        toothSectionOffset: 0.0,
+        toothSectionInverted: false,
+        toothCameraPreset: null,
+        toothShowEnamel: true,
+        toothShowDentin: true,
+        toothShowPulp: true,
+        toothShowBone: true,
+        toothShowPdl: true
       };
-      // If currently on TMJ, auto switch to tooth_specimen
-      if (get().activeSpecimenMode === 'tmj_specimen') {
-        updates.activeSpecimenMode = 'tooth_specimen';
-      }
     } else if (id === 'joint_tmj' || id === 'specimen_tmj' || id === 'caput-mandibulae' || id?.startsWith('muscle_')) {
       updates = {
         activeSpecimenMode: 'tmj_specimen',
@@ -814,9 +895,18 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
         11: true  // Jaws
       };
     } else if (mode === 'tooth_specimen') {
-      const fdi = get().selectedToothFdi || 46;
+      let fdi = get().selectedToothFdi;
+      if (!fdi || isNaN(fdi)) {
+        const curId = get().selectedAnatomyId;
+        const res = curId ? ToothPositionResolver.resolve(curId) : null;
+        fdi = res ? res.fdi : 46;
+      }
+      updates.selectedToothFdi = fdi;
       updates.selectedAnatomyId = `tooth.${fdi}`;
       updates.selectedSide = (fdi >= 11 && fdi <= 18) || (fdi >= 41 && fdi <= 48) ? 'right' : 'left';
+      updates.toothSectionOffset = 0.0;
+      updates.toothSectionInverted = false;
+      updates.toothCameraPreset = null;
     } else if (mode === 'tmj_specimen') {
       updates.selectedAnatomyId = get().tmjActiveMuscleId || 'joint_tmj';
       updates.selectedSide = 'right';
@@ -837,7 +927,15 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
       selectedToothFdi: fdi,
       selectedAnatomyId: canonicalId,
       selectedSide: side,
-      wisdomToothId: fdi === 38 ? 'tooth_38' : fdi === 48 ? 'tooth_48' : get().wisdomToothId
+      wisdomToothId: fdi === 38 ? 'tooth_38' : fdi === 48 ? 'tooth_48' : get().wisdomToothId,
+      toothSectionOffset: 0.0,
+      toothSectionInverted: false,
+      toothCameraPreset: null,
+      toothShowEnamel: true,
+      toothShowDentin: true,
+      toothShowPulp: true,
+      toothShowBone: true,
+      toothShowPdl: true
     });
     get().focusAnatomy(canonicalId);
   },
@@ -850,6 +948,10 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
   setToothShowBone: (show) => set({ toothShowBone: show }),
   setToothShowNerve: (show) => set({ toothShowNerve: show }),
   setToothCameraPreset: (preset) => set({ toothCameraPreset: preset }),
+  setToothShowEnamel: (show) => set({ toothShowEnamel: show }),
+  setToothShowDentin: (show) => set({ toothShowDentin: show }),
+  setToothShowPulp: (show) => set({ toothShowPulp: show }),
+  toggleCleanView: () => set((s) => ({ isCleanView: !s.isCleanView })),
   setTmjJawState: (progress) => set({ tmjJawState: Math.max(0, Math.min(1, progress)) }),
   setTmjMotionMode: (mode) => set({ tmjMotionMode: mode }),
   setTmjPathology: (pathology) => set({ tmjPathology: pathology }),

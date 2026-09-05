@@ -39,6 +39,7 @@ import {
 } from '../../data/dentalNeuroData';
 import {
   DENTAL_SPECIMENS_DATABASE,
+  getDentalSpecimen,
   TMJ_SPECIMEN_DATA,
   MASTICATORY_MUSCLES_DETAIL,
   WISDOM_SURGICAL_DATABASE
@@ -142,7 +143,7 @@ export const DentalNeuroInfoPanel: React.FC<DentalNeuroInfoPanelProps> = ({
 
   // 1. SPECIMEN MODE: TOOTH FDI CLINICAL & ENDODONTIC DOSSIER
   if (activeSpecimenMode === 'tooth_specimen') {
-    const toothDetail = DENTAL_SPECIMENS_DATABASE[selectedToothFdi] || DENTAL_SPECIMENS_DATABASE[46];
+    const toothDetail = getDentalSpecimen(selectedToothFdi);
     return (
       <aside
         style={!isMobileDrawer ? { width: isOpen ? `${customWidth}px` : 0 } : undefined}

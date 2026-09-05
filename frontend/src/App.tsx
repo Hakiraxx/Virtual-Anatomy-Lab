@@ -130,8 +130,30 @@ export function App() {
 
     const handlePopState = () => {
       const currentPath = window.location.pathname.toLowerCase();
+      const searchParams = new URLSearchParams(window.location.search);
+      const structureParam = searchParams.get('structure');
+      const specimenParam = searchParams.get('specimen');
+
       if (currentPath.includes('dental-neuro') || currentPath.includes('craniofacial') || currentPath.includes('rhm')) {
         useAnatomyStore.setState({ viewMode: 'dental-neuro' });
+        if (structureParam) {
+          const clean = structureParam.toLowerCase().trim();
+          if (clean === 'nerve.inferior-alveolar' || clean === 'ian' || clean === 'nerve.inferior_alveolar') {
+            useDentalNeuroStore.getState().selectAnatomy('nerve_ian');
+          } else if (clean === 'foramen.mental' || clean === 'mental_foramen') {
+            useDentalNeuroStore.getState().selectAnatomy('mental_foramen');
+          } else if (clean === 'canal.mandibular' || clean === 'mandibular_canal') {
+            useDentalNeuroStore.getState().selectAnatomy('mandibular_canal');
+          } else if (clean.startsWith('tooth.') || clean.startsWith('tooth_')) {
+            const num = clean.replace(/tooth[._]/, '');
+            useDentalNeuroStore.getState().selectAnatomy(`tooth.${num}`);
+          } else {
+            useDentalNeuroStore.getState().selectAnatomy(clean.replace(/\./g, '_'));
+          }
+        }
+        if (specimenParam === 'general' || specimenParam === 'cranial_nerves' || specimenParam === 'tooth_specimen' || specimenParam === 'tmj_specimen' || specimenParam === 'wisdom_surgery') {
+          useDentalNeuroStore.getState().setActiveSpecimenMode(specimenParam as any);
+        }
       } else if (currentPath.includes('tieubansau') || currentPath.includes('tieu-ban-sau') || currentPath.includes('specimen')) {
         useAnatomyStore.setState({ viewMode: 'specimen' });
         const match = currentPath.match(/\/(?:tieubansau|tieu-ban-sau|specimens?)\/([a-z0-9_-]+)/);
@@ -140,6 +162,10 @@ export function App() {
         }
       } else {
         useAnatomyStore.setState({ viewMode: 'full-body' });
+        if (structureParam) {
+          const clean = structureParam.toLowerCase().trim().replace(/\./g, '_');
+          useAnatomyStore.getState().selectStructure(clean);
+        }
       }
     };
 

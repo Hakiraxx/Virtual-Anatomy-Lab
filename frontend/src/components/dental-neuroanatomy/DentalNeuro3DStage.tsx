@@ -13,6 +13,7 @@ import {
   CLINICAL_ANESTHESIA_TECHNIQUES
 } from '../../data/dentalNeuroData';
 import { ToothPositionResolver } from '../../utils/ToothPositionResolver';
+import { TOOTH_REGISTRY } from '../../data/ToothRegistry';
 
 // Normalizes and articulates any head mesh into the standard Craniofacial coordinate system
 export function createCraniofacialOrganGroup(
@@ -460,8 +461,30 @@ const RealSkullAndBrainstemSystem: React.FC<{
   const cleanedSkull = useMemo(() => {
     const scene = skullGltf.scene.clone(true);
 
+    const isAnyToothSelected = !!(
+      selectedAnatomyId &&
+      (selectedAnatomyId.startsWith('tooth.') || selectedAnatomyId.startsWith('tooth_'))
+    );
+
+    const adjacentFdis = new Set<number>();
+    if (selectedToothFdi) {
+      const toothRecord = TOOTH_REGISTRY[selectedToothFdi];
+      if (toothRecord) {
+        if (toothRecord.mesialAdjacent) {
+          const m = ToothPositionResolver.resolve(toothRecord.mesialAdjacent);
+          if (m) adjacentFdis.add(m.fdi);
+        }
+        if (toothRecord.distalAdjacent) {
+          const d = ToothPositionResolver.resolve(toothRecord.distalAdjacent);
+          if (d) adjacentFdis.add(d.fdi);
+        }
+      }
+    }
+
     const effectiveOpacity = isNeuralXRay
       ? 0.12
+      : isAnyToothSelected
+      ? 0.18
       : selectedAnatomyId
       ? Math.min(boneOpacity, 0.32)
       : boneOpacity;
@@ -510,21 +533,38 @@ const RealSkullAndBrainstemSystem: React.FC<{
       if (toothFdi) {
         child.userData.toothFdi = toothFdi;
         const isSelectedTooth = selectedToothFdi === toothFdi;
-        const isAnyToothSelected = !!(
-          selectedAnatomyId &&
-          (selectedAnatomyId.startsWith('tooth.') || selectedAnatomyId.startsWith('tooth_'))
-        );
+        const isAdjacent = adjacentFdis.has(toothFdi);
 
-        child.material = new THREE.MeshStandardMaterial({
-          color: new THREE.Color(isSelectedTooth ? '#f59e0b' : '#fafafa'),
-          emissive: new THREE.Color(isSelectedTooth ? '#d97706' : '#000000'),
-          emissiveIntensity: isSelectedTooth ? 0.95 : 0.0,
-          roughness: isSelectedTooth ? 0.20 : 0.32,
-          metalness: isSelectedTooth ? 0.08 : 0.02,
-          transparent: isAnyToothSelected && !isSelectedTooth ? true : effectiveOpacity < 0.98,
-          opacity: isSelectedTooth ? 1.0 : isAnyToothSelected ? 0.65 : Math.max(effectiveOpacity, 0.85),
-          depthWrite: true
-        });
+        if (isSelectedTooth) {
+          child.material = new THREE.MeshStandardMaterial({
+            color: new THREE.Color('#fbbf24'),
+            emissive: new THREE.Color('#d97706'),
+            emissiveIntensity: 0.55,
+            roughness: 0.20,
+            metalness: 0.04,
+            transparent: false,
+            opacity: 1.0,
+            depthWrite: true
+          });
+        } else if (isAdjacent) {
+          child.material = new THREE.MeshStandardMaterial({
+            color: new THREE.Color('#e2e8f0'),
+            roughness: 0.40,
+            metalness: 0.02,
+            transparent: true,
+            opacity: 0.35,
+            depthWrite: true
+          });
+        } else {
+          child.material = new THREE.MeshStandardMaterial({
+            color: new THREE.Color('#94a3b8'),
+            roughness: 0.60,
+            metalness: 0.01,
+            transparent: true,
+            opacity: isAnyToothSelected ? 0.08 : Math.max(effectiveOpacity, 0.85),
+            depthWrite: !isAnyToothSelected
+          });
+        }
         return;
       }
 
@@ -534,13 +574,16 @@ const RealSkullAndBrainstemSystem: React.FC<{
       if (isMandible) child.userData.structureId = 'bone_mandible';
       if (isMaxilla) child.userData.structureId = 'bone_maxilla';
 
+      const isJaw = isMandible || isMaxilla;
+      const boneOp = isAnyToothSelected ? (isJaw ? 0.20 : 0.04) : effectiveOpacity;
+
       child.material = new THREE.MeshStandardMaterial({
         color: new THREE.Color('#f8fafc'),
         roughness: 0.55,
         metalness: 0.02,
-        transparent: effectiveOpacity < 0.98,
-        opacity: effectiveOpacity,
-        depthWrite: effectiveOpacity > 0.65
+        transparent: boneOp < 0.98,
+        opacity: boneOp,
+        depthWrite: boneOp > 0.65
       });
     });
 

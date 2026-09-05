@@ -98,7 +98,7 @@ export class ToothPositionResolver {
   public static getCameraFocus(
     identifier: string | number,
     frame: CoordinateFrame = 'craniofacial',
-    preset: 'default' | 'occlusal' | 'buccal' | 'lingual' | 'mesial' | 'distal' | 'apical' = 'default'
+    preset: 'default' | 'occlusal' | 'buccal' | 'lingual' | 'mesial' | 'distal' | 'apical' | 'root' = 'default'
   ): CameraTargetPreset {
     const tooth = this.resolve(identifier);
     if (!tooth) {
@@ -110,17 +110,21 @@ export class ToothPositionResolver {
     }
 
     if (frame === 'specimen') {
-      if (preset === 'occlusal') return { position: [0, 0.08, 0.001], lookAt: [0, 0, 0], distance: 0.08 };
-      if (preset === 'buccal') return { position: [0, 0, 0.07], lookAt: [0, 0, 0], distance: 0.07 };
-      if (preset === 'lingual') return { position: [0, 0, -0.07], lookAt: [0, 0, 0], distance: 0.07 };
-      if (preset === 'mesial') return { position: [0.07, 0, 0], lookAt: [0, 0, 0], distance: 0.07 };
-      if (preset === 'distal') return { position: [-0.07, 0, 0], lookAt: [0, 0, 0], distance: 0.07 };
-      if (preset === 'apical') return { position: [0, -0.08, 0.001], lookAt: [0, 0, 0], distance: 0.08 };
+      // Scale is 2.2x -> normalized height ~0.0484m. At FOV 30, distance 0.145m yields 55-65% viewport height
+      const d = 0.145;
+      if (preset === 'occlusal') return { position: [0, d, 0.001], lookAt: [0, 0, 0], distance: d };
+      if (preset === 'apical') return { position: [0, -d, 0.001], lookAt: [0, 0, 0], distance: d };
+      if (preset === 'buccal') return { position: [0, 0, d], lookAt: [0, 0, 0], distance: d };
+      if (preset === 'lingual') return { position: [0, 0, -d], lookAt: [0, 0, 0], distance: d };
+      if (preset === 'mesial') return { position: [d, 0, 0], lookAt: [0, 0, 0], distance: d };
+      if (preset === 'distal') return { position: [-d, 0, 0], lookAt: [0, 0, 0], distance: d };
+      if (preset === 'root') return { position: [0.05, -0.11, 0.10], lookAt: [0, -0.015, 0], distance: d };
 
+      // 3/4 Isometric Perspective (Default)
       return {
-        position: [0.06, 0.03, 0.08],
+        position: [0.095, 0.055, 0.115],
         lookAt: [0, 0, 0],
-        distance: 0.10
+        distance: 0.155
       };
     }
 
@@ -137,15 +141,15 @@ export class ToothPositionResolver {
     const [tx, ty, tz] = tooth.craniofacialPos;
     const isRightSide = tooth.side === 'RIGHT';
 
-    // Camera offset: position camera slightly outward and anterior to inspect buccal & occlusal face
-    const offsetX = isRightSide ? -0.055 : 0.055;
-    const offsetY = tooth.jaw === 'MANDIBLE' ? 0.025 : -0.025;
-    const offsetZ = 0.065;
+    // Camera offset: position camera for 55-65% screen height (~0.067m distance)
+    const offsetX = isRightSide ? -0.040 : 0.040;
+    const offsetY = tooth.jaw === 'MANDIBLE' ? 0.020 : -0.020;
+    const offsetZ = 0.050;
 
     return {
       position: [tx + offsetX, ty + offsetY, tz + offsetZ],
       lookAt: [tx, ty, tz],
-      distance: 0.09
+      distance: 0.067
     };
   }
 
@@ -159,43 +163,68 @@ export class ToothPositionResolver {
 
   /**
    * Map 3D scene mesh node name to canonical FDI number
+   * Handles raw glTF node names ("Upper medial incisor.l") and Three.js sanitized names ("Upper_medial_incisorl")
    */
   public static getFdiFromMeshNodeName(nodeName: string): number | null {
     if (!nodeName) return null;
     const direct = MESH_NODE_TO_FDI_MAP[nodeName] || MESH_NODE_TO_FDI_MAP[nodeName.toLowerCase()];
     if (direct) return direct;
 
-    const lower = nodeName.toLowerCase();
+    // Normalize underscores, dots, and spaces
+    const clean = nodeName.toLowerCase().replace(/_/g, ' ');
+    const isRight = clean.includes('.r') || clean.includes(' right') || clean.endsWith('r') || clean.endsWith(' r');
+    const isLeft = clean.includes('.l') || clean.includes(' left') || clean.endsWith('l') || clean.endsWith(' l');
 
-    // Check for molar, premolar, canine, incisor naming
-    if (lower.includes('lower first molar') || lower.includes('mandibular first molar')) {
-      return lower.includes('.r') || lower.includes('right') ? 46 : 36;
+    if (clean.includes('upper medial incisor') || clean.includes('upper central incisor')) {
+      return isRight ? 11 : isLeft ? 21 : 11;
     }
-    if (lower.includes('lower second molar') || lower.includes('mandibular second molar')) {
-      return lower.includes('.r') || lower.includes('right') ? 47 : 37;
+    if (clean.includes('upper lateral incisor')) {
+      return isRight ? 12 : isLeft ? 22 : 12;
     }
-    if (lower.includes('upper first molar') || lower.includes('maxillary first molar')) {
-      return lower.includes('.r') || lower.includes('right') ? 16 : 26;
+    if (clean.includes('upper canine')) {
+      return isRight ? 13 : isLeft ? 23 : 13;
     }
-    if (lower.includes('upper second molar') || lower.includes('maxillary second molar')) {
-      return lower.includes('.r') || lower.includes('right') ? 17 : 27;
+    if (clean.includes('upper first premolar')) {
+      return isRight ? 14 : isLeft ? 24 : 14;
     }
-    if (lower.includes('lower canine')) {
-      return lower.includes('.r') || lower.includes('right') ? 43 : 33;
+    if (clean.includes('upper second premolar')) {
+      return isRight ? 15 : isLeft ? 25 : 15;
     }
-    if (lower.includes('upper canine')) {
-      return lower.includes('.r') || lower.includes('right') ? 13 : 23;
+    if (clean.includes('upper first molar') || clean.includes('maxillary first molar')) {
+      return isRight ? 16 : isLeft ? 26 : 16;
     }
-    if (lower.includes('lower medial incisor') || lower.includes('lower central incisor')) {
-      return lower.includes('.r') || lower.includes('right') ? 41 : 31;
+    if (clean.includes('upper second molar') || clean.includes('maxillary second molar')) {
+      return isRight ? 17 : isLeft ? 27 : 17;
     }
-    if (lower.includes('upper medial incisor') || lower.includes('upper central incisor')) {
-      return lower.includes('.r') || lower.includes('right') ? 11 : 21;
+    if (clean.includes('upper third molar')) {
+      return isRight ? 18 : isLeft ? 28 : 18;
     }
-    if (lower.includes('thirdmolar_48') || lower.includes('third_molar_48')) {
+
+    if (clean.includes('lower medial incisor') || clean.includes('lower central incisor')) {
+      return isRight ? 41 : isLeft ? 31 : 41;
+    }
+    if (clean.includes('lower lateral incisor')) {
+      return isRight ? 42 : isLeft ? 32 : 42;
+    }
+    if (clean.includes('lower canine')) {
+      return isRight ? 43 : isLeft ? 33 : 43;
+    }
+    if (clean.includes('lower first premolar')) {
+      return isRight ? 44 : isLeft ? 34 : 44;
+    }
+    if (clean.includes('lower second premolar')) {
+      return isRight ? 45 : isLeft ? 35 : 45;
+    }
+    if (clean.includes('lower first molar') || clean.includes('mandibular first molar')) {
+      return isRight ? 46 : isLeft ? 36 : 46;
+    }
+    if (clean.includes('lower second molar') || clean.includes('mandibular second molar')) {
+      return isRight ? 47 : isLeft ? 37 : 47;
+    }
+    if (clean.includes('lower third molar') || clean.includes('thirdmolar_48') || clean.includes('third_molar_48')) {
       return 48;
     }
-    if (lower.includes('thirdmolar_38') || lower.includes('third_molar_38')) {
+    if (clean.includes('thirdmolar_38') || clean.includes('third_molar_38')) {
       return 38;
     }
 
