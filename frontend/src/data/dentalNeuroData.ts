@@ -960,6 +960,40 @@ export const DENTAL_NERVE_STRUCTURES: Record<string, DentalNerveStructure> = {
     }
   },
 
+  // --- CN VI: ABDUCENS NERVE ---
+  'cn_6': {
+    id: 'cn_6',
+    nameVi: 'Dây thần kinh Vận nhãn ngoài (CN VI)',
+    nameEn: 'Abducens Nerve (CN VI)',
+    latinName: 'Nervus abducens [VI]',
+    type: 'cranial_nerve',
+    cranialNerveNumber: 6,
+    originVi: 'Rãnh hành - cầu của thân não gần đường giữa',
+    originEn: 'Pontomedullary junction medial to facial nerve',
+    courseVi: 'Chạy qua ống Dorello, xoang hang bên cạnh động mạch cảnh trong, qua khe ổ mắt trên vào ổ mắt',
+    courseEn: 'Courses through Dorello canal, cavernous sinus lateral to internal carotid artery, enters orbit through superior orbital fissure',
+    foramenId: 'superior_orbital_fissure',
+    innervationVi: 'Vận động cơ thẳng ngoài của nhãn cầu (liếc ngoài)',
+    innervationEn: 'Somatic motor to lateral rectus muscle of eyeball (abduction)',
+    clinicalAnatomyVi: 'Liệt dây VI là liệt thần kinh sọ phổ biến nhất do đường đi dài trong khoang dưới nhện; gây song thị ngang khi nhìn về bên tổn thương.',
+    clinicalAnatomyEn: 'Vulnerable to elevated intracranial pressure due to long subarachnoid course; damage results in convergent strabismus and horizontal diplopia.',
+    color: '#38bdf8',
+    path3D: [
+      [-0.008, 1.370, 0.055],
+      [-0.015, 1.385, 0.075],
+      [-0.025, 1.405, 0.115]
+    ],
+    cameraFocus: { position: [-0.06, 1.42, 0.28], lookAt: [-0.020, 1.400, 0.100], distance: 0.22 },
+    references: {
+      terminologiaAnatomica: 'A14.2.01.046',
+      netterPlate: 122,
+      graysPage: '614',
+      reviewStatus: 'VERIFIED',
+      reviewedBy: 'Bộ môn Giải phẫu',
+      reviewedAt: '2026-09-04'
+    }
+  },
+
   // --- CN VII: FACIAL NERVE ---
   'cn_7': {
     id: 'cn_7',
@@ -1130,6 +1164,40 @@ export const DENTAL_NERVE_STRUCTURES: Record<string, DentalNerveStructure> = {
     ],
     cameraFocus: { position: [-0.07, 1.25, 0.28], lookAt: [-0.040, 1.280, 0.075], distance: 0.22 },
     references: { terminologiaAnatomica: 'A14.2.01.054', reviewStatus: 'VERIFIED', reviewedBy: 'Bộ môn Giải phẫu', reviewedAt: '2026-09-04' }
+  },
+
+  // --- CN VIII: VESTIBULOCOCHLEAR NERVE ---
+  'cn_8': {
+    id: 'cn_8',
+    nameVi: 'Dây thần kinh Tiền đình - Ốc tai (CN VIII)',
+    nameEn: 'Vestibulocochlear Nerve (CN VIII)',
+    latinName: 'Nervus vestibulocochlearis [VIII]',
+    type: 'cranial_nerve',
+    cranialNerveNumber: 8,
+    originVi: 'Góc cầu - tiểu não (Rãnh hành - cầu phía ngoài dây VII)',
+    originEn: 'Cerebellopontine angle at lateral pontomedullary sulcus',
+    courseVi: 'Cùng dây VII chui vào lỗ tai trong của xương đá, chia thành phần tiền đình và phần ốc tai',
+    courseEn: 'Enters internal acoustic meatus alongside facial nerve to vestibular system and cochlea',
+    foramenId: 'internal_acoustic_meatus',
+    innervationVi: 'Cảm giác đặc biệt: Thính giác (phần ốc tai) và thăng bằng tư thế (phần tiền đình)',
+    innervationEn: 'Special sensory: Hearing (cochlear nerve) and equilibrium / balance (vestibular nerve)',
+    clinicalAnatomyVi: 'U bao dây thần kinh thính giác (Acoustic Neuroma / Schwannoma tiền đình): Gây ù tai, nghe kém tiếp nhận và mất thăng bằng. Tổn thương tiến triển có thể chèn ép dây VII và dây V kế cận.',
+    clinicalAnatomyEn: 'Vestibular schwannoma causes sensorineural hearing loss, tinnitus, and vertigo; expansive growth can compress CN VII and CN V.',
+    color: '#a855f7',
+    path3D: [
+      [-0.018, 1.365, 0.052],
+      [-0.025, 1.372, 0.046],
+      [-0.030, 1.373, 0.040]
+    ],
+    cameraFocus: { position: [-0.08, 1.38, 0.25], lookAt: [-0.025, 1.370, 0.045], distance: 0.20 },
+    references: {
+      terminologiaAnatomica: 'A14.2.01.111',
+      netterPlate: 129,
+      graysPage: '623',
+      reviewStatus: 'VERIFIED',
+      reviewedBy: 'Bộ môn Giải phẫu',
+      reviewedAt: '2026-09-04'
+    }
   },
 
   // --- CN IX ---

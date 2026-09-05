@@ -12,6 +12,7 @@ import {
   DENTAL_INNERVATION_DATABASE,
   CLINICAL_ANESTHESIA_TECHNIQUES
 } from '../../data/dentalNeuroData';
+import { ToothPositionResolver } from '../../utils/ToothPositionResolver';
 
 // Normalizes and articulates any head mesh into the standard Craniofacial coordinate system
 export function createCraniofacialOrganGroup(
@@ -72,16 +73,14 @@ const DentalCameraController: React.FC<{ controlsRef: React.RefObject<any> }> = 
     animRef.current.lastTimestamp = cameraTarget.timestamp;
     animRef.current.startPos.copy(camera.position);
 
-    // If cameraTarget position was in old coordinate space (> 0.5), adapt to normalized head space
+    // If cameraTarget position was in legacy standing human space (> 1.15m), adapt to craniofacial space
     let targetPos = new THREE.Vector3(...cameraTarget.position);
     let lookPos = new THREE.Vector3(...cameraTarget.lookAt);
-    if (targetPos.y > 0.8) {
-      targetPos.y -= 1.35;
-      targetPos.z -= 0.08;
+    if (targetPos.y > 1.15) {
+      targetPos.y -= 0.60;
     }
-    if (lookPos.y > 0.8) {
-      lookPos.y -= 1.35;
-      lookPos.z -= 0.08;
+    if (lookPos.y > 1.15) {
+      lookPos.y -= 0.60;
     }
 
     animRef.current.endPos.copy(targetPos);
@@ -451,7 +450,9 @@ const RealSkullAndBrainstemSystem: React.FC<{
   boneOpacity: number;
   isNeuralXRay: boolean;
   selectedAnatomyId: string | null;
-}> = ({ boneOpacity, isNeuralXRay, selectedAnatomyId }) => {
+  selectedToothFdi?: number | null;
+  onSelectStructure: (id: string, side?: 'right' | 'left') => void;
+}> = ({ boneOpacity, isNeuralXRay, selectedAnatomyId, selectedToothFdi, onSelectStructure }) => {
   const skullGltf = useGLTF('/models/craniofacial/skull/skull_complete.glb', '/draco/');
   const brainGltf = useGLTF('/models/craniofacial/brain/brain_complete.glb', '/draco/');
 
@@ -504,21 +505,44 @@ const RealSkullAndBrainstemSystem: React.FC<{
 
       child.visible = true;
 
+      // Authentic 32 Tooth Mesh resolution via ToothPositionResolver
+      const toothFdi = ToothPositionResolver.getFdiFromMeshNodeName(child.name);
+      if (toothFdi) {
+        child.userData.toothFdi = toothFdi;
+        const isSelectedTooth = selectedToothFdi === toothFdi;
+        const isAnyToothSelected = !!(selectedAnatomyId && selectedAnatomyId.startsWith('tooth_'));
+
+        child.material = new THREE.MeshStandardMaterial({
+          color: new THREE.Color(isSelectedTooth ? '#f59e0b' : '#fafafa'),
+          emissive: new THREE.Color(isSelectedTooth ? '#d97706' : '#000000'),
+          emissiveIntensity: isSelectedTooth ? 0.95 : 0.0,
+          roughness: isSelectedTooth ? 0.20 : 0.32,
+          metalness: isSelectedTooth ? 0.08 : 0.02,
+          transparent: isAnyToothSelected && !isSelectedTooth ? true : effectiveOpacity < 0.98,
+          opacity: isSelectedTooth ? 1.0 : isAnyToothSelected ? 0.65 : Math.max(effectiveOpacity, 0.85),
+          depthWrite: true
+        });
+        return;
+      }
+
       // Bone translucent PBR material
-      const isTooth = lower.includes('tooth') || lower.includes('incisor') || lower.includes('canine') || lower.includes('premolar') || lower.includes('molar');
+      const isMandible = lower.includes('mandib');
+      const isMaxilla = lower.includes('maxill');
+      if (isMandible) child.userData.structureId = 'bone_mandible';
+      if (isMaxilla) child.userData.structureId = 'bone_maxilla';
 
       child.material = new THREE.MeshStandardMaterial({
-        color: new THREE.Color(isTooth ? '#fafafa' : '#f8fafc'),
-        roughness: isTooth ? 0.25 : 0.55,
+        color: new THREE.Color('#f8fafc'),
+        roughness: 0.55,
         metalness: 0.02,
         transparent: effectiveOpacity < 0.98,
-        opacity: isTooth ? Math.max(effectiveOpacity, 0.65) : effectiveOpacity,
+        opacity: effectiveOpacity,
         depthWrite: effectiveOpacity > 0.65
       });
     });
 
     return scene;
-  }, [skullGltf, boneOpacity, isNeuralXRay, selectedAnatomyId]);
+  }, [skullGltf, boneOpacity, isNeuralXRay, selectedAnatomyId, selectedToothFdi]);
 
   // Cleaned brainstem scene: keep Pons, Midbrain, Medulla
   const cleanedBrainstem = useMemo(() => {
@@ -558,7 +582,35 @@ const RealSkullAndBrainstemSystem: React.FC<{
   }, [brainGltf]);
 
   return (
-    <group position={[0, 0, 0]} rotation={[0, 0, 0]} scale={[1, 1, 1]}>
+    <group
+      position={[0, 0, 0]}
+      rotation={[0, 0, 0]}
+      scale={[1, 1, 1]}
+      onClick={(e) => {
+        e.stopPropagation();
+        const mesh = e.object as THREE.Mesh;
+        const toothFdi = mesh.userData?.toothFdi || ToothPositionResolver.getFdiFromMeshNodeName(mesh.name);
+        if (toothFdi) {
+          const side = (toothFdi >= 11 && toothFdi <= 18) || (toothFdi >= 41 && toothFdi <= 48) ? 'right' : 'left';
+          onSelectStructure(`tooth_${toothFdi}`, side);
+          return;
+        }
+        if (mesh.userData?.structureId) {
+          onSelectStructure(mesh.userData.structureId);
+        }
+      }}
+      onPointerOver={(e) => {
+        const mesh = e.object as THREE.Mesh;
+        const toothFdi = mesh.userData?.toothFdi || ToothPositionResolver.getFdiFromMeshNodeName(mesh.name);
+        if (toothFdi) {
+          e.stopPropagation();
+          document.body.style.cursor = 'pointer';
+        }
+      }}
+      onPointerOut={() => {
+        document.body.style.cursor = 'auto';
+      }}
+    >
       <primitive object={cleanedSkull} />
       <primitive object={cleanedBrainstem} />
     </group>
@@ -572,6 +624,7 @@ export const DentalNeuro3DStage: React.FC = () => {
   const controlsRef = useRef<any>(null);
 
   const selectedAnatomyId = useDentalNeuroStore((s) => s.selectedAnatomyId);
+  const selectedToothFdi = useDentalNeuroStore((s) => s.selectedToothFdi);
   const selectAnatomy = useDentalNeuroStore((s) => s.selectAnatomy);
   const lateralizationSide = useDentalNeuroStore((s) => s.lateralizationSide);
   const selectedSide = useDentalNeuroStore((s) => s.selectedSide);
@@ -639,7 +692,7 @@ export const DentalNeuro3DStage: React.FC = () => {
       <AnatomyAssetInspector isOpen={isDebugOpen} onClose={toggleDebug} />
 
       <Canvas
-        camera={{ position: [0.24, 0.12, 0.28], fov: 38 }}
+        camera={{ position: [0.0451, 0.78, 0.32], fov: 38 }}
         gl={{
           antialias: true,
           powerPreference: 'high-performance',
@@ -655,7 +708,7 @@ export const DentalNeuro3DStage: React.FC = () => {
           intensity={0.75}
           color={isDark ? '#38bdf8' : '#cbd5e1'}
         />
-        <pointLight position={[0, 0.20, 0.20]} intensity={1.2} distance={0.8} />
+        <pointLight position={[0.0451, 0.78, 0.15]} intensity={1.2} distance={0.8} />
 
         {/* UNIFIED CRANIOFACIAL STAGE (All real meshes at shared [0, 0, 0] origin) */}
         <group name="CraniofacialMasterRoot">
@@ -665,6 +718,8 @@ export const DentalNeuro3DStage: React.FC = () => {
               boneOpacity={boneOpacity}
               isNeuralXRay={isNeuralXRay}
               selectedAnatomyId={selectedAnatomyId}
+              selectedToothFdi={selectedToothFdi}
+              onSelectStructure={handleStructureClick}
             />
           </React.Suspense>
 
@@ -686,16 +741,16 @@ export const DentalNeuro3DStage: React.FC = () => {
           </React.Suspense>
         </group>
 
-        {/* Dynamic Camera Glide & OrbitControls centered on head origin */}
+        {/* Dynamic Camera Glide & OrbitControls centered on dental arch */}
         <DentalCameraController controlsRef={controlsRef} />
         <OrbitControls
           ref={controlsRef}
           enableDamping
           dampingFactor={0.08}
           rotateSpeed={0.85}
-          minDistance={0.06}
+          minDistance={0.04}
           maxDistance={0.85}
-          target={[0.0, 0.0, 0.0]}
+          target={[0.0451, 0.760, 0.050]}
         />
       </Canvas>
     </div>

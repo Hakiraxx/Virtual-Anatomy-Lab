@@ -43,6 +43,7 @@ import {
   MASTICATORY_MUSCLES_DETAIL,
   WISDOM_SURGICAL_DATABASE
 } from '../../data/dentalSpecimensData';
+import { ToothPositionResolver } from '../../utils/ToothPositionResolver';
 
 interface DentalNeuroInfoPanelProps {
   isOpen?: boolean;
@@ -75,10 +76,10 @@ export const DentalNeuroInfoPanel: React.FC<DentalNeuroInfoPanelProps> = ({
   // 1. Identify selected structure type
   const nerve = selectedAnatomyId ? DENTAL_NERVE_STRUCTURES[selectedAnatomyId] : null;
   const foramen = selectedAnatomyId ? CRANIAL_FORAMINA[selectedAnatomyId] : null;
-  const tooth =
-    selectedAnatomyId && selectedAnatomyId.startsWith('tooth_')
-      ? DENTAL_INNERVATION_DATABASE.find((t) => `tooth_${t.fdi}` === selectedAnatomyId)
-      : null;
+  const toothRecord = selectedAnatomyId ? ToothPositionResolver.resolve(selectedAnatomyId) : null;
+  const tooth = toothRecord
+    ? DENTAL_INNERVATION_DATABASE.find((t) => t.fdi === toothRecord.fdi) || null
+    : null;
   const muscle = selectedAnatomyId
     ? MUSCLES_OF_MASTICATION.find((m) => m.id === selectedAnatomyId)
     : null;
@@ -1294,7 +1295,7 @@ export const DentalNeuroInfoPanel: React.FC<DentalNeuroInfoPanelProps> = ({
         )}
 
         {/* TOOTH SPECIFIC INFORMATION */}
-        {tooth && (
+        {toothRecord && (
           <div className="space-y-3">
             <div className="grid grid-cols-3 gap-1.5 text-center">
               <div
@@ -1306,7 +1307,10 @@ export const DentalNeuroInfoPanel: React.FC<DentalNeuroInfoPanelProps> = ({
                   RĂNG FDI
                 </span>
                 <span className="font-serif text-base font-bold text-amber-600 dark:text-amber-400">
-                  {tooth.fdi}
+                  {toothRecord.fdi}
+                </span>
+                <span className="text-[8px] text-slate-400 block font-mono">
+                  #{toothRecord.universalNumber} | {toothRecord.palmer}
                 </span>
               </div>
               <div
@@ -1315,10 +1319,13 @@ export const DentalNeuroInfoPanel: React.FC<DentalNeuroInfoPanelProps> = ({
                 }`}
               >
                 <span className="text-[9px] text-slate-500 dark:text-slate-400 block font-mono uppercase">
-                  PHÂN CUNG
+                  PHÂN CUNG & BÊN
                 </span>
-                <span className="font-serif text-xs font-bold text-emerald-600 dark:text-emerald-400 block truncate" title={`Cung ${tooth.quadrant}: ${tooth.quadrant === 1 ? 'Hàm trên Phải' : tooth.quadrant === 2 ? 'Hàm trên Trái' : tooth.quadrant === 3 ? 'Hàm dưới Trái' : 'Hàm dưới Phải'}`}>
-                  Cung {tooth.quadrant}
+                <span className="font-serif text-xs font-bold text-emerald-600 dark:text-emerald-400 block truncate" title={`Cung ${toothRecord.quadrant}: ${toothRecord.jaw === 'MAXILLA' ? 'Hàm Trên' : 'Hàm Dưới'} - ${toothRecord.side === 'RIGHT' ? 'Bên Phải bệnh nhân' : 'Bên Trái bệnh nhân'}`}>
+                  Cung {toothRecord.quadrant} • {toothRecord.side === 'RIGHT' ? 'Phải' : 'Trái'}
+                </span>
+                <span className="text-[8px] text-slate-400 block font-mono">
+                  {toothRecord.jaw === 'MAXILLA' ? 'Hàm Trên' : 'Hàm Dưới'}
                 </span>
               </div>
               <div
@@ -1329,64 +1336,124 @@ export const DentalNeuroInfoPanel: React.FC<DentalNeuroInfoPanelProps> = ({
                 <span className="text-[9px] text-slate-500 dark:text-slate-400 block font-mono uppercase">
                   SỐ ỐNG TỦY
                 </span>
-                <span className="font-serif text-xs font-bold text-sky-600 dark:text-sky-400 block truncate" title={tooth.canalCount}>
-                  {tooth.canalCount}
+                <span className="font-serif text-xs font-bold text-sky-600 dark:text-sky-400 block truncate" title={`${toothRecord.morphology.canalCount} ống tủy (Vertucci ${toothRecord.morphology.vertucciClass})`}>
+                  {toothRecord.morphology.canalCount} Ống ({toothRecord.morphology.rootCount} Chân)
+                </span>
+                <span className="text-[8px] text-slate-400 block font-mono">
+                  Vertucci {toothRecord.morphology.vertucciClass}
                 </span>
               </div>
             </div>
 
+            {/* Anatomical Topology & 3D Mesh Node */}
             <div
-              className={`p-3 rounded-xl border ${
-                isDark
-                  ? 'bg-sky-950/20 border-sky-500/30'
-                  : 'bg-sky-50 border-sky-200'
+              className={`p-2.5 rounded-xl border text-[11px] space-y-1 ${
+                isDark ? 'bg-slate-900/50 border-slate-800' : 'bg-white/60 border-[#e7ded3]'
               }`}
             >
-              <h3 className="font-serif font-bold text-xs text-sky-700 dark:text-sky-300 uppercase mb-2 flex items-center gap-1.5">
-                <Zap className="w-3.5 h-3.5 text-sky-500" />
-                <span>Hệ Thần Kinh Chi Phối</span>
-              </h3>
-              <div className="space-y-1.5 text-[11px]">
-                <div>
-                  <span className="text-slate-500 dark:text-slate-400">Tủy & Nha chu: </span>
-                  <button
-                    onClick={() => selectAnatomy(tooth.pulpInnervationId)}
-                    className="font-bold text-amber-600 dark:text-amber-300 underline hover:opacity-80 cursor-pointer"
-                  >
-                    {DENTAL_NERVE_STRUCTURES[tooth.pulpInnervationId]?.nameVi || tooth.pulpInnervationId}
-                  </button>
-                </div>
-                <div>
-                  <span className="text-slate-500 dark:text-slate-400">Lợi mặt ngoài: </span>
-                  <button
-                    onClick={() => selectAnatomy(tooth.buccalGingivaInnervationId)}
-                    className="font-medium text-orange-600 dark:text-orange-300 underline hover:opacity-80 cursor-pointer"
-                  >
-                    {DENTAL_NERVE_STRUCTURES[tooth.buccalGingivaInnervationId]?.nameVi ||
-                      tooth.buccalGingivaInnervationId}
-                  </button>
-                </div>
-                <div>
-                  <span className="text-slate-500 dark:text-slate-400">Lợi mặt trong: </span>
-                  <button
-                    onClick={() => selectAnatomy(tooth.lingualGingivaInnervationId)}
-                    className="font-medium text-purple-600 dark:text-purple-300 underline hover:opacity-80 cursor-pointer"
-                  >
-                    {DENTAL_NERVE_STRUCTURES[tooth.lingualGingivaInnervationId]?.nameVi ||
-                      tooth.lingualGingivaInnervationId}
-                  </button>
-                </div>
+              <div className="flex justify-between items-center text-[10px] text-slate-400 font-mono">
+                <span>3D Mesh Node:</span>
+                <span className="text-amber-500 font-bold">{toothRecord.meshNodeName}</span>
+              </div>
+              <div className="flex justify-between items-center text-[10px] text-slate-400">
+                <span>Tọa độ Sọ mặt (Craniofacial):</span>
+                <span className="font-mono text-slate-300">
+                  [{toothRecord.craniofacialPos.map(c => c.toFixed(3)).join(', ')}]
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-[10px] text-slate-400">
+                <span>Răng kế cận:</span>
+                <span className="text-slate-300">
+                  Gần: {toothRecord.mesialAdjacent || 'Đường giữa'} | Xa: {toothRecord.distalAdjacent || 'Không có'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-[10px] text-slate-400">
+                <span>Răng đối diện khớp cắn:</span>
+                <span className="text-amber-400 font-medium">
+                  {toothRecord.opposingTooth || 'Không có'}
+                </span>
               </div>
             </div>
 
-            <div className="p-3 rounded-xl border bg-rose-500/10 border-rose-500/20 text-xs">
-              <div className="font-serif font-bold text-rose-700 dark:text-rose-400 mb-1 flex items-center gap-1.5">
-                <Syringe className="w-3.5 h-3.5" />
-                <span>Gây tê khuyến nghị</span>
-              </div>
-              <p className="text-[11px] leading-relaxed text-rose-900 dark:text-rose-200">
-                {tooth.anesthesiaTechniqueVi}
+            {/* Innervation & Anesthesia */}
+            {tooth && (
+              <>
+                <div
+                  className={`p-3 rounded-xl border ${
+                    isDark
+                      ? 'bg-sky-950/20 border-sky-500/30'
+                      : 'bg-sky-50 border-sky-200'
+                  }`}
+                >
+                  <h3 className="font-serif font-bold text-xs text-sky-700 dark:text-sky-300 uppercase mb-2 flex items-center gap-1.5">
+                    <Zap className="w-3.5 h-3.5 text-sky-500" />
+                    <span>Hệ Thần Kinh Chi Phối</span>
+                  </h3>
+                  <div className="space-y-1.5 text-[11px]">
+                    <div>
+                      <span className="text-slate-500 dark:text-slate-400">Tủy & Nha chu: </span>
+                      <button
+                        onClick={() => selectAnatomy(tooth.pulpInnervationId)}
+                        className="font-bold text-amber-600 dark:text-amber-300 underline hover:opacity-80 cursor-pointer"
+                      >
+                        {DENTAL_NERVE_STRUCTURES[tooth.pulpInnervationId]?.nameVi || tooth.pulpInnervationId}
+                      </button>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 dark:text-slate-400">Lợi mặt ngoài: </span>
+                      <button
+                        onClick={() => selectAnatomy(tooth.buccalGingivaInnervationId)}
+                        className="font-medium text-orange-600 dark:text-orange-300 underline hover:opacity-80 cursor-pointer"
+                      >
+                        {DENTAL_NERVE_STRUCTURES[tooth.buccalGingivaInnervationId]?.nameVi ||
+                          tooth.buccalGingivaInnervationId}
+                      </button>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 dark:text-slate-400">Lợi mặt trong: </span>
+                      <button
+                        onClick={() => selectAnatomy(tooth.lingualGingivaInnervationId)}
+                        className="font-medium text-purple-600 dark:text-purple-300 underline hover:opacity-80 cursor-pointer"
+                      >
+                        {DENTAL_NERVE_STRUCTURES[tooth.lingualGingivaInnervationId]?.nameVi ||
+                          tooth.lingualGingivaInnervationId}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl border bg-rose-500/10 border-rose-500/20 text-xs">
+                  <div className="font-serif font-bold text-rose-700 dark:text-rose-400 mb-1 flex items-center gap-1.5">
+                    <Syringe className="w-3.5 h-3.5" />
+                    <span>Gây tê khuyến nghị</span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-rose-900 dark:text-rose-200">
+                    {tooth.anesthesiaTechniqueVi}
+                  </p>
+                </div>
+              </>
+            )}
+
+            {/* Morphology & Clinical Pearls */}
+            <div
+              className={`p-3 rounded-xl border ${
+                isDark ? 'bg-amber-950/20 border-amber-500/30' : 'bg-amber-50 border-amber-200'
+              }`}
+            >
+              <h4 className="font-serif font-bold text-xs text-amber-700 dark:text-amber-300 mb-1.5 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <span>Giải Phẫu Tủy & Lưu Ý Lâm Sàng</span>
+              </h4>
+              <p className="text-[11px] text-slate-300 leading-relaxed mb-1.5">
+                {toothRecord.morphology.pulpFloorAnatomyVi}
               </p>
+              {toothRecord.morphology.clinicalRisksVi.length > 0 && (
+                <ul className="text-[10px] text-amber-400/90 list-disc list-inside space-y-0.5">
+                  {toothRecord.morphology.clinicalRisksVi.map((risk, idx) => (
+                    <li key={idx}>{risk}</li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
         )}

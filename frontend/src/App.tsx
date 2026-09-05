@@ -45,24 +45,49 @@ export function App() {
 
     // Initialize and sync route with browser URL
     const pathname = window.location.pathname.toLowerCase();
-    if (pathname === '/' || pathname === '') {
+    const searchParams = new URLSearchParams(window.location.search);
+    const structureParam = searchParams.get('structure');
+    const labParam = searchParams.get('lab');
+    const specimenParam = searchParams.get('specimen') || labParam;
+
+    const isDentalStructure = structureParam && (
+      structureParam.startsWith('tooth') ||
+      structureParam.includes('nerve') ||
+      structureParam.includes('ian') ||
+      structureParam.includes('foramen') ||
+      structureParam.includes('canal') ||
+      structureParam.includes('cn_') ||
+      structureParam.includes('cn-') ||
+      structureParam.includes('trigeminal') ||
+      structureParam.includes('tmj') ||
+      structureParam.includes('mandib')
+    );
+
+    // Explicit client routes: /toanthan, /lab/craniofacial, /lab/dental-neuroanatomy, /lab/rhm
+    if (pathname === '/' || pathname === '' || pathname === '/toanthan') {
       window.history.replaceState({ viewMode: 'full-body' }, '', '/toanthan');
-    } else if (pathname.includes('dental-neuro') || pathname.includes('craniofacial') || pathname.includes('rhm') || window.location.search.includes('lab=') || window.location.search.includes('structure=')) {
+    } else if (
+      pathname.includes('/lab/dental-neuroanatomy') ||
+      pathname.includes('/lab/craniofacial') ||
+      pathname.includes('/lab/rhm') ||
+      pathname.includes('dental-neuro') ||
+      pathname.includes('craniofacial') ||
+      pathname.includes('rhm') ||
+      Boolean(specimenParam) ||
+      Boolean(isDentalStructure)
+    ) {
       useAnatomyStore.setState({ viewMode: 'dental-neuro' });
-      const params = new URLSearchParams(window.location.search);
-      const labParam = params.get('lab');
-      if (labParam === 'general' || labParam === 'cranial_nerves' || labParam === 'tooth_specimen' || labParam === 'tmj_specimen' || labParam === 'wisdom_surgery') {
-        useDentalNeuroStore.getState().setActiveSpecimenMode(labParam);
+      if (specimenParam === 'general' || specimenParam === 'cranial_nerves' || specimenParam === 'tooth_specimen' || specimenParam === 'tmj_specimen' || specimenParam === 'wisdom_surgery') {
+        useDentalNeuroStore.getState().setActiveSpecimenMode(specimenParam as any);
       }
 
-      const modeParam = params.get('mode');
+      const modeParam = searchParams.get('mode');
       if (modeParam === 'compare') {
         useDentalNeuroStore.getState().toggleCompare();
       } else if (modeParam === 'trace') {
         useDentalNeuroStore.getState().toggleTrace();
       }
 
-      const structureParam = params.get('structure');
       if (structureParam) {
         const clean = structureParam.toLowerCase().trim();
         if (clean === 'nerve.inferior-alveolar' || clean === 'ian' || clean === 'nerve.inferior_alveolar') {
@@ -87,6 +112,19 @@ export function App() {
         useDentalNeuroStore.getState().toggleMandibularCanalMode();
       } else if (pathname.includes('cn-vii') || pathname.includes('facial')) {
         useDentalNeuroStore.getState().selectAnatomy('cn_7');
+      }
+    } else if (pathname.includes('tieubansau') || pathname.includes('tieu-ban-sau') || pathname.includes('specimen')) {
+      useAnatomyStore.setState({ viewMode: 'specimen' });
+      const match = pathname.match(/\/(?:tieubansau|tieu-ban-sau|specimens?)\/([a-z0-9_-]+)/);
+      if (match && match[1]) {
+        useAnatomyStore.setState({ activeSpecimenId: match[1] });
+      }
+    } else {
+      // Default to Whole-Body Lab
+      useAnatomyStore.setState({ viewMode: 'full-body' });
+      if (structureParam) {
+        const clean = structureParam.toLowerCase().trim().replace(/\./g, '_');
+        useAnatomyStore.getState().selectStructure(clean);
       }
     }
 
