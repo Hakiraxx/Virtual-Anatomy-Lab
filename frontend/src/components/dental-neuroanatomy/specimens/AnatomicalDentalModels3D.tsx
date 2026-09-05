@@ -499,29 +499,6 @@ export const RealDentalAnatomySectionMesh: React.FC<RealDentalSectionProps> = ({
   const { scene: toothScene } = useGLTF(modelUrl);
   const skullGltf = useGLTF('/models/craniofacial/skull/skull_complete.glb', '/draco/');
 
-  // Compute active Three.js GPU Hardware Clipping Plane
-  const clippingPlanes = useMemo(() => {
-    if (sectionMode === 'solid') {
-      return [];
-    }
-
-    let normal = new THREE.Vector3(1, 0, 0); // Default Sagittal (Mesiodistal)
-    if (sectionPlane === 'coronal') {
-      normal = new THREE.Vector3(0, 0, 1); // Buccolingual
-    } else if (sectionPlane === 'axial') {
-      normal = new THREE.Vector3(0, 1, 0); // Occlusal-Apical
-    } else if (sectionPlane === 'oblique') {
-      normal = new THREE.Vector3(0.7071, 0.7071, 0).normalize();
-    }
-
-    if (sectionInverted) {
-      normal.negate();
-    }
-
-    // Offset in local coordinate meters (-0.015 to +0.015)
-    return [new THREE.Plane(normal, sectionOffset)];
-  }, [sectionMode, sectionPlane, sectionOffset, sectionInverted]);
-
   // Extract real anatomical crown and root geometries from verified 3D assets
   const { crownGeom, rootGeom } = useMemo(() => {
     let cg: THREE.BufferGeometry | null = null;
@@ -567,8 +544,33 @@ export const RealDentalAnatomySectionMesh: React.FC<RealDentalSectionProps> = ({
         fullGeom.scale(-1, 1, 1);
       }
 
-      cg = fullGeom;
-      rg = fullGeom.clone();
+      // Look for sub-meshes (crown vs root) if present under targetMesh
+      let subCrown: THREE.BufferGeometry | null = null;
+      let subRoot: THREE.BufferGeometry | null = null;
+
+      (targetMesh as any).traverse((child: any) => {
+        if (child.isMesh && child !== targetMesh && child.geometry) {
+          const lower = (child.name || '').toLowerCase();
+          if (lower.includes('crown') && !subCrown) {
+            subCrown = child.geometry.clone();
+          } else if (lower.includes('root') && !subRoot) {
+            subRoot = child.geometry.clone();
+          }
+        }
+      });
+
+      if (subCrown && subRoot) {
+        const sc: THREE.BufferGeometry = subCrown;
+        const sr: THREE.BufferGeometry = subRoot;
+        sc.computeBoundingBox();
+        sr.computeBoundingBox();
+        cg = sc;
+        rg = sr;
+      } else {
+        // Unified single authentic mesh: render once, no duplicate overlap
+        cg = fullGeom;
+        rg = null;
+      }
     } else {
       toothScene.traverse((child: any) => {
         if (child.isMesh) {
@@ -584,6 +586,105 @@ export const RealDentalAnatomySectionMesh: React.FC<RealDentalSectionProps> = ({
     return { crownGeom: cg, rootGeom: rg };
   }, [fdi, isRightSide, toothScene, skullGltf]);
 
+  // Compute active geometry's exact bounding box
+  const bbox = useMemo(() => {
+    const b = new THREE.Box3();
+    const cg = crownGeom as THREE.BufferGeometry | null;
+    const rg = rootGeom as THREE.BufferGeometry | null;
+    if (cg) {
+      cg.computeBoundingBox();
+      if (cg.boundingBox) b.union(cg.boundingBox);
+    }
+    if (rg) {
+      rg.computeBoundingBox();
+      if (rg.boundingBox) b.union(rg.boundingBox);
+    }
+    return b;
+  }, [crownGeom, rootGeom]);
+
+  // Compute active Three.js GPU Hardware Clipping Plane strictly based on Bounding Box
+  const clippingPlanes = useMemo(() => {
+    if (sectionMode === 'solid') {
+      return [];
+    }
+
+    // Direction vectors in local tooth space:
+    // Mesiodistal (Dọc / M-D): along Z axis
+    // Buccolingual (Đứng / B-L): along X axis
+    // Axial / Horizontal (Ngang): along Y axis (Occlusal-Apical)
+    // Oblique (Chếch): 45-degree diagonal vector
+    // Canonical anatomical slicing normals
+    const sagittalNormal = new THREE.Vector3(1, 0, 0);
+    const coronalNormal = new THREE.Vector3(0, 0, 1);
+    const axialNormal = new THREE.Vector3(0, 1, 0);
+    const obliqueNormal = new THREE.Vector3(0.7071, 0.7071, 0);
+
+    let localAxis = sagittalNormal;
+    if (sectionPlane === 'sagittal') {
+      localAxis = sagittalNormal;
+    } else if (sectionPlane === 'coronal') {
+      localAxis = coronalNormal;
+    } else if (sectionPlane === 'axial') {
+      localAxis = axialNormal;
+    } else if (sectionPlane === 'oblique') {
+      localAxis = obliqueNormal;
+    }
+
+    // Project all 8 corners of the bounding box onto localAxis
+    const corners = [
+      new THREE.Vector3(bbox.min.x, bbox.min.y, bbox.min.z),
+      new THREE.Vector3(bbox.min.x, bbox.min.y, bbox.max.z),
+      new THREE.Vector3(bbox.min.x, bbox.max.y, bbox.min.z),
+      new THREE.Vector3(bbox.min.x, bbox.max.y, bbox.max.z),
+      new THREE.Vector3(bbox.max.x, bbox.min.y, bbox.min.z),
+      new THREE.Vector3(bbox.max.x, bbox.min.y, bbox.max.z),
+      new THREE.Vector3(bbox.max.x, bbox.max.y, bbox.min.z),
+      new THREE.Vector3(bbox.max.x, bbox.max.y, bbox.max.z),
+    ];
+
+    let pmin = Infinity;
+    let pmax = -Infinity;
+    for (const c of corners) {
+      const p = c.dot(localAxis);
+      if (p < pmin) pmin = p;
+      if (p > pmax) pmax = p;
+    }
+
+    if (!isFinite(pmin) || !isFinite(pmax) || pmax <= pmin) {
+      pmin = -0.012;
+      pmax = 0.012;
+    }
+
+    // sectionOffset is normalized cut depth: 0.0 (0% cut / full tooth) to 1.0 (100% cut)
+    let t = typeof sectionOffset === 'number' ? sectionOffset : 0.25;
+    if (t < 0) t = 0;
+    if (t > 1) t = 1;
+
+    // Small margin so at t=0 nothing is clipped
+    const margin = 0.0006;
+    let normal: THREE.Vector3;
+    let localConstant: number;
+
+    if (!sectionInverted) {
+      // Cut from positive side: keep points where localAxis . v <= cutPos
+      // Three.js keeps points where normal . v + constant >= 0
+      // So normal = -localAxis, constant = cutPos
+      const cutPos = (pmax + margin) - t * ((pmax - pmin) + 2 * margin);
+      normal = localAxis.clone().negate();
+      localConstant = cutPos;
+    } else {
+      // Cut from negative side: keep points where localAxis . v >= cutPos
+      // So normal = localAxis, constant = -cutPos
+      const cutPos = (pmin - margin) + t * ((pmax - pmin) + 2 * margin);
+      normal = localAxis.clone();
+      localConstant = -cutPos;
+    }
+
+    // Multiply by group scale so the plane evaluates in world space matching scaled geometry
+    const S = scale || 1.0;
+    return [new THREE.Plane(normal, localConstant * S)];
+  }, [sectionMode, sectionPlane, sectionOffset, sectionInverted, bbox, scale]);
+
   // Authentic PBR Dental Materials configured with GPU Clipping Planes
   const materials = useMemo(() => {
     const planes = clippingPlanes.length > 0 ? clippingPlanes : undefined;
@@ -592,12 +693,12 @@ export const RealDentalAnatomySectionMesh: React.FC<RealDentalSectionProps> = ({
 
     // 1. Natural Dental Enamel (MeshPhysicalMaterial with clearcoat & transmission)
     const enamelMat = new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color('#f6f2ec'),
-      roughness: 0.24,
+      color: new THREE.Color('#f5efeb'),
+      roughness: 0.26,
       metalness: 0.02,
-      clearcoat: 0.38,
-      clearcoatRoughness: 0.10,
-      transmission: isTransp ? 0.45 : 0.05,
+      clearcoat: 0.35,
+      clearcoatRoughness: 0.12,
+      transmission: isTransp ? 0.45 : 0.04,
       thickness: 0.003,
       ior: 1.63,
       transparent: isTransp,
@@ -609,7 +710,7 @@ export const RealDentalAnatomySectionMesh: React.FC<RealDentalSectionProps> = ({
 
     // 2. Natural Root Cementum & Internal Dentin
     const cementumMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color('#e5d5be'),
+      color: new THREE.Color('#e5d7c3'),
       roughness: 0.58,
       metalness: 0.03,
       side: THREE.DoubleSide,
@@ -620,10 +721,10 @@ export const RealDentalAnatomySectionMesh: React.FC<RealDentalSectionProps> = ({
     // 3. Alveolar Bone Socket (Cribriform plate of mandibular bone)
     const boneMat = new THREE.MeshStandardMaterial({
       color: new THREE.Color('#ece1d0'),
-      roughness: 0.75,
+      roughness: 0.72,
       metalness: 0.02,
       transparent: true,
-      opacity: 0.55,
+      opacity: 0.45,
       side: THREE.DoubleSide,
       clippingPlanes: planes,
       clipShadows: true
@@ -634,28 +735,18 @@ export const RealDentalAnatomySectionMesh: React.FC<RealDentalSectionProps> = ({
       color: new THREE.Color('#06b6d4'),
       roughness: 0.40,
       transparent: true,
-      opacity: 0.45,
+      opacity: 0.40,
       side: THREE.DoubleSide,
       clippingPlanes: planes,
       clipShadows: true
     });
 
-    // 5. Dental Nerve Inflow (Luminous gold/amber)
-    const nerveMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color('#f59e0b'),
-      roughness: 0.35,
-      emissive: new THREE.Color('#d97706'),
-      emissiveIntensity: 0.65,
-      side: THREE.DoubleSide,
-      clippingPlanes: planes
-    });
-
-    return { enamelMat, cementumMat, boneMat, pdlMat, nerveMat };
+    return { enamelMat, cementumMat, boneMat, pdlMat };
   }, [enamelOpacity, sectionMode, clippingPlanes]);
 
   return (
     <group scale={scale} position={[0, 0, 0]}>
-      {/* 1. REAL ANATOMICAL CROWN MESH (Enamel Shell with PBR Shading & 3D Section) */}
+      {/* 1. REAL ANATOMICAL CROWN MESH (or full tooth when unified) */}
       {crownGeom && (
         <mesh
           geometry={crownGeom}
@@ -665,7 +756,7 @@ export const RealDentalAnatomySectionMesh: React.FC<RealDentalSectionProps> = ({
         />
       )}
 
-      {/* 2. REAL ANATOMICAL ROOT MESH (Dentin & Cementum with Bifurcated Roots) */}
+      {/* 2. REAL ANATOMICAL ROOT MESH (only rendered when separate from crown) */}
       {rootGeom && (
         <mesh
           geometry={rootGeom}
@@ -676,33 +767,26 @@ export const RealDentalAnatomySectionMesh: React.FC<RealDentalSectionProps> = ({
       )}
 
       {/* 3. REAL ALVEOLAR BONE SOCKET (Surrounding tooth roots in mandible) */}
-      {showBone && (
-        <group position={[0, -0.005, 0]}>
-          {rootGeom && (
-            <mesh
-              geometry={rootGeom}
-              material={materials.boneMat}
-              scale={[1.16, 1.05, 1.16]}
-            />
-          )}
+      {showBone && rootGeom && (
+        <group position={[0, -0.003, 0]}>
+          <mesh
+            geometry={rootGeom}
+            material={materials.boneMat}
+            scale={[1.12, 1.02, 1.12]}
+          />
         </group>
       )}
 
-      {/* 4. REAL PERIODONTAL LIGAMENT (PDL) CAVITY (Interface between Root & Alveolar Bone) */}
-      {showPdl && (
-        <group position={[0, -0.002, 0]}>
-          {rootGeom && (
-            <mesh
-              geometry={rootGeom}
-              material={materials.pdlMat}
-              scale={[1.05, 1.02, 1.05]}
-            />
-          )}
+      {/* 4. REAL PERIODONTAL LIGAMENT (PDL) CAVITY */}
+      {showPdl && rootGeom && (
+        <group position={[0, -0.001, 0]}>
+          <mesh
+            geometry={rootGeom}
+            material={materials.pdlMat}
+            scale={[1.04, 1.01, 1.04]}
+          />
         </group>
       )}
-
-      {/* 5. DENTAL NERVE PATHWAY IN RADICULAR APICES */}
-      {/* Real anatomical root geometry contains authentic apical foramina where neurovascular bundles enter */}
     </group>
   );
 };

@@ -18,6 +18,7 @@ import {
   DENTAL_INNERVATION_DATABASE,
   MUSCLES_OF_MASTICATION
 } from '../../data/dentalNeuroData';
+import { ToothPositionResolver } from '../../utils/ToothPositionResolver';
 
 interface DentalNeuroTreeProps {
   isOpen?: boolean;
@@ -128,8 +129,8 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
         selectedAnatomyId.includes('canal')
       ) {
         next.foramina = true;
-      } else if (selectedAnatomyId.startsWith('tooth_')) {
-        const num = parseInt(selectedAnatomyId.replace('tooth_', ''), 10);
+      } else if (selectedAnatomyId.startsWith('tooth.') || selectedAnatomyId.startsWith('tooth_')) {
+        const num = parseInt(selectedAnatomyId.replace(/tooth[._]/, ''), 10);
         if (num >= 11 && num <= 28) {
           next.maxilla = true;
         } else {
@@ -862,17 +863,20 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                 Răng Hàm Dưới (FDI 31 - 38 & 41 - 48)
               </div>
               {DENTAL_INNERVATION_DATABASE.filter((t) => t.arch === 'mandibular').map((tooth) => {
-                const toothId = `tooth_${tooth.fdi}`;
-                const isSelected = selectedAnatomyId === toothId;
+                const toothId = `tooth.${tooth.fdi}`;
+                const isSelected =
+                  selectedAnatomyId === toothId ||
+                  selectedAnatomyId === `tooth_${tooth.fdi}` ||
+                  (selectedAnatomyId && ToothPositionResolver.resolve(selectedAnatomyId)?.fdi === tooth.fdi);
                 const isWisdom = tooth.fdi === 38 || tooth.fdi === 48;
                 return (
                   <button
                     key={tooth.fdi}
-                    id={`tree_item_${toothId}`}
+                    id={`tree_item_tooth_${tooth.fdi}`}
                     onClick={() => handleItemSelect(toothId)}
                     className={`w-full text-left px-2 py-0.5 rounded text-[10px] flex items-center justify-between cursor-pointer ${
                       isSelected
-                        ? 'bg-rose-600 text-white font-bold shadow-sm'
+                        ? 'bg-rose-600 text-white font-bold shadow-sm ring-1 ring-amber-400'
                         : isDark
                         ? 'hover:bg-slate-800 text-slate-300'
                         : 'hover:bg-[#ede3d5]/60 text-slate-700'
@@ -941,16 +945,19 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
                 Răng Hàm Trên (FDI 11 - 18 & 21 - 28)
               </div>
               {DENTAL_INNERVATION_DATABASE.filter((t) => t.arch === 'maxillary').map((tooth) => {
-                const toothId = `tooth_${tooth.fdi}`;
-                const isSelected = selectedAnatomyId === toothId;
+                const toothId = `tooth.${tooth.fdi}`;
+                const isSelected =
+                  selectedAnatomyId === toothId ||
+                  selectedAnatomyId === `tooth_${tooth.fdi}` ||
+                  (selectedAnatomyId && ToothPositionResolver.resolve(selectedAnatomyId)?.fdi === tooth.fdi);
                 return (
                   <button
                     key={tooth.fdi}
-                    id={`tree_item_${toothId}`}
+                    id={`tree_item_tooth_${tooth.fdi}`}
                     onClick={() => handleItemSelect(toothId)}
                     className={`w-full text-left px-2 py-0.5 rounded text-[10px] flex items-center justify-between cursor-pointer ${
                       isSelected
-                        ? 'bg-orange-600 text-white font-bold shadow-sm'
+                        ? 'bg-orange-600 text-white font-bold shadow-sm ring-1 ring-amber-400'
                         : isDark
                         ? 'hover:bg-slate-800 text-slate-300'
                         : 'hover:bg-[#ede3d5]/60 text-slate-700'

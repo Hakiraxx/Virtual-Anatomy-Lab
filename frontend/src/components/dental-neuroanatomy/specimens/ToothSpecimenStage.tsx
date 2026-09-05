@@ -1,7 +1,7 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import * as THREE from 'three';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, useGLTF, Html } from '@react-three/drei';
+import { Canvas, useThree, useFrame } from '@react-three/fiber';
+import { OrbitControls, useGLTF } from '@react-three/drei';
 import {
   Layers,
   Sparkles,
@@ -140,24 +140,108 @@ const CanonicalDentalArchView: React.FC<{
       }}
     >
       <primitive object={cleanedArch} />
-
-      {/* Anatomical HTML Label Badge over Selected Real Tooth */}
-      {!isContextOnly && selectedToothRecord && (
-        <group position={selectedToothPos}>
-          <pointLight color="#fde047" intensity={2.5} distance={0.06} />
-          <Html
-            position={[0, selectedToothRecord.jaw === 'MANDIBLE' ? 0.014 : -0.014, 0]}
-            center
-            distanceFactor={0.5}
-          >
-            <div className="px-2.5 py-1 rounded-full text-[10px] font-bold shadow-xl border border-amber-400 bg-amber-500 text-slate-950 whitespace-nowrap animate-bounce">
-              FDI #{selectedFdi} • {selectedToothRecord.nameVi}
-            </div>
-          </Html>
-        </group>
-      )}
     </group>
   );
+};
+
+// ============================================================================
+// CAMERA CONTROLLER: DYNAMIC BOUNDING BOX FRAMING & SMOOTH GLIDE
+// ============================================================================
+const ToothStageCameraController: React.FC<{
+  viewMode: 'arch' | 'isolated';
+  selectedFdi: number;
+  preset: string | null;
+  controlsRef: React.RefObject<any>;
+}> = ({ viewMode, selectedFdi, preset, controlsRef }) => {
+  const { camera } = useThree();
+  const animRef = useRef<{
+    isAnimating: boolean;
+    startTime: number;
+    duration: number;
+    startPos: THREE.Vector3;
+    endPos: THREE.Vector3;
+    startTarget: THREE.Vector3;
+    endTarget: THREE.Vector3;
+  }>({
+    isAnimating: false,
+    startTime: 0,
+    duration: 750,
+    startPos: new THREE.Vector3(),
+    endPos: new THREE.Vector3(),
+    startTarget: new THREE.Vector3(),
+    endTarget: new THREE.Vector3()
+  });
+
+  const lastKeyRef = useRef<string>('');
+
+  useEffect(() => {
+    const key = `${viewMode}-${selectedFdi}-${preset || 'default'}`;
+    if (key === lastKeyRef.current) return;
+    lastKeyRef.current = key;
+
+    let targetVec: THREE.Vector3;
+    let posVec: THREE.Vector3;
+
+    if (viewMode === 'arch') {
+      const toothRecord = TOOTH_REGISTRY[selectedFdi] || TOOTH_REGISTRY[46];
+      const [tx, ty, tz] = toothRecord.craniofacialPos;
+      const isRight = toothRecord.side === 'RIGHT';
+
+      targetVec = new THREE.Vector3(tx, ty, tz);
+
+      // Frame tooth keeping mesial, distal, and alveolar bone in context (~6.5cm distance)
+      const dx = isRight ? -0.048 : 0.048;
+      const dy = toothRecord.jaw === 'MANDIBLE' ? 0.018 : -0.018;
+      const dz = 0.058;
+
+      posVec = new THREE.Vector3(tx + dx, ty + dy, tz + dz);
+    } else {
+      // Isolated view centered at origin [0, 0, 0]
+      targetVec = new THREE.Vector3(0, 0, 0);
+
+      if (preset === 'occlusal') posVec = new THREE.Vector3(0, 0.08, 0.001);
+      else if (preset === 'buccal') posVec = new THREE.Vector3(0, 0, 0.07);
+      else if (preset === 'lingual') posVec = new THREE.Vector3(0, 0, -0.07);
+      else if (preset === 'mesial') posVec = new THREE.Vector3(0.07, 0, 0);
+      else if (preset === 'distal') posVec = new THREE.Vector3(-0.07, 0, 0);
+      else if (preset === 'apical') posVec = new THREE.Vector3(0, -0.08, 0.001);
+      else posVec = new THREE.Vector3(0.055, 0.025, 0.065);
+    }
+
+    const currentPos = camera.position.clone();
+    const currentTarget = controlsRef.current ? controlsRef.current.target.clone() : new THREE.Vector3();
+
+    animRef.current = {
+      isAnimating: true,
+      startTime: performance.now(),
+      duration: 750,
+      startPos: currentPos,
+      endPos: posVec,
+      startTarget: currentTarget,
+      endTarget: targetVec
+    };
+  }, [viewMode, selectedFdi, preset, camera, controlsRef]);
+
+  useFrame(() => {
+    if (!animRef.current.isAnimating) return;
+
+    const elapsed = performance.now() - animRef.current.startTime;
+    const progress = Math.min(1.0, elapsed / animRef.current.duration);
+    const ease = 1 - Math.pow(1 - progress, 3);
+
+    camera.position.lerpVectors(animRef.current.startPos, animRef.current.endPos, ease);
+
+    if (controlsRef.current) {
+      controlsRef.current.target.lerpVectors(animRef.current.startTarget, animRef.current.endTarget, ease);
+      controlsRef.current.update();
+    }
+
+    if (progress >= 1.0) {
+      animRef.current.isAnimating = false;
+    }
+  });
+
+  return null;
 };
 
 // ============================================================================
@@ -171,6 +255,7 @@ export const ToothSpecimenStage: React.FC = () => {
   const [viewMode, setViewMode] = useState<'arch' | 'isolated'>('isolated');
   const [showSkullContext, setShowSkullContext] = useState<boolean>(false);
   const [isDossierOpen, setIsDossierOpen] = useState<boolean>(true);
+  const controlsRef = useRef<any>(null);
 
   const selectedToothFdi = useDentalNeuroStore((s) => s.selectedToothFdi);
   const setSelectedToothFdi = useDentalNeuroStore((s) => s.setSelectedToothFdi);
@@ -369,33 +454,61 @@ export const ToothSpecimenStage: React.FC = () => {
                   ))}
                 </div>
 
-                {/* Section Depth Offset Slider */}
-                <div className="space-y-1 mb-2.5">
+                {/* Section Depth Percentage Slider */}
+                <div className="space-y-1.5 mb-2.5">
                   <div className="flex items-center justify-between text-[10px]">
-                    <span className="text-slate-400">Độ Sâu Mặt Cắt:</span>
+                    <span className="text-slate-400">Độ Sâu Mặt Cắt 3D:</span>
                     <span className="font-mono font-bold text-amber-400">
-                      {(toothSectionOffset * 1000).toFixed(1)} mm
+                      {Math.round(toothSectionOffset * 100)}%
+                      <span className="text-[9px] text-slate-400 font-normal ml-1">
+                        {toothSectionOffset === 0
+                          ? '(Nguyên khối)'
+                          : toothSectionOffset <= 0.25
+                          ? '(Cắt nông)'
+                          : toothSectionOffset <= 0.5
+                          ? '(Chính giữa)'
+                          : '(Cắt sâu)'}
+                      </span>
                     </span>
                   </div>
                   <input
                     type="range"
-                    min="-0.012"
-                    max="0.012"
-                    step="0.0005"
+                    min="0.0"
+                    max="1.0"
+                    step="0.05"
                     value={toothSectionOffset}
                     onChange={(e) => setToothSectionOffset(parseFloat(e.target.value))}
                     className="w-full accent-amber-500 cursor-pointer h-1.5 rounded-lg bg-slate-700"
                   />
-                  <div className="flex justify-between items-center text-[9px] text-slate-500">
-                    <span>-12mm</span>
+                  {/* Quick percentage depth presets */}
+                  <div className="grid grid-cols-4 gap-1 text-[9px] pt-0.5">
+                    {[
+                      { val: 0.0, label: '0%' },
+                      { val: 0.25, label: '25%' },
+                      { val: 0.50, label: '50%' },
+                      { val: 0.75, label: '75%' }
+                    ].map((btn) => (
+                      <button
+                        key={btn.val}
+                        onClick={() => setToothSectionOffset(btn.val)}
+                        className={`py-0.5 rounded text-center transition cursor-pointer font-medium ${
+                          Math.abs(toothSectionOffset - btn.val) < 0.05
+                            ? 'bg-amber-500 text-slate-950 font-bold'
+                            : 'bg-black/10 dark:bg-white/5 text-slate-400 hover:text-current'
+                        }`}
+                      >
+                        {btn.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex justify-end items-center text-[9px] text-slate-500 pt-1">
                     <button
                       onClick={toggleToothSectionInverted}
-                      className="text-amber-400 hover:underline flex items-center gap-0.5"
+                      className="text-amber-400 hover:underline flex items-center gap-1 cursor-pointer font-bold"
                     >
                       <RotateCw className="w-2.5 h-2.5" />
                       Đảo hướng cắt
                     </button>
-                    <span>+12mm</span>
                   </div>
                 </div>
               </>
@@ -507,12 +620,23 @@ export const ToothSpecimenStage: React.FC = () => {
           color="#fff"
         />
 
+        {/* Dynamic Camera Controller for precise bounding box framing */}
+        <ToothStageCameraController
+          viewMode={viewMode}
+          selectedFdi={selectedToothFdi}
+          preset={toothCameraPreset}
+          controlsRef={controlsRef}
+        />
+
         {viewMode === 'arch' ? (
           /* View Mode A: Real 3D Dental Arch Context */
           <group position={[0, 0, 0]}>
             <CanonicalDentalArchView
               selectedFdi={selectedToothFdi}
-              onSelectTooth={(fdi) => setSelectedToothFdi(fdi)}
+              onSelectTooth={(fdi) => {
+                setSelectedToothFdi(fdi);
+                useDentalNeuroStore.getState().selectAnatomy(`tooth.${fdi}`);
+              }}
               boneOpacity={0.88}
             />
           </group>
@@ -523,7 +647,10 @@ export const ToothSpecimenStage: React.FC = () => {
               <group position={[0, 0, 0]}>
                 <CanonicalDentalArchView
                   selectedFdi={selectedToothFdi}
-                  onSelectTooth={(fdi) => setSelectedToothFdi(fdi)}
+                  onSelectTooth={(fdi) => {
+                    setSelectedToothFdi(fdi);
+                    useDentalNeuroStore.getState().selectAnatomy(`tooth.${fdi}`);
+                  }}
                   boneOpacity={0.20}
                   isContextOnly={true}
                 />
@@ -548,6 +675,7 @@ export const ToothSpecimenStage: React.FC = () => {
 
         {/* Orbit Controls with dynamic target */}
         <OrbitControls
+          ref={controlsRef}
           key={`${viewMode}-${selectedToothFdi}-${toothCameraPreset}`}
           enableDamping
           dampingFactor={0.06}

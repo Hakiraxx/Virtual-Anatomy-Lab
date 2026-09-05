@@ -510,7 +510,10 @@ const RealSkullAndBrainstemSystem: React.FC<{
       if (toothFdi) {
         child.userData.toothFdi = toothFdi;
         const isSelectedTooth = selectedToothFdi === toothFdi;
-        const isAnyToothSelected = !!(selectedAnatomyId && selectedAnatomyId.startsWith('tooth_'));
+        const isAnyToothSelected = !!(
+          selectedAnatomyId &&
+          (selectedAnatomyId.startsWith('tooth.') || selectedAnatomyId.startsWith('tooth_'))
+        );
 
         child.material = new THREE.MeshStandardMaterial({
           color: new THREE.Color(isSelectedTooth ? '#f59e0b' : '#fafafa'),
@@ -592,7 +595,7 @@ const RealSkullAndBrainstemSystem: React.FC<{
         const toothFdi = mesh.userData?.toothFdi || ToothPositionResolver.getFdiFromMeshNodeName(mesh.name);
         if (toothFdi) {
           const side = (toothFdi >= 11 && toothFdi <= 18) || (toothFdi >= 41 && toothFdi <= 48) ? 'right' : 'left';
-          onSelectStructure(`tooth_${toothFdi}`, side);
+          onSelectStructure(`tooth.${toothFdi}`, side);
           return;
         }
         if (mesh.userData?.structureId) {

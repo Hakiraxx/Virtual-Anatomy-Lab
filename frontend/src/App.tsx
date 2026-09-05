@@ -98,7 +98,7 @@ export function App() {
           useDentalNeuroStore.getState().selectAnatomy('mandibular_canal');
         } else if (clean.startsWith('tooth.') || clean.startsWith('tooth_')) {
           const num = clean.replace(/tooth[._]/, '');
-          useDentalNeuroStore.getState().selectAnatomy(`tooth_${num}`);
+          useDentalNeuroStore.getState().selectAnatomy(`tooth.${num}`);
         } else {
           useDentalNeuroStore.getState().selectAnatomy(clean.replace(/\./g, '_'));
         }

@@ -335,7 +335,7 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
   toothEnamelOpacity: 0.65,
   toothShowPdl: true,
   toothSectionPlane: 'sagittal',
-  toothSectionOffset: 0.0,
+  toothSectionOffset: 0.25,
   toothSectionInverted: false,
   toothShowBone: true,
   toothShowNerve: true,
@@ -394,6 +394,7 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
       const autoSide: 'right' | 'left' = resolvedTooth.side === 'RIGHT' ? 'right' : 'left';
       updates = {
         selectedToothFdi: fdi,
+        selectedAnatomyId: resolvedTooth.id, // Canonical: "tooth.46"
         wisdomToothId: fdi === 38 ? 'tooth_38' : fdi === 48 ? 'tooth_48' : get().wisdomToothId,
         selectedSide: side || autoSide
       };
@@ -432,13 +433,14 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
       }
     }
 
+    const finalId = updates.selectedAnatomyId || id;
     set({
-      selectedAnatomyId: id,
+      selectedAnatomyId: finalId,
       selectedSide: side || updates.selectedSide || (id ? get().selectedSide || 'right' : null),
       ...updates
     });
-    if (id) {
-      get().focusAnatomy(id);
+    if (finalId) {
+      get().focusAnatomy(finalId);
     }
   },
 
@@ -813,7 +815,7 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
       };
     } else if (mode === 'tooth_specimen') {
       const fdi = get().selectedToothFdi || 46;
-      updates.selectedAnatomyId = `tooth_${fdi}`;
+      updates.selectedAnatomyId = `tooth.${fdi}`;
       updates.selectedSide = (fdi >= 11 && fdi <= 18) || (fdi >= 41 && fdi <= 48) ? 'right' : 'left';
     } else if (mode === 'tmj_specimen') {
       updates.selectedAnatomyId = get().tmjActiveMuscleId || 'joint_tmj';
@@ -830,19 +832,20 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
   setSelectedToothFdi: (fdi) => {
     const side: 'right' | 'left' =
       (fdi >= 11 && fdi <= 18) || (fdi >= 41 && fdi <= 48) ? 'right' : 'left';
+    const canonicalId = `tooth.${fdi}`;
     set({
       selectedToothFdi: fdi,
-      selectedAnatomyId: `tooth_${fdi}`,
+      selectedAnatomyId: canonicalId,
       selectedSide: side,
       wisdomToothId: fdi === 38 ? 'tooth_38' : fdi === 48 ? 'tooth_48' : get().wisdomToothId
     });
-    get().focusAnatomy(`tooth_${fdi}`);
+    get().focusAnatomy(canonicalId);
   },
   setToothCrossSection: (mode) => set({ toothCrossSection: mode }),
   setToothEnamelOpacity: (opacity) => set({ toothEnamelOpacity: opacity }),
   setToothShowPdl: (show) => set({ toothShowPdl: show }),
   setToothSectionPlane: (plane) => set({ toothSectionPlane: plane }),
-  setToothSectionOffset: (offset) => set({ toothSectionOffset: Math.max(-0.015, Math.min(0.015, offset)) }),
+  setToothSectionOffset: (offset) => set({ toothSectionOffset: Math.max(0.0, Math.min(1.0, offset)) }),
   toggleToothSectionInverted: () => set((s) => ({ toothSectionInverted: !s.toothSectionInverted })),
   setToothShowBone: (show) => set({ toothShowBone: show }),
   setToothShowNerve: (show) => set({ toothShowNerve: show }),
