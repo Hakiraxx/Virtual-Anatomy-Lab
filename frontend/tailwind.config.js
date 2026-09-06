@@ -5,6 +5,14 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
+    screens: {
+      'xs': '480px',
+      'sm': '600px',     // Tablet portrait
+      'md': '900px',     // Tablet landscape (iPad landscape)
+      'lg': '1200px',    // Laptop
+      'xl': '1440px',    // Desktop
+      '2xl': '1600px',   // Large desktop
+    },
     extend: {
       colors: {
         medical: {

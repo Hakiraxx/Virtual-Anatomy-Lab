@@ -385,22 +385,22 @@ export const useAnatomyStore = create<AnatomyState>((set, get) => ({
       selectedStructureId: id,
       isInfoOpen: Boolean(id),
       isInfoExpanded: false, // COMPACT BY DEFAULT: only expand on explicit user demand
-      isTreeOpen: Boolean(id) && typeof window !== 'undefined' && window.innerWidth < 1024 ? false : s.isTreeOpen
+      isTreeOpen: Boolean(id) && typeof window !== 'undefined' && window.innerWidth < 1200 ? false : s.isTreeOpen
     })),
 
-  isTreeOpen: typeof window !== 'undefined' ? window.innerWidth >= 1280 : true,
+  isTreeOpen: typeof window !== 'undefined' ? window.innerWidth >= 1200 : true,
   toggleTreeOpen: () =>
     set((s) => {
       const next = !s.isTreeOpen;
       return {
         isTreeOpen: next,
-        isInfoOpen: next && typeof window !== 'undefined' && window.innerWidth < 1024 ? false : s.isInfoOpen
+        isInfoOpen: next && typeof window !== 'undefined' && window.innerWidth < 1200 ? false : s.isInfoOpen
       };
     }),
   setIsTreeOpen: (open) =>
     set((s) => ({
       isTreeOpen: open,
-      isInfoOpen: open && typeof window !== 'undefined' && window.innerWidth < 1024 ? false : s.isInfoOpen
+      isInfoOpen: open && typeof window !== 'undefined' && window.innerWidth < 1200 ? false : s.isInfoOpen
     })),
 
   isInfoOpen: typeof window !== 'undefined' ? window.innerWidth >= 1440 : false,
@@ -409,13 +409,13 @@ export const useAnatomyStore = create<AnatomyState>((set, get) => ({
       const next = !s.isInfoOpen;
       return {
         isInfoOpen: next,
-        isTreeOpen: next && typeof window !== 'undefined' && window.innerWidth < 1024 ? false : s.isTreeOpen
+        isTreeOpen: next && typeof window !== 'undefined' && window.innerWidth < 1200 ? false : s.isTreeOpen
       };
     }),
   setIsInfoOpen: (open) =>
     set((s) => ({
       isInfoOpen: open,
-      isTreeOpen: open && typeof window !== 'undefined' && window.innerWidth < 1024 ? false : s.isTreeOpen
+      isTreeOpen: open && typeof window !== 'undefined' && window.innerWidth < 1200 ? false : s.isTreeOpen
     })),
 
   isInfoExpanded: false,
@@ -464,8 +464,8 @@ export const useAnatomyStore = create<AnatomyState>((set, get) => ({
         8: 0.0
       },
       cameraFocusTarget: {
-        targetPosition: [0, 0.95, 3.1],
-        targetLookAt: [0, 0.875, 0],
+        targetPosition: [0, 0.90, 2.65],
+        targetLookAt: [0, 0.88, 0],
         duration: 900,
         timestamp: Date.now()
       }

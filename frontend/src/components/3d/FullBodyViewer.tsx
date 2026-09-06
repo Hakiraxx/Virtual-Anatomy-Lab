@@ -231,6 +231,8 @@ export const FullBodyViewer: React.FC = () => {
   const toggleTreeOpen = useAnatomyStore((s) => s.toggleTreeOpen);
   const isInfoOpen = useAnatomyStore((s) => s.isInfoOpen);
   const toggleInfoOpen = useAnatomyStore((s) => s.toggleInfoOpen);
+  const isCleanView = useAnatomyStore((s) => s.isCleanView);
+  const toggleCleanView = useAnatomyStore((s) => s.toggleCleanView);
 
   const [showLayerPanel, setShowLayerPanel] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
@@ -330,8 +332,21 @@ export const FullBodyViewer: React.FC = () => {
         isDark ? 'bg-[#090d16]' : 'bg-[#f5ede3]'
       }`}
     >
+      {/* Clean View Exit Floating Button */}
+      {isCleanView && (
+        <button
+          onClick={toggleCleanView}
+          className="absolute top-4 right-4 z-30 flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-slate-900/90 text-amber-400 border border-amber-500/40 shadow-2xl backdrop-blur-md text-xs font-semibold hover:bg-slate-800 transition cursor-pointer pointer-events-auto"
+          title="Thoát chế độ xem tĩnh (Clean Mode)"
+        >
+          <Eye className="w-4 h-4 text-amber-400" />
+          <span>{isVi ? 'Thoát xem tĩnh' : 'Exit Clean View'}</span>
+        </button>
+      )}
+
       {/* Unified Top Control Bar — Single Flex Container (Guarantees Zero Overlap) */}
-      <header className="absolute top-3 left-3 right-3 z-20 flex items-center justify-between gap-2 pointer-events-none">
+      {!isCleanView && (
+        <header className="absolute top-3 left-3 right-3 z-20 flex items-center justify-between gap-2 pointer-events-none">
         {/* Left Utility Controls */}
         <div className="flex items-center gap-1.5 pointer-events-auto">
           {/* Universal Sidebar Toggle: Anatomy Tree */}
@@ -460,8 +475,9 @@ export const FullBodyViewer: React.FC = () => {
           </div>
         )}
       </header>
+      )}
 
-      {showInspector && <AnatomyAssetInspector onClose={() => setShowInspector(false)} />}
+      {showInspector && !isCleanView && <AnatomyAssetInspector onClose={() => setShowInspector(false)} />}
 
       {/* Debug HUD Overlay (Section 42) */}
       {debugMode && (
@@ -510,7 +526,7 @@ export const FullBodyViewer: React.FC = () => {
         <Canvas
           shadows={false}
           dpr={[1, 1.35]}
-          camera={{ position: [0, 0.95, 3.1], fov: 38 }}
+          camera={{ position: [0, 0.90, 2.65], fov: 38 }}
           gl={{
             powerPreference: 'high-performance',
             antialias: true,
@@ -809,58 +825,60 @@ export const FullBodyViewer: React.FC = () => {
             rotateSpeed={0.85}
             minDistance={0.3}
             maxDistance={5.0}
-            target={[0, 0.875, 0]}
+            target={[0, 0.88, 0]}
           />
         </Canvas>
       </div>
 
       {/* Floating Smart Focus Toolbar */}
-      <SmartFocusToolbar />
+      {!isCleanView && <SmartFocusToolbar />}
 
-      {/* Footer Status Bar — Hidden on mobile to prevent overlapping SmartFocusToolbar */}
-      <div data-ui="footer-status-bar" className="hidden md:flex h-10 border-t items-center justify-between px-5 text-xs font-serif z-10 bg-white/75 dark:bg-slate-900/75 border-[#e7ded3] dark:border-slate-800 text-slate-600 dark:text-slate-400">
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] uppercase tracking-wider text-slate-400 font-mono">
-            {isVi ? 'HỆ THỐNG GIẢI PHẪU' : 'ANATOMY SYSTEM'}
-          </span>
-          <span className="font-bold text-slate-800 dark:text-slate-200">
-            {gender === 'male'
-              ? isVi
-                ? 'Cơ thể Nam giới (Homo sapiens ♂)'
-                : 'Male Body (Homo sapiens ♂)'
-              : isVi
-              ? 'Cơ thể Nữ giới (Homo sapiens ♀)'
-              : 'Female Body (Homo sapiens ♀)'}
-          </span>
-          {selectedStructure && (
-            <>
-              <span className="text-slate-400">·</span>
-              <span className="text-amber-600 dark:text-amber-400 font-sans font-medium">
-                {isVi ? 'Đang chọn:' : 'Selected:'} {selectedStructure.nameVi}
-              </span>
-            </>
-          )}
-        </div>
+      {/* Footer Status Bar — Hidden on mobile to prevent overlapping SmartFocusToolbar, and hidden in Clean View */}
+      {!isCleanView && (
+        <div data-ui="footer-status-bar" className="hidden md:flex h-10 border-t items-center justify-between px-5 text-xs font-serif z-10 bg-white/75 dark:bg-slate-900/75 border-[#e7ded3] dark:border-slate-800 text-slate-600 dark:text-slate-400">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] uppercase tracking-wider text-slate-400 font-mono">
+              {isVi ? 'HỆ THỐNG GIẢI PHẪU' : 'ANATOMY SYSTEM'}
+            </span>
+            <span className="font-bold text-slate-800 dark:text-slate-200">
+              {gender === 'male'
+                ? isVi
+                  ? 'Cơ thể Nam giới (Homo sapiens ♂)'
+                  : 'Male Body (Homo sapiens ♂)'
+                : isVi
+                ? 'Cơ thể Nữ giới (Homo sapiens ♀)'
+                : 'Female Body (Homo sapiens ♀)'}
+            </span>
+            {selectedStructure && (
+              <>
+                <span className="text-slate-400">·</span>
+                <span className="text-amber-600 dark:text-amber-400 font-sans font-medium">
+                  {isVi ? 'Đang chọn:' : 'Selected:'} {selectedStructure.nameVi}
+                </span>
+              </>
+            )}
+          </div>
 
-        {/* Auto Rotate Toggle */}
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] font-sans text-slate-500">
-            {isVi ? 'Tự động xoay' : 'Auto rotate'}
-          </span>
-          <button
-            onClick={toggleAutoRotate}
-            className={`w-9 h-5 rounded-full p-0.5 transition-colors duration-200 cursor-pointer ${
-              autoRotate ? 'bg-amber-600' : 'bg-slate-300 dark:bg-slate-700'
-            }`}
-          >
-            <div
-              className={`w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform duration-200 ${
-                autoRotate ? 'translate-x-4' : 'translate-x-0'
+          {/* Auto Rotate Toggle */}
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-sans text-slate-500">
+              {isVi ? 'Tự động xoay' : 'Auto rotate'}
+            </span>
+            <button
+              onClick={toggleAutoRotate}
+              className={`w-9 h-5 rounded-full p-0.5 transition-colors duration-200 cursor-pointer ${
+                autoRotate ? 'bg-amber-600' : 'bg-slate-300 dark:bg-slate-700'
               }`}
-            />
-          </button>
+            >
+              <div
+                className={`w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform duration-200 ${
+                  autoRotate ? 'translate-x-4' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </section>
   );
 };

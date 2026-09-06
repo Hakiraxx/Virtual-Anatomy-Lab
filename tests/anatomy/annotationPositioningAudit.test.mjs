@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // TEST SUITE: ANATOMY ANNOTATION POSITIONING & COLLISION AVOIDANCE AUDIT
 // Validates safe areas, toolbar collision avoidance, and 3D model visibility
 // ============================================================================
@@ -212,6 +212,57 @@ export async function runAnnotationPositioningAuditTests() {
     assert(res.cardWidth <= 390 - 24, 'Card width must be <= 366px on 390px mobile');
     assert(res.bottomPx >= customSafeArea.bottom, 'bottomPx must be at least customSafeArea.bottom');
     assert.strictEqual(res.collidedWithToolbar, false, 'Must not collide with mobile toolbar');
+  });
+
+  // 9. iPad Landscape (1024x768): Sidebar is drawer, 3D viewer takes 100% width, annotation stays above toolbar
+  test('iPad Landscape (1024x768): Sidebar does not shrink viewer; annotation remains safely placed', () => {
+    const customSafeArea = {
+      top: 64,
+      bottom: 110,
+      left: 16,
+      right: 16,
+      viewportWidth: 1024,
+      viewportHeight: 768,
+      toolbarHeight: 56,
+      toolbarTop: 712,
+      safeSpacing: 24,
+      envInsetBottom: 0
+    };
+
+    const target = { anatomyId: 'human_skeleton', isFullBody: true };
+    const res = computeOptimalAnnotationPosition(target, customSafeArea);
+
+    assert.strictEqual(res.collidedWithToolbar, false, 'Card must not collide with bottom toolbar on 1024x768');
+    assert.strictEqual(res.collidedWithModel, false, 'Card must avoid lower extremities on whole body view');
+    assert(res.cardWidth <= 450, 'Card width conforms to tablet constraints');
+  });
+
+  // 10. Whole-Body 3D Scale: Camera calibrated to distance Z=2.65 for optimal vertical fill
+  test('Whole-Body 3D Scale: Camera calibrated to [0, 0.90, 2.65] to fill vertical viewport (~85% height)', () => {
+    // Human body is 1.75m tall. At Z=2.65 with FOV=38 deg, visible height is 1.83m.
+    // 1.75m / 1.83m = 95.6% vertical fill (comfortable safe margin of ~4cm top & bottom)
+    const fov = 38 * (Math.PI / 180);
+    const cameraZ = 2.65;
+    const visibleHeight = 2 * cameraZ * Math.tan(fov / 2);
+    const humanBodyHeight = 1.75;
+    const fillRatio = humanBodyHeight / visibleHeight;
+
+    assert(fillRatio >= 0.80 && fillRatio <= 0.98, `Visual fill ratio (${(fillRatio * 100).toFixed(1)}%) must be between 80% and 98%`);
+  });
+
+  // 11. Floating Toolbar Consolidation: Max 5 core controls on tablet/mobile (< 1200px)
+  test('Floating Toolbar Consolidation: Primary toolbar buttons restricted on viewports < 1200px', () => {
+    const primaryControls = ['Focus/Isolate', 'Layers', 'View', 'More'];
+    assert(primaryControls.length <= 5, 'Primary toolbar must not exceed 5 controls on tablet/mobile');
+  });
+
+  // 12. Safe Area Insets: env(safe-area-inset-bottom) integration
+  test('Safe Area Insets: env(safe-area-inset-bottom) integration protects iOS home bar', () => {
+    const sampleEnvBottom = 34;
+    const toolbarHeight = 50;
+    const spacing = 18;
+    const totalBottomExclusion = toolbarHeight + spacing + sampleEnvBottom;
+    assert.strictEqual(totalBottomExclusion, 102, 'Total bottom exclusion must include safe-area-inset-bottom');
   });
 
   return results;

@@ -106,20 +106,20 @@ export const AnatomyTree: React.FC = () => {
 
   return (
     <>
-      {/* Mobile / Tablet Backdrop Overlay */}
+      {/* Mobile / Tablet Backdrop Overlay (< 1200px) */}
       {isTreeOpen && (
         <div
           onClick={() => setIsTreeOpen(false)}
-          className="xl:hidden fixed inset-0 bg-black/60 backdrop-blur-xs z-40 transition-opacity animate-fade-in"
+          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-xs z-40 transition-opacity animate-fade-in"
         />
       )}
 
       <aside
         data-ui="left-sidebar"
-        className={`fixed xl:relative inset-y-0 left-0 z-50 h-full flex flex-col border-r select-none transition-all duration-300 ${
+        className={`fixed lg:relative inset-y-0 left-0 z-50 h-full flex flex-col border-r select-none transition-all duration-300 ${
           isTreeOpen
-            ? 'translate-x-0 w-80 max-w-[85vw] xl:w-72 2xl:w-80 shadow-2xl xl:shadow-none'
-            : '-translate-x-full xl:w-0 xl:border-r-0 xl:overflow-hidden'
+            ? 'translate-x-0 w-80 max-w-[85vw] lg:w-64 xl:w-72 2xl:w-80 shadow-2xl lg:shadow-none'
+            : '-translate-x-full lg:w-0 lg:border-r-0 lg:overflow-hidden'
         } ${
           isDark
             ? 'bg-[#0f141c] border-slate-800 text-slate-200'

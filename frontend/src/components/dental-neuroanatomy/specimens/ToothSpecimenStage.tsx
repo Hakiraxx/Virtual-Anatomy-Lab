@@ -363,6 +363,11 @@ export const ToothSpecimenStage: React.FC = () => {
   const isCleanView = useDentalNeuroStore((s) => s.isCleanView);
   const toggleCleanView = useDentalNeuroStore((s) => s.toggleCleanView);
 
+  const [isSectionPanelOpen, setIsSectionPanelOpen] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') return window.innerWidth >= 1200;
+    return true;
+  });
+
   const currentToothRecord =
     TOOTH_REGISTRY[selectedToothFdi] || TOOTH_REGISTRY[46];
   const currentToothSpecimen =
@@ -504,29 +509,51 @@ export const ToothSpecimenStage: React.FC = () => {
 
       {/* 2. TOP RIGHT TOOLBAR: 3D SECTION PLANE & VIEW PRESETS */}
       {viewMode === 'isolated' && !isCleanView && (
-        <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 pointer-events-auto w-72">
-          {/* Section Plane & Depth Controls */}
-          <div
-            className={`p-3 rounded-2xl border backdrop-blur-md shadow-xl animate-fade-in ${
-              isDark ? 'bg-slate-900/90 border-slate-800 text-slate-100' : 'bg-[#f7f2ea]/90 border-[#dfd5c6] text-slate-900'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-bold font-mono text-amber-500 flex items-center gap-1">
-                <Scissors className="w-3 h-3" />
-                MẶT CẮT 3D THẬT (GPU CLIPPING)
-              </span>
-              <button
-                onClick={() => setToothCrossSection(toothCrossSection === 'solid' ? 'longitudinal' : 'solid')}
-                className={`px-2 py-0.5 rounded-full text-[9px] font-bold transition cursor-pointer ${
-                  toothCrossSection !== 'solid'
-                    ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                    : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+        <>
+          {!isSectionPanelOpen && (
+            <button
+              onClick={() => setIsSectionPanelOpen(true)}
+              className="absolute top-4 right-4 z-20 px-3 py-1.5 rounded-full bg-slate-900/85 border border-slate-700 text-slate-200 hover:text-white shadow-xl backdrop-blur-md transition cursor-pointer flex items-center gap-1.5 text-xs font-semibold hover:border-amber-500 animate-fade-in"
+              title="Mở bảng điều khiển mặt cắt 3D"
+            >
+              <Scissors className="w-3.5 h-3.5 text-amber-500" />
+              <span>Mặt Cắt 3D</span>
+            </button>
+          )}
+
+          {isSectionPanelOpen && (
+            <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 pointer-events-auto w-72 max-w-[88vw]">
+              {/* Section Plane & Depth Controls */}
+              <div
+                className={`p-3 rounded-2xl border backdrop-blur-md shadow-xl animate-fade-in ${
+                  isDark ? 'bg-slate-900/90 border-slate-800 text-slate-100' : 'bg-[#f7f2ea]/90 border-[#dfd5c6] text-slate-900'
                 }`}
               >
-                {toothCrossSection !== 'solid' ? 'Đang Cắt' : 'Nguyên Khối'}
-              </button>
-            </div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-bold font-mono text-amber-500 flex items-center gap-1">
+                    <Scissors className="w-3 h-3" />
+                    MẶT CẮT 3D THẬT (GPU CLIPPING)
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setToothCrossSection(toothCrossSection === 'solid' ? 'longitudinal' : 'solid')}
+                      className={`px-2 py-0.5 rounded-full text-[9px] font-bold transition cursor-pointer ${
+                        toothCrossSection !== 'solid'
+                          ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                          : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                      }`}
+                    >
+                      {toothCrossSection !== 'solid' ? 'Đang Cắt' : 'Nguyên Khối'}
+                    </button>
+                    <button
+                      onClick={() => setIsSectionPanelOpen(false)}
+                      className="p-1 rounded-full text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 transition cursor-pointer lg:hidden"
+                      title="Thu gọn bảng điều khiển"
+                    >
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
 
             {toothCrossSection !== 'solid' && (
               <>
@@ -742,6 +769,8 @@ export const ToothSpecimenStage: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+      </>
       )}
 
       {/* 3. 3D WEBGL CANVAS STAGE (GPU HARDWARE CLIPPING ENABLED) */}

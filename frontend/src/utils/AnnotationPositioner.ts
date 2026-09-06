@@ -222,7 +222,7 @@ export function getModelObstructionRect(
 
   // 1. Full Body Human Model: spans vertically from head to feet in center
   if (isFullBody) {
-    const bodyHalfWidth = Math.min(180, usableWidth * 0.18);
+    const bodyHalfWidth = Math.min(140, usableWidth * 0.14);
     return {
       left: centerX - bodyHalfWidth,
       right: centerX + bodyHalfWidth,
@@ -288,28 +288,35 @@ export function getModelObstructionRect(
  * Calculates candidate card dimensions dynamically based on viewport width.
  */
 export function getResponsiveCardDimensions(viewportWidth: number): { width: number; height: number } {
-  if (viewportWidth < 640) {
-    // Mobile: responsive width calc(100vw - 24px), height ~95-125px
+  if (viewportWidth < 600) {
+    // Mobile (< 600px): responsive width calc(100vw - 24px), height ~95-125px
     return {
       width: Math.min(viewportWidth - 24, 420),
       height: 115
     };
   }
-  if (viewportWidth < 1024) {
-    // Tablet / iPad: 380–420px
+  if (viewportWidth < 900) {
+    // Tablet Portrait (600–899px): 340–380px
     return {
-      width: Math.min(viewportWidth - 48, 420),
+      width: Math.min(viewportWidth - 48, 380),
+      height: 110
+    };
+  }
+  if (viewportWidth < 1200) {
+    // Tablet Landscape (900–1199px): compact card ~320px to fit comfortably beside 3D body
+    return {
+      width: 320,
       height: 110
     };
   }
   if (viewportWidth < 1440) {
-    // Laptop: 400–440px
+    // Laptop (1200–1439px): 440px
     return {
       width: 440,
       height: 110
     };
   }
-  // Large Desktop: 460px
+  // Large Desktop (>= 1440px): 460px
   return {
     width: 460,
     height: 112

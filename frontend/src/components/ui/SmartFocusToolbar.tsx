@@ -12,7 +12,11 @@ import {
   Compass,
   Gauge,
   HelpCircle,
-  Scissors
+  Scissors,
+  MoreHorizontal,
+  X,
+  Crosshair,
+  Monitor
 } from 'lucide-react';
 import { useAnatomyStore } from '../../stores/useAnatomyStore';
 
@@ -39,13 +43,18 @@ export const SmartFocusToolbar: React.FC = () => {
   const toggleLayers = useAnatomyStore((s) => s.toggleLayers);
   const selectedStructureId = useAnatomyStore((s) => s.selectedStructureId);
   const viewMode = useAnatomyStore((s) => s.viewMode);
+  const isCleanView = useAnatomyStore((s) => s.isCleanView);
+  const toggleCleanView = useAnatomyStore((s) => s.toggleCleanView);
 
   const [showAnglesMenu, setShowAnglesMenu] = useState(false);
   const [showExplodeSlider, setShowExplodeSlider] = useState(false);
   const [showSectionControls, setShowSectionControls] = useState(false);
+  const [showMoreSheet, setShowMoreSheet] = useState(false);
 
   const isVi = language === 'vi';
   const isDark = atelierTheme === 'dark';
+
+  const hasActiveSecondaryTools = explodeFactor > 0 || crossSection.enabled || autoRotate || showHotspots;
 
   const angles = [
     { id: 'anterior', labelVi: 'Nhìn trước (Anterior)', labelEn: 'Anterior' },
@@ -57,7 +66,10 @@ export const SmartFocusToolbar: React.FC = () => {
   ];
 
   return (
-    <div data-ui="bottom-toolbar" className="absolute bottom-3 sm:bottom-14 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 select-none pointer-events-auto max-w-[95vw]">
+    <div
+      data-ui="bottom-toolbar"
+      className="absolute bottom-3 lg:bottom-14 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 select-none pointer-events-auto max-w-[96vw] pb-[env(safe-area-inset-bottom,0px)]"
+    >
       {/* 1. Pop-up Panel: Exploded View Slider */}
       {showExplodeSlider && (
         <div
@@ -96,7 +108,7 @@ export const SmartFocusToolbar: React.FC = () => {
       {/* 2. Pop-up Panel: Cross-Section 3D Sliders */}
       {showSectionControls && (
         <div
-          className={`flex flex-col gap-2 p-3.5 rounded-2xl border shadow-xl backdrop-blur-md animate-fade-in text-xs ${
+          className={`flex flex-col gap-2 p-3.5 rounded-2xl border shadow-xl backdrop-blur-md animate-fade-in text-xs max-w-[90vw] ${
             isDark
               ? 'bg-slate-900/95 border-slate-800 text-slate-200'
               : 'bg-white/95 border-[#e7ded3] text-slate-800'
@@ -114,9 +126,9 @@ export const SmartFocusToolbar: React.FC = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-3 gap-3 pt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
             <div className="flex flex-col gap-1">
-              <span className="text-[10px] text-slate-500 font-mono">Trục X (Mặt phẳng đứng dọc)</span>
+              <span className="text-[10px] text-slate-500 font-mono">Trục X (Đứng dọc)</span>
               <input
                 type="range"
                 min="-1.5"
@@ -124,11 +136,11 @@ export const SmartFocusToolbar: React.FC = () => {
                 step="0.05"
                 value={crossSection.x}
                 onChange={(e) => setCrossSection({ x: parseFloat(e.target.value), enabled: true })}
-                className="w-24 accent-amber-600 h-1 cursor-pointer"
+                className="w-full sm:w-24 accent-amber-600 h-1 cursor-pointer"
               />
             </div>
             <div className="flex flex-col gap-1">
-              <span className="text-[10px] text-slate-500 font-mono">Trục Y (Mặt phẳng nằm ngang)</span>
+              <span className="text-[10px] text-slate-500 font-mono">Trục Y (Ngang)</span>
               <input
                 type="range"
                 min="-1.5"
@@ -136,11 +148,11 @@ export const SmartFocusToolbar: React.FC = () => {
                 step="0.05"
                 value={crossSection.y}
                 onChange={(e) => setCrossSection({ y: parseFloat(e.target.value), enabled: true })}
-                className="w-24 accent-amber-600 h-1 cursor-pointer"
+                className="w-full sm:w-24 accent-amber-600 h-1 cursor-pointer"
               />
             </div>
             <div className="flex flex-col gap-1">
-              <span className="text-[10px] text-slate-500 font-mono">Trục Z (Mặt phẳng đứng ngang)</span>
+              <span className="text-[10px] text-slate-500 font-mono">Trục Z (Đứng ngang)</span>
               <input
                 type="range"
                 min="-1.5"
@@ -148,7 +160,7 @@ export const SmartFocusToolbar: React.FC = () => {
                 step="0.05"
                 value={crossSection.z}
                 onChange={(e) => setCrossSection({ z: parseFloat(e.target.value), enabled: true })}
-                className="w-24 accent-amber-600 h-1 cursor-pointer"
+                className="w-full sm:w-24 accent-amber-600 h-1 cursor-pointer"
               />
             </div>
           </div>
@@ -158,7 +170,7 @@ export const SmartFocusToolbar: React.FC = () => {
       {/* 3. Pop-up Panel: Anatomical View Angles */}
       {showAnglesMenu && (
         <div
-          className={`flex items-center gap-1.5 p-2 rounded-2xl border shadow-xl backdrop-blur-md animate-fade-in ${
+          className={`flex items-center gap-1.5 p-2 rounded-2xl border shadow-xl backdrop-blur-md animate-fade-in flex-wrap max-w-[90vw] justify-center ${
             isDark
               ? 'bg-slate-900/95 border-slate-800 text-slate-200'
               : 'bg-white/95 border-[#e7ded3] text-slate-800'
@@ -171,7 +183,7 @@ export const SmartFocusToolbar: React.FC = () => {
                 setCameraAnglePreset(ang.id as any);
                 setShowAnglesMenu(false);
               }}
-              className={`px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer ${
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition cursor-pointer min-h-[36px] flex items-center justify-center ${
                 cameraAnglePreset === ang.id
                   ? 'bg-amber-600 text-white font-bold shadow-sm'
                   : 'hover:bg-amber-500/10 hover:text-amber-500'
@@ -183,9 +195,133 @@ export const SmartFocusToolbar: React.FC = () => {
         </div>
       )}
 
-      {/* 4. Main Smart Focus Toolbar */}
+      {/* 4. Pop-up Sheet: Secondary Tools ("More" Drawer for Tablet & Mobile) */}
+      {showMoreSheet && (
+        <div
+          className={`w-[340px] max-w-[92vw] p-3.5 rounded-2xl border shadow-2xl backdrop-blur-xl animate-fade-in text-xs space-y-3 ${
+            isDark
+              ? 'bg-slate-900/95 border-slate-800 text-slate-200'
+              : 'bg-white/95 border-[#e7ded3] text-slate-800'
+          }`}
+        >
+          <div className="flex items-center justify-between font-serif font-bold text-amber-600 dark:text-amber-400 border-b border-black/5 dark:border-white/10 pb-2">
+            <span className="flex items-center gap-1.5">
+              <MoreHorizontal className="w-4 h-4" />
+              <span>{isVi ? 'CÔNG CỤ NÂNG CAO' : 'SECONDARY 3D TOOLS'}</span>
+            </span>
+            <button
+              onClick={() => setShowMoreSheet(false)}
+              className="p-1 rounded-full text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            {/* Exploded View */}
+            <button
+              onClick={() => {
+                setShowExplodeSlider(!showExplodeSlider);
+                setShowMoreSheet(false);
+              }}
+              className={`flex items-center gap-2 p-2 rounded-xl border text-left cursor-pointer transition ${
+                explodeFactor > 0
+                  ? 'bg-amber-500/15 border-amber-500 text-amber-500 font-bold'
+                  : 'border-inherit hover:bg-black/5 dark:hover:bg-white/5'
+              }`}
+            >
+              <Sliders className="w-4 h-4 text-amber-500 flex-shrink-0" />
+              <div>
+                <div className="font-semibold">{isVi ? 'Bung lớp 3D' : 'Explode View'}</div>
+                <div className="text-[10px] text-slate-400">{explodeFactor > 0 ? `${Math.round(explodeFactor * 100)}%` : 'Tắt'}</div>
+              </div>
+            </button>
+
+            {/* Cross Section */}
+            <button
+              onClick={() => {
+                setShowSectionControls(!showSectionControls);
+                setShowMoreSheet(false);
+              }}
+              className={`flex items-center gap-2 p-2 rounded-xl border text-left cursor-pointer transition ${
+                crossSection.enabled
+                  ? 'bg-amber-500/15 border-amber-500 text-amber-500 font-bold'
+                  : 'border-inherit hover:bg-black/5 dark:hover:bg-white/5'
+              }`}
+            >
+              <Scissors className="w-4 h-4 text-sky-500 flex-shrink-0" />
+              <div>
+                <div className="font-semibold">{isVi ? 'Mặt cắt lát' : 'Cross-Section'}</div>
+                <div className="text-[10px] text-slate-400">{crossSection.enabled ? 'Đang bật' : 'Tắt'}</div>
+              </div>
+            </button>
+
+            {/* Anatomical Landmarks (3D Pins) */}
+            <button
+              onClick={toggleShowHotspots}
+              className={`flex items-center gap-2 p-2 rounded-xl border text-left cursor-pointer transition ${
+                showHotspots
+                  ? 'bg-emerald-500/15 border-emerald-500 text-emerald-500 font-bold'
+                  : 'border-inherit hover:bg-black/5 dark:hover:bg-white/5'
+              }`}
+            >
+              <Crosshair className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+              <div>
+                <div className="font-semibold">{isVi ? 'Điểm mốc giải phẫu' : '3D Pins'}</div>
+                <div className="text-[10px] text-slate-400">{showHotspots ? 'Hiển thị' : 'Ẩn'}</div>
+              </div>
+            </button>
+
+            {/* Auto Rotate Toggle */}
+            <button
+              onClick={toggleAutoRotate}
+              className={`flex items-center gap-2 p-2 rounded-xl border text-left cursor-pointer transition ${
+                autoRotate
+                  ? 'bg-amber-600/15 border-amber-600 text-amber-600 font-bold'
+                  : 'border-inherit hover:bg-black/5 dark:hover:bg-white/5'
+              }`}
+            >
+              <RotateCcw className={`w-4 h-4 text-amber-600 flex-shrink-0 ${autoRotate ? 'animate-spin' : ''}`} />
+              <div>
+                <div className="font-semibold">{isVi ? 'Tự động xoay' : 'Auto Rotate'}</div>
+                <div className="text-[10px] text-slate-400">{autoRotate ? autoRotateSpeed.toUpperCase() : 'Tắt'}</div>
+              </div>
+            </button>
+
+            {/* Dim vs Hide Surroundings */}
+            <button
+              onClick={() => setFocusMode(focusMode === 'dim' ? 'hide' : 'dim')}
+              className="flex items-center gap-2 p-2 rounded-xl border border-inherit hover:bg-black/5 dark:hover:bg-white/5 text-left cursor-pointer transition"
+            >
+              <Eye className="w-4 h-4 text-purple-500 flex-shrink-0" />
+              <div>
+                <div className="font-semibold">{isVi ? 'Môi trường quanh' : 'Surroundings'}</div>
+                <div className="text-[10px] text-slate-400">{focusMode === 'dim' ? (isVi ? 'Làm mờ 15%' : 'Dim') : (isVi ? 'Ẩn hoàn toàn' : 'Hidden')}</div>
+              </div>
+            </button>
+
+            {/* Clean View Toggle */}
+            <button
+              onClick={toggleCleanView}
+              className={`flex items-center gap-2 p-2 rounded-xl border text-left cursor-pointer transition ${
+                isCleanView
+                  ? 'bg-amber-500/20 border-amber-500 text-amber-500 font-bold'
+                  : 'border-inherit hover:bg-black/5 dark:hover:bg-white/5'
+              }`}
+            >
+              <Monitor className="w-4 h-4 text-indigo-500 flex-shrink-0" />
+              <div>
+                <div className="font-semibold">{isVi ? 'Chế độ xem tĩnh' : 'Clean View'}</div>
+                <div className="text-[10px] text-slate-400">{isCleanView ? 'Đang bật' : 'Ẩn giao diện'}</div>
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 5. Main Smart Focus Toolbar */}
       <div
-        className={`flex items-center gap-1 sm:gap-1.5 p-1.5 rounded-full border shadow-2xl backdrop-blur-md text-xs font-medium transition overflow-x-auto max-w-[94vw] scrollbar-none flex-nowrap ${
+        className={`flex items-center gap-1 sm:gap-1.5 p-1 sm:p-1.5 rounded-full border shadow-2xl backdrop-blur-md text-xs font-medium transition overflow-x-auto max-w-[94vw] scrollbar-none flex-nowrap ${
           isDark
             ? 'bg-slate-900/90 border-slate-800 text-slate-200'
             : 'bg-white/90 border-[#e7ded3] text-slate-800'
@@ -195,20 +331,20 @@ export const SmartFocusToolbar: React.FC = () => {
         <div className="flex items-center p-0.5 rounded-full bg-black/5 dark:bg-white/5 border border-inherit">
           <button
             onClick={() => setIsIsolated(false)}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] transition cursor-pointer ${
+            className={`flex items-center gap-1 px-2.5 py-1.5 sm:py-1 rounded-full text-[11px] transition cursor-pointer min-h-[36px] sm:min-h-0 ${
               !isIsolated
                 ? 'bg-amber-600 text-white font-bold shadow-sm'
                 : 'text-slate-500 hover:text-current'
             }`}
             title="Tập trung vào cơ quan nhưng vẫn giữ mờ môi trường xung quanh"
           >
-            <Search className="w-3 h-3" />
+            <Search className="w-3.5 h-3.5" />
             <span>{isVi ? 'Tiêu điểm' : 'Focus'}</span>
           </button>
           <button
             onClick={() => setIsIsolated(true)}
             disabled={!selectedStructureId}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] transition ${
+            className={`flex items-center gap-1 px-2.5 py-1.5 sm:py-1 rounded-full text-[11px] transition min-h-[36px] sm:min-h-0 ${
               !selectedStructureId
                 ? 'opacity-40 cursor-not-allowed text-slate-400'
                 : isIsolated
@@ -221,16 +357,16 @@ export const SmartFocusToolbar: React.FC = () => {
                 : (isVi ? 'Chọn một cơ quan để bật chế độ tách biệt' : 'Select a structure to isolate')
             }
           >
-            <Eye className="w-3 h-3" />
+            <Eye className="w-3.5 h-3.5" />
             <span>{isVi ? 'Tách biệt' : 'Isolate'}</span>
           </button>
         </div>
 
-        {/* Dim vs Hide Surroundings (Only when in Focus mode) */}
+        {/* Dim vs Hide Surroundings (Only visible on Desktop >= 1200px) */}
         {!isIsolated && (
           <button
             onClick={() => setFocusMode(focusMode === 'dim' ? 'hide' : 'dim')}
-            className={`px-2.5 py-1 rounded-full text-[11px] border transition cursor-pointer ${
+            className={`hidden lg:flex items-center px-2.5 py-1 rounded-full text-[11px] border transition cursor-pointer ${
               focusMode === 'hide'
                 ? 'bg-rose-500/20 border-rose-500 text-rose-400'
                 : 'border-transparent text-slate-500 hover:text-current'
@@ -243,73 +379,96 @@ export const SmartFocusToolbar: React.FC = () => {
 
         <div className="w-px h-4 bg-slate-300 dark:bg-slate-700 mx-0.5" />
 
-        {/* BÓC TÁCH LỚP (LAYERS) BUTTON - EXACT MATCH TO IMAGE 2 */}
+        {/* BÓC TÁCH LỚP (LAYERS) BUTTON */}
         <button
           onClick={toggleLayers}
-          className={`flex items-center gap-1.5 px-3 py-1 rounded-full transition cursor-pointer ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 sm:py-1 rounded-full transition cursor-pointer min-h-[36px] sm:min-h-0 ${
             isLayersActive
               ? 'bg-[#c05a4e] text-white font-bold shadow-md'
               : 'hover:bg-black/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300'
           }`}
-          title="Bóc tách từng lớp giải phẫu / Sợi cơ & Mạch máu vi thể (Layers)"
+          title="Bóc tách từng lớp giải phẫu (Layers)"
         >
           <Layers className="w-3.5 h-3.5" />
           <span>{isVi ? 'Bóc tách lớp' : 'Layers'}</span>
         </button>
 
-        {/* Bung lớp (Explode) Trigger */}
-        <button
-          onClick={() => {
-            if (viewMode === 'full-body' && !selectedStructureId) return;
-            setShowExplodeSlider(!showExplodeSlider);
-            setShowAnglesMenu(false);
-            setShowSectionControls(false);
-          }}
-          disabled={viewMode === 'full-body' && !selectedStructureId}
-          className={`flex items-center gap-1 px-2.5 py-1 rounded-full transition ${
-            viewMode === 'full-body' && !selectedStructureId
-              ? 'opacity-40 cursor-not-allowed text-slate-400'
-              : explodeFactor > 0 || showExplodeSlider
-              ? 'bg-amber-500/20 text-amber-500 border border-amber-500/50 cursor-pointer'
-              : 'hover:bg-black/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 cursor-pointer'
-          }`}
-          title={
-            viewMode === 'full-body' && !selectedStructureId
-              ? (isVi ? 'Chọn một cơ quan để bung tách cấu trúc con' : 'Select an organ to explode sub-structures')
-              : (isVi ? 'Bung tách các cấu trúc con ra ngoài' : 'Explode sub-structures')
-          }
-        >
-          <Sliders className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">{isVi ? 'Bung lớp' : 'Explode'}</span>
-          {explodeFactor > 0 && <span className="font-mono text-[10px]">({Math.round(explodeFactor * 100)}%)</span>}
-        </button>
+        {/* Desktop-Only Tools (Shown inline on Desktop >= 1200px) */}
+        <div className="hidden lg:flex items-center gap-1">
+          {/* Bung lớp (Explode) Trigger */}
+          <button
+            onClick={() => {
+              if (viewMode === 'full-body' && !selectedStructureId) return;
+              setShowExplodeSlider(!showExplodeSlider);
+              setShowAnglesMenu(false);
+              setShowSectionControls(false);
+            }}
+            disabled={viewMode === 'full-body' && !selectedStructureId}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-full transition ${
+              viewMode === 'full-body' && !selectedStructureId
+                ? 'opacity-40 cursor-not-allowed text-slate-400'
+                : explodeFactor > 0 || showExplodeSlider
+                ? 'bg-amber-500/20 text-amber-500 border border-amber-500/50 cursor-pointer'
+                : 'hover:bg-black/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 cursor-pointer'
+            }`}
+            title="Bung tách các cấu trúc con ra ngoài"
+          >
+            <Sliders className="w-3.5 h-3.5" />
+            <span>{isVi ? 'Bung lớp' : 'Explode'}</span>
+            {explodeFactor > 0 && <span className="font-mono text-[10px]">({Math.round(explodeFactor * 100)}%)</span>}
+          </button>
 
-        {/* Mặt cắt 3D (Section) Trigger */}
-        <button
-          onClick={() => {
-            setShowSectionControls(!showSectionControls);
-            setShowExplodeSlider(false);
-            setShowAnglesMenu(false);
-          }}
-          className={`flex items-center gap-1 px-2.5 py-1 rounded-full transition cursor-pointer ${
-            crossSection.enabled || showSectionControls
-              ? 'bg-amber-500/20 text-amber-500 border border-amber-500/50'
-              : 'hover:bg-black/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300'
-          }`}
-          title="Cắt lát 3 chiều"
-        >
-          <Scissors className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">{isVi ? 'Mặt cắt' : 'Section'}</span>
-        </button>
+          {/* Mặt cắt 3D (Section) Trigger */}
+          <button
+            onClick={() => {
+              setShowSectionControls(!showSectionControls);
+              setShowExplodeSlider(false);
+              setShowAnglesMenu(false);
+            }}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-full transition cursor-pointer ${
+              crossSection.enabled || showSectionControls
+                ? 'bg-amber-500/20 text-amber-500 border border-amber-500/50'
+                : 'hover:bg-black/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300'
+            }`}
+            title="Cắt lát 3 chiều"
+          >
+            <Scissors className="w-3.5 h-3.5" />
+            <span>{isVi ? 'Mặt cắt' : 'Section'}</span>
+          </button>
 
-        {/* Góc nhìn y khoa chuẩn (Anatomical Angles) */}
+          {/* 3D Pins Nhãn Mốc Giải Phẫu */}
+          <button
+            onClick={toggleShowHotspots}
+            className={`p-1.5 rounded-full transition cursor-pointer ${
+              showHotspots ? 'text-amber-500 bg-amber-500/15' : 'text-slate-400 hover:text-current'
+            }`}
+            title={showHotspots ? 'Ẩn các điểm mốc giải phẫu' : 'Hiện các điểm mốc giải phẫu'}
+          >
+            {showHotspots ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+          </button>
+
+          {/* Auto rotate */}
+          <button
+            onClick={toggleAutoRotate}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-full transition cursor-pointer ${
+              autoRotate ? 'bg-amber-600 text-white font-bold shadow-sm' : 'hover:bg-black/5 dark:hover:bg-white/10 text-slate-500'
+            }`}
+            title="Tự động xoay 360 độ quanh tiêu bản"
+          >
+            <RotateCcw className={`w-3 h-3 ${autoRotate ? 'animate-spin' : ''}`} />
+            <span>{isVi ? 'Tự xoay' : 'Rotate'}</span>
+          </button>
+        </div>
+
+        {/* Góc nhìn y khoa chuẩn (Anatomical Angles - Always on primary toolbar) */}
         <button
           onClick={() => {
             setShowAnglesMenu(!showAnglesMenu);
             setShowExplodeSlider(false);
             setShowSectionControls(false);
+            setShowMoreSheet(false);
           }}
-          className={`flex items-center gap-1 px-2.5 py-1 rounded-full transition cursor-pointer ${
+          className={`flex items-center gap-1 px-2.5 py-1.5 sm:py-1 rounded-full transition cursor-pointer min-h-[36px] sm:min-h-0 ${
             showAnglesMenu
               ? 'bg-amber-500/20 text-amber-500'
               : 'hover:bg-black/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300'
@@ -317,57 +476,30 @@ export const SmartFocusToolbar: React.FC = () => {
           title="Các góc nhìn giải phẫu kinh điển (Trước, Sau, Trên, Dưới, Trái, Phải)"
         >
           <Compass className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">{isVi ? 'Góc nhìn' : 'Angles'}</span>
+          <span>{isVi ? 'Góc nhìn' : 'View'}</span>
         </button>
 
-        {/* 3D Pins Nhãn Mốc Giải Phẫu */}
+        {/* MORE BUTTON (Tablet & Mobile < 1200px: Opens secondary tools drawer) */}
         <button
-          onClick={toggleShowHotspots}
-          className={`p-1.5 rounded-full transition cursor-pointer ${
-            showHotspots
-              ? 'text-amber-500 bg-amber-500/15'
-              : 'text-slate-400 hover:text-current'
+          onClick={() => {
+            setShowMoreSheet(!showMoreSheet);
+            setShowAnglesMenu(false);
+            setShowExplodeSlider(false);
+            setShowSectionControls(false);
+          }}
+          className={`relative flex lg:hidden items-center gap-1 px-2.5 py-1.5 sm:py-1 rounded-full transition cursor-pointer min-h-[36px] sm:min-h-0 ${
+            showMoreSheet
+              ? 'bg-amber-600 text-white font-bold shadow-sm'
+              : 'hover:bg-black/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300'
           }`}
-          title={showHotspots ? 'Ẩn các điểm mốc giải phẫu' : 'Hiện các điểm mốc giải phẫu'}
+          title="Công cụ bổ trợ: Bung lớp, Mặt cắt, Mốc giải phẫu, Tự xoay"
         >
-          {showHotspots ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-        </button>
-
-        <div className="w-px h-4 bg-slate-300 dark:bg-slate-700 mx-0.5" />
-
-        {/* Tự xoay quanh tâm vật thể */}
-        <div className="flex items-center gap-0.5">
-          <button
-            onClick={toggleAutoRotate}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-full transition cursor-pointer ${
-              autoRotate
-                ? 'bg-amber-600 text-white font-bold shadow-sm'
-                : 'hover:bg-black/5 dark:hover:bg-white/10 text-slate-500'
-            }`}
-            title="Tự động xoay 360 độ quanh tiêu bản"
-          >
-            <RotateCcw className={`w-3 h-3 ${autoRotate ? 'animate-spin' : ''}`} />
-            <span className="hidden md:inline">{isVi ? 'Tự xoay' : 'Rotate'}</span>
-          </button>
-
-          {autoRotate && (
-            <button
-              onClick={() => {
-                const nextSpeed =
-                  autoRotateSpeed === 'slow'
-                    ? 'normal'
-                    : autoRotateSpeed === 'normal'
-                    ? 'fast'
-                    : 'slow';
-                setAutoRotateSpeed(nextSpeed);
-              }}
-              className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-black/10 dark:bg-white/10 uppercase cursor-pointer"
-              title="Tốc độ tự xoay"
-            >
-              {autoRotateSpeed}
-            </button>
+          <MoreHorizontal className="w-3.5 h-3.5" />
+          <span>{isVi ? 'Khác' : 'More'}</span>
+          {hasActiveSecondaryTools && (
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse absolute -top-0.5 -right-0.5" />
           )}
-        </div>
+        </button>
       </div>
     </div>
   );
