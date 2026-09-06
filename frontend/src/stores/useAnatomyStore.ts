@@ -104,6 +104,8 @@ interface AnatomyState {
   isInfoExpanded: boolean;
   setIsInfoExpanded: (expanded: boolean) => void;
   toggleInfoExpanded: () => void;
+  infoSheetState: 'collapsed' | 'half' | 'expanded';
+  setInfoSheetState: (state: 'collapsed' | 'half' | 'expanded') => void;
   isCleanView: boolean;
   toggleCleanView: () => void;
   setIsCleanView: (clean: boolean) => void;
@@ -385,6 +387,7 @@ export const useAnatomyStore = create<AnatomyState>((set, get) => ({
       selectedStructureId: id,
       isInfoOpen: Boolean(id),
       isInfoExpanded: false, // COMPACT BY DEFAULT: only expand on explicit user demand
+      infoSheetState: 'collapsed',
       isTreeOpen: Boolean(id) && typeof window !== 'undefined' && window.innerWidth < 1200 ? false : s.isTreeOpen
     })),
 
@@ -419,8 +422,26 @@ export const useAnatomyStore = create<AnatomyState>((set, get) => ({
     })),
 
   isInfoExpanded: false,
-  setIsInfoExpanded: (expanded) => set({ isInfoExpanded: expanded }),
-  toggleInfoExpanded: () => set((s) => ({ isInfoExpanded: !s.isInfoExpanded })),
+  setIsInfoExpanded: (expanded) =>
+    set({
+      isInfoExpanded: expanded,
+      infoSheetState: expanded ? 'half' : 'collapsed'
+    }),
+  toggleInfoExpanded: () =>
+    set((s) => {
+      const next = !s.isInfoExpanded;
+      return {
+        isInfoExpanded: next,
+        infoSheetState: next ? 'half' : 'collapsed'
+      };
+    }),
+
+  infoSheetState: 'collapsed',
+  setInfoSheetState: (state) =>
+    set({
+      infoSheetState: state,
+      isInfoExpanded: state !== 'collapsed'
+    }),
 
   isCleanView: false,
   setIsCleanView: (clean) => set({ isCleanView: clean }),

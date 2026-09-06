@@ -74,70 +74,52 @@ export const AnatomyInfoPanel: React.FC = () => {
   // Case 1: Whole Body Overview (when no specific organ is selected)
   if (!structure) {
     return (
-      <>
-        {/* Dark backdrop ONLY appears when user explicitly expands on mobile/tablet */}
-        {isInfoExpanded && (
-          <div
-            onClick={() => setIsInfoExpanded(false)}
-            className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-xs z-40 transition-opacity animate-fade-in"
-          />
-        )}
-        <AnatomyInfoCard
-          anatomyId="human_skeleton"
-          nameVi="Khung xương toàn thân (Bộ xương người)"
-          nameEn="Human Skeleton"
-          nameLatin="Skeleton humanum"
-          ipa="/ˈskel.ɪ.tən/"
-          category="bone"
-          reviewStatus="verified"
-          position={[0, 0.9, 0]}
-          summary="Bộ khung nâng đỡ cơ thể gồm 206 xương ở người trưởng thành, chia thành xương trục và xương treo."
-          details={{
-            overviewVi:
-              'Bộ khung nâng đỡ cơ thể gồm 206 xương ở người trưởng thành, bảo vệ tạng phủ, cung cấp điểm bám cho hệ cơ vân và là kho dự trữ 99% calci và phosphat toàn thân.',
-            overviewEn:
-              'The adult human skeleton comprises 206 bones providing structural framework, protecting vital organs, and storing essential minerals.',
-            locationVi: 'Bộ khung toàn thân từ vòm sọ đến các đốt ngón chân.',
-            locationEn: 'Throughout the human anatomical axis from cranium to phalanges.',
-            structureVi:
-              'Chia thành 2 phần chính: Xương trục (80 xương: sọ, cột sống, xương sườn, xương ức) và Xương treo (126 xương: đai vai, chi trên, đai hông, chi dưới).',
-            structureEn:
-              'Divided into Axial skeleton (80 bones) and Appendicular skeleton (126 bones).',
-            functionVi:
-              'Nâng đỡ cơ thể, bảo vệ các tạng trọng yếu (não, tim, phổi), tạo hệ đòn bẩy vận động, tạo máu tại tủy xương và dự trữ khoáng chất.',
-            functionEn:
-              'Support, protection of vital viscera, biomechanical levers for locomotion, hematopoiesis, and mineral storage.',
-            clinicalVi:
-              'Loãng xương (Osteoporosis), gãy xương bệnh lý, đa u tủy xương, còi xương/nhuyễn xương.',
-            clinicalEn: 'Osteoporosis, pathological fractures, multiple myeloma, rickets/osteomalacia.',
-            icd10: ['M81', 'M80'],
-            references: "Terminologia Anatomica (TA2), Gray's Anatomy 42nd ed, Netter Atlas of Human Anatomy.",
-            stats: [
-              { label: 'Xương', value: '206', sub: 'Xương chính' },
-              { label: 'Cơ vân', value: '~640', sub: 'Cơ vận động' },
-              { label: 'Hệ cơ quan', value: '12', sub: 'Hệ giải phẫu' },
-              { label: 'Mô hình 3D', value: '64', sub: 'PBR Assets' }
-            ]
-          }}
-          onDeepInspect={handleDeepInspect}
-          onClose={() => setIsInfoOpen(false)}
-        />
-      </>
+      <AnatomyInfoCard
+        anatomyId="human_skeleton"
+        nameVi="Khung xương toàn thân (Bộ xương người)"
+        nameEn="Human Skeleton"
+        nameLatin="Skeleton humanum"
+        ipa="/ˈskel.ɪ.tən/"
+        category="bone"
+        reviewStatus="verified"
+        position={[0, 0.9, 0]}
+        summary="Bộ khung nâng đỡ cơ thể gồm 206 xương ở người trưởng thành, chia thành xương trục và xương treo."
+        details={{
+          overviewVi:
+            'Bộ khung nâng đỡ cơ thể gồm 206 xương ở người trưởng thành, bảo vệ tạng phủ, cung cấp điểm bám cho hệ cơ vân và là kho dự trữ 99% calci và phosphat toàn thân.',
+          overviewEn:
+            'The adult human skeleton comprises 206 bones providing structural framework, protecting vital organs, and storing essential minerals.',
+          locationVi: 'Bộ khung toàn thân từ vòm sọ đến các đốt ngón chân.',
+          locationEn: 'Throughout the human anatomical axis from cranium to phalanges.',
+          structureVi:
+            'Chia thành 2 phần chính: Xương trục (80 xương: sọ, cột sống, xương sườn, xương ức) và Xương treo (126 xương: đai vai, chi trên, đai hông, chi dưới).',
+          structureEn:
+            'Divided into Axial skeleton (80 bones) and Appendicular skeleton (126 bones).',
+          functionVi:
+            'Nâng đỡ cơ thể, bảo vệ các tạng trọng yếu (não, tim, phổi), tạo hệ đòn bẩy vận động, tạo máu tại tủy xương và dự trữ khoáng chất.',
+          functionEn:
+            'Support, protection of vital viscera, biomechanical levers for locomotion, hematopoiesis, and mineral storage.',
+          clinicalVi:
+            'Loãng xương (Osteoporosis), gãy xương bệnh lý, đa u tủy xương, còi xương/nhuyễn xương.',
+          clinicalEn: 'Osteoporosis, pathological fractures, multiple myeloma, rickets/osteomalacia.',
+          icd10: ['M81', 'M80'],
+          references: "Terminologia Anatomica (TA2), Gray's Anatomy 42nd ed, Netter Atlas of Human Anatomy.",
+          stats: [
+            { label: 'Xương', value: '206', sub: 'Xương chính' },
+            { label: 'Cơ vân', value: '~640', sub: 'Cơ vận động' },
+            { label: 'Hệ cơ quan', value: '12', sub: 'Hệ giải phẫu' },
+            { label: 'Mô hình 3D', value: '64', sub: 'PBR Assets' }
+          ]
+        }}
+        onDeepInspect={handleDeepInspect}
+        onClose={() => setIsInfoOpen(false)}
+      />
     );
   }
 
   // Case 2: Specific Anatomical Structure Selected
   return (
-    <>
-      {/* Dark backdrop ONLY appears when user explicitly expands on mobile/tablet */}
-      {isInfoExpanded && (
-        <div
-          onClick={() => setIsInfoExpanded(false)}
-          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-xs z-40 transition-opacity animate-fade-in"
-        />
-      )}
-
-      <AnatomyInfoCard
+    <AnatomyInfoCard
         anatomyId={structure.id}
         nameVi={structure.nameVi}
         nameEn={structure.nameEn}
@@ -169,6 +151,5 @@ export const AnatomyInfoPanel: React.FC = () => {
         }}
         onRelationClick={handleRelationClick}
       />
-    </>
   );
 };
