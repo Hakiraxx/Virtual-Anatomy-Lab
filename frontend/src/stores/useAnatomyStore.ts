@@ -101,6 +101,9 @@ interface AnatomyState {
   isInfoOpen: boolean;
   toggleInfoOpen: () => void;
   setIsInfoOpen: (open: boolean) => void;
+  isInfoExpanded: boolean;
+  setIsInfoExpanded: (expanded: boolean) => void;
+  toggleInfoExpanded: () => void;
 
   // Smart Focus actions
   triggerCameraFocus: (target: CameraFocusTarget) => void;
@@ -375,6 +378,7 @@ export const useAnatomyStore = create<AnatomyState>((set, get) => ({
     set((s) => ({
       selectedStructureId: id,
       isInfoOpen: Boolean(id),
+      isInfoExpanded: false, // COMPACT BY DEFAULT: only expand on explicit user demand
       isTreeOpen: Boolean(id) && typeof window !== 'undefined' && window.innerWidth < 1024 ? false : s.isTreeOpen
     })),
 
@@ -407,6 +411,10 @@ export const useAnatomyStore = create<AnatomyState>((set, get) => ({
       isInfoOpen: open,
       isTreeOpen: open && typeof window !== 'undefined' && window.innerWidth < 1024 ? false : s.isTreeOpen
     })),
+
+  isInfoExpanded: false,
+  setIsInfoExpanded: (expanded) => set({ isInfoExpanded: expanded }),
+  toggleInfoExpanded: () => set((s) => ({ isInfoExpanded: !s.isInfoExpanded })),
 
   toggleLayers: () => set((s) => ({ isLayersActive: !s.isLayersActive })),
 

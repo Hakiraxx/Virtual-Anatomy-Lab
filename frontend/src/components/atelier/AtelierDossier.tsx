@@ -12,11 +12,14 @@ import {
   Share2,
   Layers,
   ChevronRight,
+  Volume2,
   X
 } from 'lucide-react';
 import { useAnatomyStore } from '../../stores/useAnatomyStore';
 import { ATELIER_ORGANS } from '../../data/fullOrgansData';
 import { DEEP_STRUCTURES_MAP, DeepStructure } from '../../data/deepStructures';
+import { getAnatomicalPronunciation } from '../../data/anatomyPronunciationData';
+import { pronunciationPlayer } from '../../utils/pronunciationPlayer';
 
 // Rich medical facts mapped by organ id
 const SPECIMEN_DETAILS: Record<
@@ -258,8 +261,30 @@ export const AtelierDossier: React.FC = () => {
               <h1 className="font-serif text-2xl font-bold tracking-tight text-current mt-0.5">
                 {isVi ? activeStructure.nameVi : activeStructure.nameEn}
               </h1>
-              <div className="text-xs font-serif italic text-amber-600 dark:text-amber-400 mt-0.5">
-                {activeStructure.nameLatin}
+              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                <span className="text-xs font-serif italic text-amber-600 dark:text-amber-400">
+                  {activeStructure.nameLatin || activeStructure.nameEn}
+                </span>
+                {(() => {
+                  const pron = getAnatomicalPronunciation(activeStructure.id, activeStructure.nameEn);
+                  if (!pron?.ipa) return null;
+                  return (
+                    <div className="flex items-center gap-1 bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded text-[11px] font-mono text-amber-600 dark:text-amber-400 border border-black/5 dark:border-white/10">
+                      <span>{pron.ipa}</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          pronunciationPlayer.play(activeStructure.nameEn);
+                        }}
+                        className="p-0.5 rounded hover:bg-amber-500/20 text-slate-400 hover:text-amber-500 cursor-pointer"
+                        title="Nghe phát âm tiếng Anh chuẩn học thuật"
+                        aria-label="Nghe phát âm tiếng Anh"
+                      >
+                        <Volume2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 
@@ -342,8 +367,30 @@ export const AtelierDossier: React.FC = () => {
                   <h1 className="font-serif text-2xl lg:text-3xl font-bold tracking-tight text-current">
                     {organName}
                   </h1>
-                  <div className="text-xs font-serif italic text-amber-700 dark:text-amber-400 mt-0.5">
-                    {isVi ? detail.subtitleVi : detail.subtitleEn}
+                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                    <span className="text-xs font-serif italic text-amber-700 dark:text-amber-400">
+                      {isVi ? detail.subtitleVi : detail.subtitleEn}
+                    </span>
+                    {(() => {
+                      const pron = getAnatomicalPronunciation(specimen.id, specimen.nameEn);
+                      if (!pron?.ipa) return null;
+                      return (
+                        <div className="flex items-center gap-1 bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded text-[11px] font-mono text-amber-600 dark:text-amber-400 border border-black/5 dark:border-white/10">
+                          <span>{pron.ipa}</span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              pronunciationPlayer.play(specimen.nameEn);
+                            }}
+                            className="p-0.5 rounded hover:bg-amber-500/20 text-slate-400 hover:text-amber-500 cursor-pointer"
+                            title="Nghe phát âm tiếng Anh chuẩn học thuật"
+                            aria-label="Nghe phát âm tiếng Anh"
+                          >
+                            <Volume2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
 
