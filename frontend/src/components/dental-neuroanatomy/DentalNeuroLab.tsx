@@ -25,6 +25,9 @@ import {
   DENTAL_INNERVATION_DATABASE,
   MUSCLES_OF_MASTICATION
 } from '../../data/dentalNeuroData';
+import { getDentalSpecimen, TMJ_SPECIMEN_DATA } from '../../data/dentalSpecimensData';
+import { ToothPositionResolver } from '../../utils/ToothPositionResolver';
+import { AnatomyInfoCard } from '../ui/AnatomyInfoCard';
 import { DentalNeuroTree } from './DentalNeuroTree';
 import { DentalNeuro3DStage } from './DentalNeuro3DStage';
 import { DentalNeuroInfoPanel } from './DentalNeuroInfoPanel';
@@ -126,12 +129,9 @@ export const DentalNeuroLab: React.FC = () => {
     }
     return true;
   });
-  const [isInfoOpen, setIsInfoOpen] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      return window.innerWidth >= 1200;
-    }
-    return false;
-  });
+  // Compact by default: Right panel is closed initially across all viewports
+  const [isInfoOpen, setIsInfoOpen] = useState<boolean>(false);
+  const [isCompactDismissed, setIsCompactDismissed] = useState<boolean>(false);
 
   // Responsive layout watcher for viewports
   useEffect(() => {
@@ -148,12 +148,10 @@ export const DentalNeuroLab: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Automatically open Info panel on desktop when selection changes
+  // Reset compact card dismissal when active selection changes so new structure appears immediately
   useEffect(() => {
-    if (selectedAnatomyId && !isCompact) {
-      setIsInfoOpen(true);
-    }
-  }, [selectedAnatomyId, isCompact]);
+    setIsCompactDismissed(false);
+  }, [selectedAnatomyId, selectedToothFdi, activeSpecimenMode]);
 
   // Drag handler for Left Tree Splitter
   const handleTreeSplitterPointerDown = (e: React.PointerEvent) => {
@@ -471,6 +469,198 @@ export const DentalNeuroLab: React.FC = () => {
     wisdomToothId,
     setViewMode,
     setActiveSpecimenMode,
+    selectAnatomy
+  ]);
+
+  // Active compact anatomy annotation card data (Compact by Default)
+  const activeCompactInfo = useMemo(() => {
+    if (isInfoOpen || isCompactDismissed) return null;
+
+    // 1. Tooth specimen mode
+    if (activeSpecimenMode === 'tooth_specimen') {
+      const toothDetail = getDentalSpecimen(selectedToothFdi);
+      if (!toothDetail) return null;
+      const record = ToothPositionResolver.resolve(toothDetail.fdi);
+      return {
+        anatomyId: `tooth.${toothDetail.fdi}`,
+        nameVi: toothDetail.nameVi,
+        nameEn: toothDetail.nameEn,
+        nameLatin: record?.latinName,
+        category: `FDI ${toothDetail.fdi}`,
+        summary:
+          toothDetail.pulpChamberFloorAnatomyVi ||
+          toothDetail.accessCavityDetailsVi ||
+          `Răng ${toothDetail.nameVi} thuộc cung răng người.`,
+        details: {
+          overviewVi: toothDetail.accessCavityDetailsVi,
+          overviewEn: toothDetail.nameEn,
+          structureVi: `Chân răng: ${toothDetail.rootCount}, Số ống tủy: ${toothDetail.canalCount}, Chiều dài chân: ${toothDetail.rootLengthMm}mm. Hình thái mở tủy: ${toothDetail.accessCavityShape}.`,
+          clinicalVi: toothDetail.clinicalRisksVi?.join('; '),
+          stats: [
+            { label: 'CHÂN RĂNG', value: String(toothDetail.rootCount) },
+            { label: 'SỐ ỐNG TỦY', value: String(toothDetail.canalCount) },
+            { label: 'DÀI CHÂN', value: `${toothDetail.rootLengthMm}mm` },
+            { label: 'FDI', value: String(toothDetail.fdi) }
+          ]
+        },
+        onClose: () => setIsCompactDismissed(true),
+        onExpand: () => setIsInfoOpen(true)
+      };
+    }
+
+    // 2. Cranial nerves / General mode with active selection
+    if (selectedAnatomyId) {
+      const nerve = DENTAL_NERVE_STRUCTURES[selectedAnatomyId];
+      if (nerve) {
+        return {
+          anatomyId: nerve.id,
+          nameVi: nerve.nameVi,
+          nameEn: nerve.nameEn,
+          nameLatin: nerve.latinName || 'Nervus cranialis',
+          category: 'nerve',
+          summary: nerve.courseVi || nerve.innervationVi,
+          details: {
+            overviewVi: nerve.courseVi,
+            overviewEn: nerve.courseEn,
+            structureVi: nerve.originVi,
+            innervationVi: nerve.innervationVi,
+            clinicalVi: nerve.clinicalAnatomyVi
+          },
+          onClose: () => {
+            setIsCompactDismissed(true);
+            selectAnatomy(null);
+          },
+          onExpand: () => setIsInfoOpen(true)
+        };
+      }
+
+      const foramen = CRANIAL_FORAMINA[selectedAnatomyId];
+      if (foramen) {
+        return {
+          anatomyId: foramen.id,
+          nameVi: foramen.nameVi,
+          nameEn: foramen.nameEn,
+          nameLatin: foramen.latinName,
+          category: 'foramen',
+          summary:
+            foramen.clinicalSignificanceVi ||
+            `Lỗ sọ trên ${foramen.boneVi} cho các cấu trúc mạch máu và thần kinh đi qua.`,
+          details: {
+            overviewVi: `Vị trí trên xương: ${foramen.boneVi}. Cấu trúc đi qua: ${foramen.structuresPassingThroughVi.join(', ')}.`,
+            overviewEn: foramen.nameEn,
+            clinicalVi: foramen.clinicalSignificanceVi
+          },
+          onClose: () => {
+            setIsCompactDismissed(true);
+            selectAnatomy(null);
+          },
+          onExpand: () => setIsInfoOpen(true)
+        };
+      }
+
+      const muscle = MUSCLES_OF_MASTICATION.find((m) => m.id === selectedAnatomyId);
+      if (muscle) {
+        return {
+          anatomyId: muscle.id,
+          nameVi: muscle.nameVi,
+          nameEn: muscle.nameEn,
+          nameLatin: muscle.latinName,
+          category: 'muscle',
+          summary: muscle.actionVi,
+          details: {
+            overviewVi: muscle.actionVi,
+            overviewEn: muscle.actionEn,
+            structureVi: `Nguyên ủy: ${muscle.originVi}. Bám tận: ${muscle.insertionVi}.`,
+            bloodSupplyVi: muscle.bloodSupplyVi
+          },
+          onClose: () => {
+            setIsCompactDismissed(true);
+            selectAnatomy(null);
+          },
+          onExpand: () => setIsInfoOpen(true)
+        };
+      }
+
+      const toothRecord = ToothPositionResolver.resolve(selectedAnatomyId);
+      if (toothRecord) {
+        const toothDetail = getDentalSpecimen(toothRecord.fdi);
+        return {
+          anatomyId: `tooth.${toothRecord.fdi}`,
+          nameVi: toothDetail?.nameVi || toothRecord.nameVi,
+          nameEn: toothDetail?.nameEn || toothRecord.nameEn,
+          nameLatin: toothRecord.latinName,
+          category: `FDI ${toothRecord.fdi}`,
+          summary:
+            toothDetail?.pulpChamberFloorAnatomyVi ||
+            toothDetail?.accessCavityDetailsVi ||
+            `Răng ${toothRecord.nameVi} thuộc cung răng người.`,
+          details: {
+            overviewVi: toothDetail?.accessCavityDetailsVi,
+            overviewEn: toothRecord.nameEn,
+            structureVi: `Chân răng: ${toothRecord.morphology.rootCount}, Số ống tủy: ${toothRecord.morphology.canalCount}, Chiều dài chân: ${toothRecord.morphology.rootLengthMm}mm.`,
+            clinicalVi: toothDetail?.clinicalRisksVi?.join('; ')
+          },
+          onClose: () => {
+            setIsCompactDismissed(true);
+            selectAnatomy(null);
+          },
+          onExpand: () => setIsInfoOpen(true)
+        };
+      }
+    }
+
+    // 3. TMJ specimen mode
+    if (activeSpecimenMode === 'tmj_specimen') {
+      return {
+        anatomyId: 'tmj',
+        nameVi: TMJ_SPECIMEN_DATA.nameVi,
+        nameEn: TMJ_SPECIMEN_DATA.nameEn,
+        nameLatin: 'Articulatio temporomandibularis',
+        category: 'joint',
+        summary:
+          'Khớp hoạt dịch lưỡng lồi cầu duy nhất của vùng sọ mặt, chịu trách nhiệm cho các vận động nhai, nuốt và phát âm.',
+        details: {
+          overviewVi: 'Khớp hoạt dịch lưỡng lồi cầu duy nhất của vùng sọ mặt.',
+          overviewEn: TMJ_SPECIMEN_DATA.nameEn,
+          clinicalVi: 'Hội chứng loạn năng thái dương hàm (TMD), trật đĩa khớp trước.'
+        },
+        onClose: () => setIsCompactDismissed(true),
+        onExpand: () => setIsInfoOpen(true)
+      };
+    }
+
+    // 4. Wisdom surgery mode
+    if (activeSpecimenMode === 'wisdom_surgery') {
+      const fdi = wisdomToothId === 'tooth_48' ? 48 : 38;
+      const toothDetail = getDentalSpecimen(fdi);
+      const record = ToothPositionResolver.resolve(fdi);
+      return {
+        anatomyId: `tooth.${fdi}`,
+        nameVi: toothDetail?.nameVi || `Răng khôn ${fdi}`,
+        nameEn: toothDetail?.nameEn || `Third Molar ${fdi}`,
+        nameLatin: record?.latinName,
+        category: `FDI ${fdi}`,
+        summary:
+          toothDetail?.pulpChamberFloorAnatomyVi ||
+          'Răng khôn hàm dưới với các biến thể giải phẫu phức tạp liên quan mật thiết đến ống thần kinh răng dưới.',
+        details: {
+          overviewVi: toothDetail?.accessCavityDetailsVi || toothDetail?.pulpChamberFloorAnatomyVi,
+          overviewEn: toothDetail?.nameEn,
+          clinicalVi: toothDetail?.clinicalRisksVi?.join('; ')
+        },
+        onClose: () => setIsCompactDismissed(true),
+        onExpand: () => setIsInfoOpen(true)
+      };
+    }
+
+    return null;
+  }, [
+    isInfoOpen,
+    isCompactDismissed,
+    activeSpecimenMode,
+    selectedToothFdi,
+    selectedAnatomyId,
+    wisdomToothId,
     selectAnatomy
   ]);
 
@@ -1032,6 +1222,22 @@ export const DentalNeuroLab: React.FC = () => {
             <DentalNeurovascularMap toothFdi={selectedToothFdi} isOpen={isNeuroMapOpen} onClose={toggleNeuroMap} />
           </div>
         </div>
+      )}
+
+      {/* 5. Sleek Compact Anatomy Annotation (Compact by Default, bottom-center) */}
+      {activeCompactInfo && (
+        <AnatomyInfoCard
+          anatomyId={activeCompactInfo.anatomyId}
+          nameVi={activeCompactInfo.nameVi}
+          nameEn={activeCompactInfo.nameEn}
+          nameLatin={activeCompactInfo.nameLatin}
+          category={activeCompactInfo.category}
+          reviewStatus="verified"
+          summary={activeCompactInfo.summary}
+          details={activeCompactInfo.details}
+          onClose={activeCompactInfo.onClose}
+          onExpand={activeCompactInfo.onExpand}
+        />
       )}
     </div>
   );

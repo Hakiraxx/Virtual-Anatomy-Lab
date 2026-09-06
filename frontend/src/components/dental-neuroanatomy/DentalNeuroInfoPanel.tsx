@@ -19,6 +19,7 @@ import {
   PanelRightClose,
   ChevronRight,
   ChevronLeft,
+  ChevronUp,
   Sparkles,
   CheckCircle2,
   ShieldAlert,
@@ -164,15 +165,27 @@ export const DentalNeuroInfoPanel: React.FC<DentalNeuroInfoPanelProps> = ({
                 FDI {toothDetail.fdi}
               </span>
             </div>
-            {onClose ? (
-              <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer">
-                <PanelRightClose className="w-4 h-4" />
-              </button>
-            ) : (
-              <button onClick={handleDeselect} className="p-1 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer">
-                <X className="w-4 h-4" />
-              </button>
-            )}
+            <div className="flex items-center gap-1">
+              {onClose && (
+                <button
+                  onClick={onClose}
+                  className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition cursor-pointer"
+                  title="Thu gọn về chú thích nhỏ"
+                >
+                  <ChevronUp className="w-3.5 h-3.5" />
+                  <span>Thu gọn</span>
+                </button>
+              )}
+              {onClose ? (
+                <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer" title="Đóng panel">
+                  <PanelRightClose className="w-4 h-4" />
+                </button>
+              ) : (
+                <button onClick={handleDeselect} className="p-1 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer" title="Đóng">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
           <h2 className="text-base font-serif font-bold text-current mt-1.5 leading-snug">{toothDetail.nameVi}</h2>
           <div className="flex items-center gap-2 mt-0.5 flex-wrap">
@@ -313,15 +326,27 @@ export const DentalNeuroInfoPanel: React.FC<DentalNeuroInfoPanelProps> = ({
             <span className="text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/30">
               HỒ SƠ KHỚP THÁI DƯƠNG HÀM & CƠ NHAI
             </span>
-            {onClose ? (
-              <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer">
-                <PanelRightClose className="w-4 h-4" />
-              </button>
-            ) : (
-              <button onClick={handleDeselect} className="p-1 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer">
-                <X className="w-4 h-4" />
-              </button>
-            )}
+            <div className="flex items-center gap-1">
+              {onClose && (
+                <button
+                  onClick={onClose}
+                  className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-semibold text-sky-600 dark:text-sky-400 hover:bg-sky-500/10 transition cursor-pointer"
+                  title="Thu gọn về chú thích nhỏ"
+                >
+                  <ChevronUp className="w-3.5 h-3.5" />
+                  <span>Thu gọn</span>
+                </button>
+              )}
+              {onClose ? (
+                <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer" title="Đóng panel">
+                  <PanelRightClose className="w-4 h-4" />
+                </button>
+              ) : (
+                <button onClick={handleDeselect} className="p-1 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer" title="Đóng">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
           <h2 className="text-base font-serif font-bold text-current mt-1.5 leading-snug">{TMJ_SPECIMEN_DATA.nameVi}</h2>
           <p className="text-xs font-serif italic text-slate-500 dark:text-slate-400">{TMJ_SPECIMEN_DATA.nameEn}</p>
@@ -464,15 +489,27 @@ export const DentalNeuroInfoPanel: React.FC<DentalNeuroInfoPanelProps> = ({
             <span className="text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30">
               HỒ SƠ TIỂU PHẪU RĂNG KHÔN
             </span>
-            {onClose ? (
-              <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer">
-                <PanelRightClose className="w-4 h-4" />
-              </button>
-            ) : (
-              <button onClick={handleDeselect} className="p-1 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer">
-                <X className="w-4 h-4" />
-              </button>
-            )}
+            <div className="flex items-center gap-1">
+              {onClose && (
+                <button
+                  onClick={onClose}
+                  className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
+                  title="Thu gọn về chú thích nhỏ"
+                >
+                  <ChevronUp className="w-3.5 h-3.5" />
+                  <span>Thu gọn</span>
+                </button>
+              )}
+              {onClose ? (
+                <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer" title="Đóng panel">
+                  <PanelRightClose className="w-4 h-4" />
+                </button>
+              ) : (
+                <button onClick={handleDeselect} className="p-1 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer" title="Đóng">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Tooth Specimen Selector (R.48 vs R.38) */}
@@ -938,15 +975,27 @@ export const DentalNeuroInfoPanel: React.FC<DentalNeuroInfoPanelProps> = ({
               </p>
             </div>
           </div>
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="p-1 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 transition cursor-pointer flex-shrink-0"
-              title="Thu gọn hồ sơ"
-            >
-              <PanelRightClose className="w-4 h-4" />
-            </button>
-          )}
+          <div className="flex items-center gap-1">
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition cursor-pointer"
+                title="Thu gọn về chú thích nhỏ"
+              >
+                <ChevronUp className="w-3.5 h-3.5" />
+                <span>Thu gọn</span>
+              </button>
+            )}
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="p-1 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 transition cursor-pointer flex-shrink-0"
+                title="Thu gọn hồ sơ"
+              >
+                <PanelRightClose className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* High-yield Quick Cards */}
@@ -1122,12 +1171,22 @@ export const DentalNeuroInfoPanel: React.FC<DentalNeuroInfoPanelProps> = ({
                 </button>
               </>
             )}
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition cursor-pointer mr-1"
+                title="Thu gọn về chú thích nhỏ"
+              >
+                <ChevronUp className="w-3.5 h-3.5" />
+                <span>Thu gọn</span>
+              </button>
+            )}
             <button
               onClick={() => {
                 if (onClose) onClose();
                 else handleDeselect();
               }}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 transition cursor-pointer ml-1"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-current hover:bg-black/5 dark:hover:bg-white/5 transition cursor-pointer"
               title="Đóng chi tiết"
             >
               <X className="w-4 h-4" />
