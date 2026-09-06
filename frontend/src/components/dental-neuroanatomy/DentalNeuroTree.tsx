@@ -157,6 +157,7 @@ export const DentalNeuroTree: React.FC<DentalNeuroTreeProps> = ({
 
   return (
     <aside
+      data-ui="left-sidebar"
       style={!isMobileDrawer ? { width: isOpen ? `${customWidth}px` : 0 } : undefined}
       className={`h-full border-r flex flex-col z-20 select-none overflow-hidden ${
         isMobileDrawer

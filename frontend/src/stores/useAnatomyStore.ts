@@ -104,6 +104,9 @@ interface AnatomyState {
   isInfoExpanded: boolean;
   setIsInfoExpanded: (expanded: boolean) => void;
   toggleInfoExpanded: () => void;
+  isCleanView: boolean;
+  toggleCleanView: () => void;
+  setIsCleanView: (clean: boolean) => void;
 
   // Smart Focus actions
   triggerCameraFocus: (target: CameraFocusTarget) => void;
@@ -415,6 +418,10 @@ export const useAnatomyStore = create<AnatomyState>((set, get) => ({
   isInfoExpanded: false,
   setIsInfoExpanded: (expanded) => set({ isInfoExpanded: expanded }),
   toggleInfoExpanded: () => set((s) => ({ isInfoExpanded: !s.isInfoExpanded })),
+
+  isCleanView: false,
+  setIsCleanView: (clean) => set({ isCleanView: clean }),
+  toggleCleanView: () => set((s) => ({ isCleanView: !s.isCleanView })),
 
   toggleLayers: () => set((s) => ({ isLayersActive: !s.isLayersActive })),
 

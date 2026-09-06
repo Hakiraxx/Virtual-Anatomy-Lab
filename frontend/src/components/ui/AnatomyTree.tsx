@@ -114,6 +114,7 @@ export const AnatomyTree: React.FC = () => {
       )}
 
       <aside
+        data-ui="left-sidebar"
         className={`fixed xl:relative inset-y-0 left-0 z-50 h-full flex flex-col border-r select-none transition-all duration-300 ${
           isTreeOpen
             ? 'translate-x-0 w-80 max-w-[85vw] xl:w-72 2xl:w-80 shadow-2xl xl:shadow-none'

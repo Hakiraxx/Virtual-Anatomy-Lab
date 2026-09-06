@@ -315,6 +315,7 @@ export const DentalNeuroInfoPanel: React.FC<DentalNeuroInfoPanelProps> = ({
       : null;
     return (
       <aside
+        data-ui="right-panel"
         style={!isMobileDrawer ? { width: isOpen ? `${customWidth}px` : 0 } : undefined}
         className={`h-full border-l flex flex-col z-20 select-none overflow-hidden ${
           isMobileDrawer ? 'w-full' : isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none border-l-0'
@@ -478,6 +479,7 @@ export const DentalNeuroInfoPanel: React.FC<DentalNeuroInfoPanelProps> = ({
 
     return (
       <aside
+        data-ui="right-panel"
         style={!isMobileDrawer ? { width: isOpen ? `${customWidth}px` : 0 } : undefined}
         className={`h-full border-l flex flex-col z-20 select-none overflow-hidden ${
           isMobileDrawer ? 'w-full' : isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none border-l-0'
@@ -943,6 +945,7 @@ export const DentalNeuroInfoPanel: React.FC<DentalNeuroInfoPanelProps> = ({
   if (!selectedAnatomyId) {
     return (
       <aside
+        data-ui="right-panel"
         style={!isMobileDrawer ? { width: isOpen ? `${customWidth}px` : 0 } : undefined}
         className={`h-full border-l flex flex-col z-20 select-none overflow-hidden ${
           isMobileDrawer
@@ -1105,6 +1108,7 @@ export const DentalNeuroInfoPanel: React.FC<DentalNeuroInfoPanelProps> = ({
 
   return (
     <aside
+      data-ui="right-panel"
       style={!isMobileDrawer ? { width: isOpen ? `${customWidth}px` : 0 } : undefined}
       className={`h-full border-l flex flex-col z-20 select-none overflow-hidden ${
         isMobileDrawer

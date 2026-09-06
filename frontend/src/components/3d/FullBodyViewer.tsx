@@ -818,7 +818,7 @@ export const FullBodyViewer: React.FC = () => {
       <SmartFocusToolbar />
 
       {/* Footer Status Bar — Hidden on mobile to prevent overlapping SmartFocusToolbar */}
-      <div className="hidden md:flex h-10 border-t items-center justify-between px-5 text-xs font-serif z-10 bg-white/75 dark:bg-slate-900/75 border-[#e7ded3] dark:border-slate-800 text-slate-600 dark:text-slate-400">
+      <div data-ui="footer-status-bar" className="hidden md:flex h-10 border-t items-center justify-between px-5 text-xs font-serif z-10 bg-white/75 dark:bg-slate-900/75 border-[#e7ded3] dark:border-slate-800 text-slate-600 dark:text-slate-400">
         <div className="flex items-center gap-2">
           <span className="text-[11px] uppercase tracking-wider text-slate-400 font-mono">
             {isVi ? 'HỆ THỐNG GIẢI PHẪU' : 'ANATOMY SYSTEM'}

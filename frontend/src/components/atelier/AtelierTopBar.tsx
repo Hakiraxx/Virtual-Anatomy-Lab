@@ -41,6 +41,7 @@ export const AtelierTopBar: React.FC = () => {
 
   return (
     <header
+      data-ui="top-header"
       className={`h-16 px-4 lg:px-6 flex items-center justify-between border-b select-none transition-colors duration-200 z-30 ${
         isDark
           ? 'bg-[#0f141c] border-slate-800 text-slate-100'

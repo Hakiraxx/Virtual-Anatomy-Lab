@@ -18,8 +18,11 @@ import {
   PanelRightClose
 } from 'lucide-react';
 import { useAnatomyStore } from '../../stores/useAnatomyStore';
+import { useDentalNeuroStore } from '../../stores/useDentalNeuroStore';
 import { getAnatomicalPronunciation } from '../../data/anatomyPronunciationData';
 import { pronunciationPlayer } from '../../utils/pronunciationPlayer';
+import { useAnnotationPosition } from '../../hooks/useAnnotationPosition';
+import { ModelObstructionTarget } from '../../utils/AnnotationPositioner';
 
 export interface AnatomyInfoCardProps {
   anatomyId?: string | null;
@@ -113,6 +116,11 @@ export const AnatomyInfoCard: React.FC<AnatomyInfoCardProps> = ({
   const isDark = atelierTheme === 'dark';
   const isVi = language === 'vi';
 
+  // Clean View Support: hide annotation when clean view is toggled
+  const isAnatomyCleanView = useAnatomyStore((s) => s.isCleanView);
+  const isDentalCleanView = useDentalNeuroStore((s) => s.isCleanView);
+  const isCleanView = isAnatomyCleanView || isDentalCleanView;
+
   // Global expansion state in store
   const isGlobalExpanded = useAnatomyStore((s) => s.isInfoExpanded);
   const setIsGlobalExpanded = useAnatomyStore((s) => s.setIsInfoExpanded);
@@ -121,6 +129,21 @@ export const AnatomyInfoCard: React.FC<AnatomyInfoCardProps> = ({
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [openAccordion, setOpenAccordion] = useState<string | null>('overview');
   const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
+
+  // Model obstruction target for collision avoidance engine
+  const obstructionTarget: ModelObstructionTarget = useMemo(
+    () => ({
+      isFullBody: anatomyId === 'human_skeleton' || (!position && !anatomyId),
+      position,
+      anatomyId
+    }),
+    [anatomyId, position]
+  );
+
+  const { positionResult, isRotating } = useAnnotationPosition({
+    target: obstructionTarget,
+    isExpanded
+  });
 
   // Sync with global store state
   useEffect(() => {
@@ -220,21 +243,28 @@ export const AnatomyInfoCard: React.FC<AnatomyInfoCardProps> = ({
 
   const categoryLabel = (category || 'anatomia').toUpperCase();
 
-  // Smart position class when in compact floating mode
-  const smartPosition = useMemo(() => getSmartPositionClass(position), [position]);
+  // If clean view mode is active, do not render annotation
+  if (isCleanView) {
+    return null;
+  }
 
   // --------------------------------------------------------------------------
-  // RENDER MODE A: COMPACT ANNOTATION (Default state: height ~85-125px, bottom-center)
+  // RENDER MODE A: COMPACT ANNOTATION (Default state: height ~85-125px, dynamic safe placement)
   // --------------------------------------------------------------------------
   if (!isExpanded) {
     return (
       <aside
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        className={`fixed z-40 pointer-events-auto transition-all duration-250 animate-fade-in ${smartPosition} ${className}`}
+        style={positionResult.style}
+        data-ui="anatomy-annotation-card"
+        data-placement={positionResult.placement}
+        className={`pointer-events-auto select-none transition-opacity duration-200 animate-fade-in ${
+          isRotating ? 'opacity-35 pointer-events-none' : 'opacity-100'
+        } ${className}`}
       >
         <div
-          className={`w-[94vw] sm:w-[420px] md:w-[460px] max-w-lg min-h-[90px] max-h-[135px] p-3 sm:px-4 sm:py-2.5 rounded-2xl border shadow-2xl backdrop-blur-xl flex flex-col justify-between select-none ${
+          className={`w-full min-h-[85px] max-h-[135px] p-3 sm:px-4 sm:py-2.5 rounded-2xl border shadow-2xl backdrop-blur-xl flex flex-col justify-between select-none ${
             isDark
               ? 'bg-[#0f141c]/95 border-slate-800 text-slate-100 shadow-black/60'
               : 'bg-[#fbf7f2]/95 border-[#e7ded3] text-[#28231d] shadow-amber-950/10'
@@ -332,6 +362,7 @@ export const AnatomyInfoCard: React.FC<AnatomyInfoCardProps> = ({
     <aside
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
+      data-ui="anatomy-details-panel"
       className={`fixed z-40 pointer-events-auto transition-all duration-300 select-none overflow-hidden ${
         // Desktop / Laptop (>= 1024px): RIGHT SIDE PANEL
         // Tablet / Mobile (< 1024px): BOTTOM SHEET

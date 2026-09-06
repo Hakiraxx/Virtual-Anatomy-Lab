@@ -132,7 +132,7 @@ export const DentalNeuroToolbar: React.FC = () => {
   ];
 
   return (
-    <div className="absolute bottom-2 sm:bottom-4 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 select-none pointer-events-auto max-w-[96vw] pb-[env(safe-area-inset-bottom,0px)]">
+    <div data-ui="bottom-toolbar" className="absolute bottom-2 sm:bottom-4 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 select-none pointer-events-auto max-w-[96vw] pb-[env(safe-area-inset-bottom,0px)]">
       {/* 1. Pop-up Panel: 3D Cross-Section Sliders */}
       {showSectionControls && (
         <div
