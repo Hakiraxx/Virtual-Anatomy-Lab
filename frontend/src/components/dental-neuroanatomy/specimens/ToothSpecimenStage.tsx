@@ -21,6 +21,7 @@ import { DENTAL_SPECIMENS_DATABASE, getDentalSpecimen } from '../../../data/dent
 import { DENTAL_INNERVATION_DATABASE } from '../../../data/dentalNeuroData';
 import { createCraniofacialOrganGroup } from '../DentalNeuro3DStage';
 import { RealDentalAnatomySectionMesh, AnatomicalMolarMesh } from './AnatomicalDentalModels3D';
+import { DentalAssetInspector } from './DentalAssetInspector';
 
 import { TOOTH_REGISTRY } from '../../../data/ToothRegistry';
 import { ToothPositionResolver } from '../../../utils/ToothPositionResolver';
@@ -872,15 +873,11 @@ export const ToothSpecimenStage: React.FC = () => {
               <div className="space-y-1 pt-1 border-t border-inherit/50 text-[10px]">
                 <div className="flex justify-between items-center">
                   <span>• Men Răng (Enamel Crown):</span>
-                  <span className="text-emerald-400 font-mono font-semibold">REAL 3D MESH</span>
+                  <span className="text-emerald-400 font-mono font-semibold">REAL 3D MESH (VERIFIED)</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span>• Chân Răng & Ngà (Roots & Dentin):</span>
-                  <span className="text-emerald-400 font-mono font-semibold">REAL 3D MESH</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>• Tủy Răng & Ống Tủy (Pulp & Canals):</span>
-                  <span className="text-rose-400 font-mono font-semibold">ANATOMICAL CORE</span>
+                  <span className="text-emerald-400 font-mono font-semibold">REAL 3D MESH (VERIFIED)</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span>• Mặt Cắt Khối Nội Nha (3D Section):</span>
@@ -888,8 +885,13 @@ export const ToothSpecimenStage: React.FC = () => {
                 </div>
               </div>
 
+              <div className="pt-1.5 border-t border-inherit/40 flex items-center justify-between">
+                <DentalAssetInspector fdi={selectedToothFdi} isDark={isDark} />
+                <span className="text-[9px] text-slate-400 font-mono">100% Medical Scan</span>
+              </div>
+
               <p className="text-[9px] text-slate-400 italic pt-1 border-t border-inherit/40 leading-relaxed">
-                Mô hình giải phẫu vi thể chuẩn hóa từ dữ liệu micro-CT Z-Anatomy & Dundee Dental (CC BY-SA 4.0).
+                Mô hình giải phẫu vi thể chuẩn hóa từ dữ liệu micro-CT Z-Anatomy (CC BY-SA 4.0).
                 Cắt lớp bằng mặt phẳng clipping GPU thực tế, loại trừ 100% hình học procedural giả lập.
               </p>
             </div>

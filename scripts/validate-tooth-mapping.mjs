@@ -83,14 +83,11 @@ export async function runToothMappingValidation() {
       tooth.toothClass === expectedTypes[posIndex].class &&
       tooth.toothType === expectedTypes[posIndex].type;
 
-    // 6. ASSET Checkpoint
+    // 6. ASSET Checkpoint: dedicated real 3D GLB exists and is non-empty
     let assetPass = false;
-    if (fdi === 48 || fdi === 18) {
-      assetPass = fs.existsSync(thirdMolar48Path);
-    } else if (fdi === 38 || fdi === 28) {
-      assetPass = fs.existsSync(thirdMolar38Path);
-    } else {
-      assetPass = fs.existsSync(skullGlbPath);
+    if (tooth && tooth.dedicatedAssetUrl) {
+      const dedicatedPath = path.join(rootDir, 'frontend/public', tooth.dedicatedAssetUrl);
+      assetPass = fs.existsSync(dedicatedPath) && fs.statSync(dedicatedPath).size > 1000;
     }
 
     // 7. MESH Checkpoint
