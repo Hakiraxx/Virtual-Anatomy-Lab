@@ -12,14 +12,12 @@ import {
   Share2,
   Layers,
   ChevronRight,
-  Volume2,
   X
 } from 'lucide-react';
 import { useAnatomyStore } from '../../stores/useAnatomyStore';
 import { ATELIER_ORGANS } from '../../data/fullOrgansData';
 import { DEEP_STRUCTURES_MAP, DeepStructure } from '../../data/deepStructures';
-import { getAnatomicalPronunciation } from '../../data/anatomyPronunciationData';
-import { pronunciationPlayer } from '../../utils/pronunciationPlayer';
+import { AnatomicalPronunciation } from '../ui/AnatomicalPronunciation';
 
 // Rich medical facts mapped by organ id
 const SPECIMEN_DETAILS: Record<
@@ -49,6 +47,30 @@ const SPECIMEN_DETAILS: Record<
     illegalTrade: string;
   }
 > = {
+  spleen: {
+    subtitleVi: 'Cơ quan bạch huyết lớn nhất & Trạm lọc máu cơ thể',
+    subtitleEn: 'The largest lymphoid organ & blood filtration hub',
+    descVi: 'Nằm ở hạ sườn trái nấp dưới vòm hoành, lách lọc sạch máu, loại bỏ các hồng cầu già cỗi và là trung tâm phản ứng miễn dịch thể dịch.',
+    descEn: 'Located in the left hypochondrium, the spleen filters blood, recycles senescent erythrocytes, and orchestrates adaptive humoral immunity.',
+    sizeVi: 'Khoảng 12 × 7 × 4 cm (Quy luật 1x3x5 inch)',
+    sizeEn: 'Roughly 12 × 7 × 4 cm (1x3x5 inch rule)',
+    weightVi: '150 – 200 g (khoảng 7 oz)',
+    weightEn: '150 – 200 g (~7 oz)',
+    dailyVi: 'Lọc khoảng 350 lít máu mỗi ngày',
+    dailyEn: 'Filters ~350 liters of blood daily',
+    locationVi: 'Hạ sườn trái, nấp dưới xương sườn 9–11',
+    locationEn: 'Left hypochondrium beneath ribs 9–11',
+    bloodVi: 'Động mạch lách (từ thân tạng) & Tĩnh mạch lách',
+    bloodEn: 'Splenic artery (celiac trunk branch) & Splenic vein',
+    functionVi: 'Miễn dịch (tủy trắng), lọc máu & tái chế sắt (tủy đỏ), dự trữ tiểu cầu',
+    functionEn: 'Humoral immunity (white pulp), iron recycling & RBC phagocytosis (red pulp)',
+    medicalImportanceVi: 'Vỡ lách chấn thương là một cấp cứu ngoại khoa tối khẩn gây mất máu trong ổ bụng dữ dội.',
+    medicalImportanceEn: 'Traumatic splenic rupture from blunt trauma causes life-threatening hemoperitoneum.',
+    didYouKnowVi: 'Tủy đỏ của lách lưu trữ tới 1/3 tổng lượng tiểu cầu toàn thân sẵn sàng phóng thích khi cần.',
+    didYouKnowEn: 'The spleen reserves about one-third of the human body’s total platelets for emergency deployment.',
+    transplantCost: 'Phẫu thuật bảo tồn / Cắt lách',
+    illegalTrade: 'Không áp dụng'
+  },
   heart: {
     subtitleVi: 'Máy bơm không bao giờ mệt mỏi',
     subtitleEn: 'The tireless pump',
@@ -265,26 +287,12 @@ export const AtelierDossier: React.FC = () => {
                 <span className="text-xs font-serif italic text-amber-600 dark:text-amber-400">
                   {activeStructure.nameLatin || activeStructure.nameEn}
                 </span>
-                {(() => {
-                  const pron = getAnatomicalPronunciation(activeStructure.id, activeStructure.nameEn);
-                  if (!pron?.ipa) return null;
-                  return (
-                    <div className="flex items-center gap-1 bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded text-[11px] font-mono text-amber-600 dark:text-amber-400 border border-black/5 dark:border-white/10">
-                      <span>{pron.ipa}</span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          pronunciationPlayer.play(activeStructure.nameEn);
-                        }}
-                        className="p-0.5 rounded hover:bg-amber-500/20 text-slate-400 hover:text-amber-500 cursor-pointer"
-                        title="Nghe phát âm tiếng Anh chuẩn học thuật"
-                        aria-label="Nghe phát âm tiếng Anh"
-                      >
-                        <Volume2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  );
-                })()}
+                <AnatomicalPronunciation
+                  termId={activeStructure.id}
+                  englishName={activeStructure.nameEn}
+                  latinName={activeStructure.nameLatin}
+                  size="sm"
+                />
               </div>
             </div>
 
@@ -371,26 +379,12 @@ export const AtelierDossier: React.FC = () => {
                     <span className="text-xs font-serif italic text-amber-700 dark:text-amber-400">
                       {isVi ? detail.subtitleVi : detail.subtitleEn}
                     </span>
-                    {(() => {
-                      const pron = getAnatomicalPronunciation(specimen.id, specimen.nameEn);
-                      if (!pron?.ipa) return null;
-                      return (
-                        <div className="flex items-center gap-1 bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded text-[11px] font-mono text-amber-600 dark:text-amber-400 border border-black/5 dark:border-white/10">
-                          <span>{pron.ipa}</span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              pronunciationPlayer.play(specimen.nameEn);
-                            }}
-                            className="p-0.5 rounded hover:bg-amber-500/20 text-slate-400 hover:text-amber-500 cursor-pointer"
-                            title="Nghe phát âm tiếng Anh chuẩn học thuật"
-                            aria-label="Nghe phát âm tiếng Anh"
-                          >
-                            <Volume2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      );
-                    })()}
+                    <AnatomicalPronunciation
+                      termId={specimen.id}
+                      englishName={specimen.nameEn}
+                      latinName={isVi ? detail.subtitleVi : detail.subtitleEn}
+                      size="sm"
+                    />
                   </div>
                 </div>
 
@@ -439,7 +433,16 @@ export const AtelierDossier: React.FC = () => {
                           {st.nameLatin}
                         </div>
                       </div>
-                      <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-amber-600 transition flex-shrink-0" />
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <AnatomicalPronunciation
+                          termId={st.id}
+                          englishName={st.nameEn}
+                          latinName={st.nameLatin}
+                          mode="button-only"
+                          size="xs"
+                        />
+                        <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-amber-600 transition flex-shrink-0" />
+                      </div>
                     </button>
                   ))}
                 </div>

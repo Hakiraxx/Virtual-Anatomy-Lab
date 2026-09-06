@@ -107,6 +107,9 @@ interface AnatomyState {
   isCleanView: boolean;
   toggleCleanView: () => void;
   setIsCleanView: (clean: boolean) => void;
+  showPronunciation: boolean;
+  toggleShowPronunciation: () => void;
+  setShowPronunciation: (show: boolean) => void;
 
   // Smart Focus actions
   triggerCameraFocus: (target: CameraFocusTarget) => void;
@@ -422,6 +425,10 @@ export const useAnatomyStore = create<AnatomyState>((set, get) => ({
   isCleanView: false,
   setIsCleanView: (clean) => set({ isCleanView: clean }),
   toggleCleanView: () => set((s) => ({ isCleanView: !s.isCleanView })),
+
+  showPronunciation: true,
+  setShowPronunciation: (show) => set({ showPronunciation: show }),
+  toggleShowPronunciation: () => set((s) => ({ showPronunciation: !s.showPronunciation })),
 
   toggleLayers: () => set((s) => ({ isLayersActive: !s.isLayersActive })),
 

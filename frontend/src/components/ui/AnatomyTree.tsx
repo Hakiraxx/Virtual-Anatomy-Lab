@@ -23,6 +23,7 @@ import {
   AnatomicalSystem,
   AnatomicalStructure
 } from '../../data/anatomyHierarchy';
+import { AnatomicalPronunciation } from './AnatomicalPronunciation';
 
 const SYSTEM_ICONS: Record<string, React.ReactNode> = {
   skeletal: <span className="text-amber-700">🦴</span>,
@@ -233,15 +234,27 @@ export const AnatomyTree: React.FC = () => {
                               </div>
                             )}
                           </div>
-                          <span
-                            className={`text-[9px] px-1.5 py-0.5 rounded uppercase font-mono flex-shrink-0 ${
-                              isSelected
-                                ? 'bg-black/20 text-white'
-                                : 'bg-black/5 dark:bg-white/5 text-slate-400'
-                            }`}
-                          >
-                            {st.category}
-                          </span>
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <AnatomicalPronunciation
+                              termId={st.id}
+                              englishName={st.nameEn}
+                              latinName={st.nameLatin}
+                              mode="button-only"
+                              size="xs"
+                              className={`opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity ${
+                                isSelected ? '!opacity-100 !text-white hover:!bg-white/20' : ''
+                              }`}
+                            />
+                            <span
+                              className={`text-[9px] px-1.5 py-0.5 rounded uppercase font-mono ${
+                                isSelected
+                                  ? 'bg-black/20 text-white'
+                                  : 'bg-black/5 dark:bg-white/5 text-slate-400'
+                              }`}
+                            >
+                              {st.category}
+                            </span>
+                          </div>
                         </button>
                       );
                     })

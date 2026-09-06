@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Search, X, Layers, ArrowRight, Activity, Sparkles } from 'lucide-react';
 import { useAnatomyStore } from '../../stores/useAnatomyStore';
 import { searchAnatomyStructures, AnatomicalStructure } from '../../data/anatomyHierarchy';
+import { AnatomicalPronunciation } from './AnatomicalPronunciation';
 
 import { useDentalNeuroStore } from '../../stores/useDentalNeuroStore';
 
@@ -153,7 +154,14 @@ export const SearchModal: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <AnatomicalPronunciation
+                      termId={st.id}
+                      englishName={st.nameEn}
+                      latinName={st.nameLatin}
+                      mode="button-only"
+                      size="xs"
+                    />
                     <span
                       className={`text-[9px] font-mono px-1.5 py-0.5 rounded uppercase ${
                         st.systemId === 'craniofacial'

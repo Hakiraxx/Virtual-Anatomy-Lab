@@ -23,7 +23,6 @@ import {
   Sparkles,
   CheckCircle2,
   ShieldAlert,
-  Volume2,
   Activity,
   Scissors,
   Layers
@@ -46,8 +45,7 @@ import {
   WISDOM_SURGICAL_DATABASE
 } from '../../data/dentalSpecimensData';
 import { ToothPositionResolver } from '../../utils/ToothPositionResolver';
-import { getAnatomicalPronunciation } from '../../data/anatomyPronunciationData';
-import { pronunciationPlayer } from '../../utils/pronunciationPlayer';
+import { AnatomicalPronunciation } from '../ui/AnatomicalPronunciation';
 
 interface DentalNeuroInfoPanelProps {
   isOpen?: boolean;
@@ -190,26 +188,11 @@ export const DentalNeuroInfoPanel: React.FC<DentalNeuroInfoPanelProps> = ({
           <h2 className="text-base font-serif font-bold text-current mt-1.5 leading-snug">{toothDetail.nameVi}</h2>
           <div className="flex items-center gap-2 mt-0.5 flex-wrap">
             <p className="text-xs font-serif italic text-slate-500 dark:text-slate-400">{toothDetail.nameEn}</p>
-            {(() => {
-              const pron = getAnatomicalPronunciation(`tooth.${toothDetail.fdi}`, toothDetail.nameEn);
-              if (!pron?.ipa) return null;
-              return (
-                <div className="flex items-center gap-1 bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded text-[11px] font-mono text-amber-600 dark:text-amber-400 border border-black/5 dark:border-white/10">
-                  <span>{pron.ipa}</span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      pronunciationPlayer.play(toothDetail.nameEn);
-                    }}
-                    className="p-0.5 rounded hover:bg-amber-500/20 text-slate-400 hover:text-amber-500 cursor-pointer"
-                    title="Nghe phát âm tiếng Anh chuẩn học thuật"
-                    aria-label="Nghe phát âm tiếng Anh"
-                  >
-                    <Volume2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              );
-            })()}
+            <AnatomicalPronunciation
+              termId={`tooth.${toothDetail.fdi}`}
+              englishName={toothDetail.nameEn}
+              size="sm"
+            />
           </div>
         </div>
 
@@ -1214,28 +1197,12 @@ export const DentalNeuroInfoPanel: React.FC<DentalNeuroInfoPanelProps> = ({
           <p className="text-xs font-serif italic text-amber-600 dark:text-amber-400">
             {nerve?.latinName || foramen?.latinName || tooth?.nameEn || muscle?.latinName}
           </p>
-          {(() => {
-            const englishName = nerve?.nameEn || tooth?.nameEn || muscle?.nameEn || foramen?.nameEn || '';
-            const targetId = nerve?.id || foramen?.id || (tooth ? `tooth.${tooth.fdi}` : null) || muscle?.id || selectedAnatomyId;
-            const pron = getAnatomicalPronunciation(targetId, englishName);
-            if (!pron?.ipa) return null;
-            return (
-              <div className="flex items-center gap-1 bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded text-[11px] font-mono text-amber-600 dark:text-amber-400 border border-black/5 dark:border-white/10">
-                <span>{pron.ipa}</span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    pronunciationPlayer.play(englishName);
-                  }}
-                  className="p-0.5 rounded hover:bg-amber-500/20 text-slate-400 hover:text-amber-500 cursor-pointer"
-                  title="Nghe phát âm tiếng Anh chuẩn học thuật"
-                  aria-label="Nghe phát âm tiếng Anh"
-                >
-                  <Volume2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            );
-          })()}
+          <AnatomicalPronunciation
+            termId={nerve?.id || foramen?.id || (tooth ? `tooth.${tooth.fdi}` : null) || muscle?.id || selectedAnatomyId}
+            englishName={nerve?.nameEn || tooth?.nameEn || muscle?.nameEn || foramen?.nameEn || ''}
+            latinName={nerve?.latinName || foramen?.latinName || muscle?.latinName}
+            size="sm"
+          />
         </div>
       </div>
 

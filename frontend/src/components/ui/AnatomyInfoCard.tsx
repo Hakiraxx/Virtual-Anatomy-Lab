@@ -193,8 +193,8 @@ export const AnatomyInfoCard: React.FC<AnatomyInfoCardProps> = ({
 
   // Resolve pronunciation & IPA from existing registry
   const pronunciation = useMemo(() => {
-    return getAnatomicalPronunciation(anatomyId, nameEn);
-  }, [anatomyId, nameEn]);
+    return getAnatomicalPronunciation(anatomyId, nameEn, nameLatin);
+  }, [anatomyId, nameEn, nameLatin]);
 
   const ipa = explicitIpa || pronunciation?.ipa;
   const audioUrl = explicitAudioUrl || pronunciation?.audioUrl;
