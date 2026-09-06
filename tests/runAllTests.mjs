@@ -6,6 +6,7 @@ import { runToothAlignmentTests } from './anatomy/toothAlignment.test.mjs';
 import { runToothMappingAuditTests } from './anatomy/toothMappingAudit.test.mjs';
 import { runPronunciationAuditTests } from './anatomy/pronunciationAudit.test.mjs';
 import { runAnnotationPositioningAuditTests } from './anatomy/annotationPositioningAudit.test.mjs';
+import { runAnatomyPositionAuditTests } from './anatomyPositionAudit.mjs';
 
 async function main() {
   console.log('========================================================================');
@@ -21,7 +22,8 @@ async function main() {
     runToothAlignmentTests,
     runToothMappingAuditTests,
     runPronunciationAuditTests,
-    runAnnotationPositioningAuditTests
+    runAnnotationPositioningAuditTests,
+    runAnatomyPositionAuditTests
   ];
 
   let totalPassed = 0;

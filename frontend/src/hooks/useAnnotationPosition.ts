@@ -4,6 +4,7 @@ import {
   ModelObstructionTarget,
   AnnotationPositionResult
 } from '../utils/AnnotationPositioner';
+import { useAnatomyStore } from '../stores/useAnatomyStore';
 
 export interface UseAnnotationPositionOptions {
   target: ModelObstructionTarget;
@@ -11,6 +12,9 @@ export interface UseAnnotationPositionOptions {
 }
 
 export function useAnnotationPosition({ target, isExpanded = false }: UseAnnotationPositionOptions) {
+  const isTreeOpen = useAnatomyStore((s) => s.isTreeOpen);
+  const isInfoExpandedStore = useAnatomyStore((s) => s.isInfoExpanded);
+
   const [positionResult, setPositionResult] = useState<AnnotationPositionResult>(() =>
     computeOptimalAnnotationPosition(target)
   );
@@ -23,6 +27,12 @@ export function useAnnotationPosition({ target, isExpanded = false }: UseAnnotat
     const next = computeOptimalAnnotationPosition(target);
     setPositionResult(next);
   }, [target, isExpanded]);
+
+  // Recalculate on sidebar open/close or detail expand/collapse transitions
+  useEffect(() => {
+    const timer = setTimeout(updatePosition, 320);
+    return () => clearTimeout(timer);
+  }, [isTreeOpen, isInfoExpandedStore, updatePosition]);
 
   // Recalculate on mount, target change, and window/layout mutations
   useEffect(() => {

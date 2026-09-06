@@ -18,7 +18,7 @@ export function classifyOrganNode(name: string): string {
   if (/thyroid|parathyroid/i.test(n)) return 'thyroid';
   if (/pituitary|hypophysis/i.test(n)) return 'pituitary';
   if (/adrenal|suprarenal/i.test(n)) return 'adrenal';
-  if (/larynx|epiglottis|cricoid/i.test(n)) return 'larynx';
+  if (/larynx|epiglottis|cricoid|pharynx/i.test(n)) return 'larynx';
 
   // 2. Cardiopulmonary System
   if (/heart|atrium|ventricle|myocard|endocard|epicard|valve|pericard/i.test(n)) return 'heart';
@@ -28,9 +28,9 @@ export function classifyOrganNode(name: string): string {
   if (/gallbladder|bile/i.test(n)) return 'gallbladder';
   if (/liver|hepatic/i.test(n) && !/duct/i.test(n)) return 'liver';
   if (/spleen|splenic/i.test(n)) return 'spleen';
-  if (/stomach|gastric|cardia|fundus of stomach|pylorus/i.test(n)) return 'stomach';
+  if (/stomach|gastric|cardia|fundus of stomach|pylorus|esophag|oesophag/i.test(n)) return 'stomach';
   if (/pancreas|pancreatic/i.test(n)) return 'pancreas';
-  if (/colon|caecum|cecum|rectum|appendix|intestine|duoden|jejun|ileum|anus/i.test(n)) return 'intestine';
+  if (/colon|caecum|cecum|rectum|appendix|intestine|duoden|jejun|ileum|anus|taenia/i.test(n)) return 'intestine';
 
   // 4. Genitourinary System
   if (/kidney|renal/i.test(n)) return 'kidneys';

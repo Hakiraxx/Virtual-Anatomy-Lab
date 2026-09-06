@@ -54,7 +54,7 @@ export const ViewModeSwitcher: React.FC = () => {
         title="Phòng thí nghiệm Giải phẫu Thần kinh Đầu — Cổ — Hàm Mặt & Răng Hàm Mặt"
       >
         <Brain className="w-3.5 h-3.5" />
-        <span>{isVi ? 'Sọ Mặt & RHM' : 'Craniofacial'}</span>
+        <span className="hidden sm:inline">{isVi ? 'Sọ Mặt & RHM' : 'Craniofacial'}</span>
       </button>
     </div>
   );

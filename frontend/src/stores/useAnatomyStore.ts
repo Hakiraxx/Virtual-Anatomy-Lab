@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { System, Organ, Bookmark } from '../types/anatomy';
 import { api } from '../services/api';
+import { ANATOMICAL_STRUCTURES } from '../data/anatomyHierarchy';
 
 export interface FocusNode {
   id: string;
@@ -322,25 +323,25 @@ export const useAnatomyStore = create<AnatomyState>((set, get) => ({
     }
   },
 
-  // 8-Layer Dissection Engine — Default to clean independent whole body
+  // 8-Layer Dissection Engine — Default to clean whole body with skeleton, viscera, and nerves
   layerVisibility: {
-    1: true,  // Skin (Human body)
+    1: true,  // Skin (Human body translucent envelope)
     2: false, // Fascia
     3: false, // Muscle
-    4: false, // Bone
-    5: false, // Organ
-    6: false, // Vessel
-    7: false, // Nerve
+    4: true,  // Skeletal System
+    5: true,  // Visceral Organs
+    6: false, // Vessels (toggleable)
+    7: true,  // Nervous System & Brain
     8: false  // Deep
   },
   layerOpacity: {
-    1: 0.98,
+    1: 0.15,
     2: 0.0,
     3: 0.0,
-    4: 0.0,
-    5: 0.0,
+    4: 1.0,
+    5: 1.0,
     6: 0.0,
-    7: 0.0,
+    7: 0.95,
     8: 0.0
   },
   setLayerVisibility: (layerIndex, visible) =>
@@ -373,8 +374,8 @@ export const useAnatomyStore = create<AnatomyState>((set, get) => ({
       targetVis = { 1: true, 2: false, 3: false, 4: true, 5: false, 6: false, 7: true, 8: false };
       targetOp = { 1: 0.10, 2: 0, 3: 0, 4: 0.15, 5: 0, 6: 0, 7: 1.0, 8: 0 };
     } else {
-      targetVis = { 1: true, 2: false, 3: false, 4: false, 5: false, 6: false, 7: false, 8: false };
-      targetOp = { 1: 0.98, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 };
+      targetVis = { 1: true, 2: false, 3: false, 4: true, 5: true, 6: false, 7: true, 8: false };
+      targetOp = { 1: 0.15, 2: 0, 3: 0, 4: 1.0, 5: 1.0, 6: 0, 7: 0.95, 8: 0 };
     }
 
     set({ visualizationMode: mode, selectedStructureId: null });
@@ -383,13 +384,38 @@ export const useAnatomyStore = create<AnatomyState>((set, get) => ({
 
   selectedStructureId: null,
   selectStructure: (id) =>
-    set((s) => ({
-      selectedStructureId: id,
-      isInfoOpen: Boolean(id),
-      isInfoExpanded: false, // COMPACT BY DEFAULT: only expand on explicit user demand
-      infoSheetState: 'collapsed',
-      isTreeOpen: Boolean(id) && typeof window !== 'undefined' && window.innerWidth < 1200 ? false : s.isTreeOpen
-    })),
+    set((s) => {
+      let nextVis = s.layerVisibility;
+      let nextOp = s.layerOpacity;
+
+      if (id && ANATOMICAL_STRUCTURES[id]) {
+        const struct = ANATOMICAL_STRUCTURES[id];
+        const targetLayer = struct.layerIndex;
+        if (targetLayer) {
+          nextVis = {
+            ...s.layerVisibility,
+            [targetLayer]: true,
+            4: true // Keep skeletal context
+          };
+          nextOp = {
+            ...s.layerOpacity,
+            [targetLayer]: Math.max(0.95, s.layerOpacity[targetLayer] || 1.0),
+            1: targetLayer >= 3 ? Math.min(0.08, s.layerOpacity[1] || 0.08) : s.layerOpacity[1],
+            4: targetLayer === 4 ? 1.0 : Math.max(0.15, s.layerOpacity[4] || 0.15)
+          };
+        }
+      }
+
+      return {
+        selectedStructureId: id,
+        layerVisibility: nextVis,
+        layerOpacity: nextOp,
+        isInfoOpen: Boolean(id),
+        isInfoExpanded: false, // COMPACT BY DEFAULT: only expand on explicit user demand
+        infoSheetState: 'collapsed',
+        isTreeOpen: Boolean(id) && typeof window !== 'undefined' && window.innerWidth < 1200 ? false : s.isTreeOpen
+      };
+    }),
 
   isTreeOpen: typeof window !== 'undefined' ? window.innerWidth >= 1200 : true,
   toggleTreeOpen: () =>
@@ -468,20 +494,20 @@ export const useAnatomyStore = create<AnatomyState>((set, get) => ({
         1: true,
         2: false,
         3: false,
-        4: false,
-        5: false,
+        4: true,
+        5: true,
         6: false,
-        7: false,
+        7: true,
         8: false
       },
       layerOpacity: {
-        1: 0.98,
+        1: 0.15,
         2: 0.0,
         3: 0.0,
-        4: 0.0,
-        5: 0.0,
+        4: 1.0,
+        5: 1.0,
         6: 0.0,
-        7: 0.0,
+        7: 0.95,
         8: 0.0
       },
       cameraFocusTarget: {

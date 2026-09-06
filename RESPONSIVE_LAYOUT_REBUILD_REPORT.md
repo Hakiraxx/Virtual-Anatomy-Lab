@@ -3,7 +3,7 @@
 **Project**: MedAnatomy 3D  
 **Architecture Principle**: 3D-First / Anatomy-First (`3D MODEL > MAIN CONTROLS > CONTEXT > INFORMATION > SECONDARY TOOLS > DEBUG`)  
 **Core Rule**: *NEVER SACRIFICE 3D VIEWER TO SHOW MORE UI.*  
-**Status**: Completed & Verified (122/122 Tests Passed, 0 Errors)
+**Status**: Completed & Verified (141/141 Tests Passed, 0 Errors across 3 Audit Suites)
 
 ---
 
@@ -100,10 +100,21 @@ The system now enforces a strict, hierarchical 5-tier responsive breakpoint matr
 
 ## Info Panel
 
-* **Tablet & Mobile**: Information panels convert from fixed side columns into collapsible bottom sheets.
-* **Specimen Stages (e.g. ToothSpecimenStage)**:
-  * Section panels default to collapsed on screens $< 1024\text{px}$ with a clear floating toggle button (`Layers` / `Info`).
-  * The 3D tooth specimen remains in the optical center without being pushed off-screen.
+* **Desktop & Laptop ($\ge 1200\text{px}$)**:
+  - **Real Layout Reflow**: When opened, the Detail Panel renders with content-based height and max-width ($320\text{px}$ on Laptop, $368\text{--}380\text{px}$ on Desktop).
+  - **Space Release**: When closed, **IT RELEASES ITS IN-FLOW SPACE COMPLETELY**, allowing the 3D viewer (`flex-1 min-w-0`) to immediately expand into the released space without ghost columns.
+  - **Zero Empty Space**: Natural content-based height (`h-auto max-h-[calc(100vh-84px)]`) ensures the panel hugs its content, completely eliminating grey/beige empty voids.
+  - **Zero Header Collision**: Positioned safely starting below the $64\text{px}$ navigation header (`top-[68px]`).
+* **Tablet Landscape ($900\text{--}1199\text{px}$, iPad Pro / iPad Air)**:
+  - Renders strictly as an **Overlay Slide-over Drawer** ($340\text{px}$ max-w $85\text{vw}$) with backdrop blur and tap-to-dismiss.
+  - Zero in-flow reduction: 3D canvas maintains $100\%$ width.
+* **Tablet Portrait ($600\text{--}899\text{px}$) & Mobile ($< 600\text{px}$)**:
+  - Renders as an ergonomic **3-State Bottom Sheet**:
+    1. `COLLAPSED` ($\le 85\text{px}$): Sits low, unobtrusive, displays title, category, and audio.
+    2. `HALF` ($\approx 48\text{vh}$): Moderate peek into anatomy details without covering the 3D model.
+    3. `EXPANDED` ($\approx 84\text{vh}$): Full reading mode with background dimming and smooth scroll.
+  - Touch gesture support: Swipe up/down on the drag handle smoothly transitions between states.
+  - Integrated iOS home indicator safe area (`pb-[env(safe-area-inset-bottom,0px)]`).
 
 ---
 
@@ -194,7 +205,15 @@ Implemented via `frontend/src/index.css`:
 
 ## Tests
 
-### 1. Test Suite: `tests/responsiveLayoutAudit.mjs` (25/25 Passed)
+### 1. Test Suite: `tests/anatomyDetailPanelAudit.mjs` (19/19 Passed)
+* Breakpoint Layout Mode Resolution (Desktop, Laptop, Tablet, Mobile): **PASS**
+* Desktop & Laptop Max Width & Height Clamps: **PASS**
+* Tablet Landscape Drawer Isolation & Backdrop: **PASS**
+* 3-State Bottom Sheet (Collapsed, Half, Expanded) Dimensions: **PASS**
+* Elimination of Header Collision and Giant Empty Space: **PASS**
+* Pointer & Wheel Event Isolation (Prevent 3D Canvas Jitter): **PASS**
+
+### 2. Test Suite: `tests/responsiveLayoutAudit.mjs` (25/25 Passed)
 * Tailwind Breakpoint & Screen Matrix Verification: **PASS**
 * CSS Safe Area Integration & Tokens: **PASS**
 * 3D Viewer Primacy on $< 1200\text{px}$: **PASS**
@@ -206,13 +225,13 @@ Implemented via `frontend/src/index.css`:
 * Non-Regression of Pronunciation System: **PASS**
 * Non-Regression of 32 Dental Assets & FDI Mappings: **PASS**
 
-### 2. Test Suite: `tests/runAllTests.mjs` (97/97 Passed)
+### 3. Test Suite: `tests/runAllTests.mjs` (97/97 Passed)
 * 32 Permanent Teeth Identity / Assets / Checkpoints: **320/320 Checkpoints Passed (100%)**
 * Anatomy English Pronunciation & Academic IPA Audit: **15/15 Passed (100%)**
 * Annotation Positioning & Safe Area Collision Audit: **12/12 Passed (100%)**
 
-### 3. Production Build
-* `cmd /c "npm run build"`: **0 Errors, 0 Warnings, Built Successfully**.
+### 4. Production Build
+* `cmd /c "npm run build"`: **0 Errors, 0 Warnings, Built Successfully in 6.21s**.
 
 ---
 
