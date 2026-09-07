@@ -11,6 +11,7 @@ import { runGenderSpecimenAuditTests } from './anatomy/genderSpecimenAudit.test.
 import { runLayerSeparationTests } from './anatomy/layerSeparation.test.mjs';
 import { runDentalCoordinateAlignmentTests } from './anatomy/dentalCoordinateAlignment.test.mjs';
 import { runDentalViewTransitionTests } from './anatomy/dentalViewTransition.test.mjs';
+import { runDentalLayoutAuditTests } from './anatomy/dentalLayoutAudit.test.mjs';
 
 async function main() {
   console.log('========================================================================');
@@ -31,7 +32,8 @@ async function main() {
     runGenderSpecimenAuditTests,
     runLayerSeparationTests,
     runDentalCoordinateAlignmentTests,
-    runDentalViewTransitionTests
+    runDentalViewTransitionTests,
+    runDentalLayoutAuditTests
   ];
 
   let totalPassed = 0;

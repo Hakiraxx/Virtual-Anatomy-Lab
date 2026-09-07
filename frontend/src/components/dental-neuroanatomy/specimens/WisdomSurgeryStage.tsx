@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState, Suspense } from 'react';
+import React, { useMemo, useRef, useState, useEffect, Suspense } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, useGLTF, Html } from '@react-three/drei';
@@ -20,6 +20,15 @@ import { ToothPositionResolver } from '../../../utils/ToothPositionResolver';
 import { CoordinateAlignmentValidator } from '../../../anatomy/dental/CoordinateAlignmentValidator';
 import { DentalTargetResolver } from '../../../anatomy/dental/DentalTargetResolver';
 import { DentalCameraFocusController, DentalViewPreset } from '../../../anatomy/dental/DentalCameraFocusController';
+import {
+  TopControlsManager,
+  ToolbarSafeArea,
+  LabelLayoutManager,
+  LayoutObstacle,
+  RawProjectedLabel
+} from '../../../utils/ViewerLayoutManager';
+import { AnatomyLabelLayer } from '../AnatomyLabelLayer';
+import { DentalAnatomyLabelProjector, LabelAnchorDefinition } from '../DentalAnatomyLabelProjector';
 import {
   AnatomicalMolarMesh,
   DentalSyringe3D,
@@ -340,24 +349,7 @@ const MandibularSurgicalSiteMesh: React.FC<{
             </mesh>
           )}
 
-          {/* IAN Foramen & Exit Labels in Canonical Space */}
-          <Html position={[spixPos[0], spixPos[1] + 0.005, spixPos[2]]} center>
-            <div className="px-1.5 py-0.5 rounded bg-amber-950/90 border border-amber-500/50 text-amber-300 text-[7px] font-mono whitespace-nowrap pointer-events-none shadow-lg">
-              Lỗ hàm dưới (Gai Spix)
-            </div>
-          </Html>
-
-          <Html position={[mentalPos[0], mentalPos[1] + 0.005, mentalPos[2]]} center>
-            <div className="px-1.5 py-0.5 rounded bg-amber-950/90 border border-amber-500/50 text-amber-300 text-[7px] font-mono whitespace-nowrap pointer-events-none shadow-lg">
-              Lỗ cằm (Mental Foramen)
-            </div>
-          </Html>
-
-          <Html position={[lingualPos[0], lingualPos[1] + 0.005, lingualPos[2]]} center>
-            <div className="px-1.5 py-0.5 rounded bg-rose-950/90 border border-rose-500/50 text-rose-300 text-[7px] font-mono whitespace-nowrap pointer-events-none shadow-lg">
-              TK Lưỡi (Lingual N.)
-            </div>
-          </Html>
+          {/* Canonical Landmark points: Spix, Mental, Lingual */}
         </group>
       )}
 
@@ -379,28 +371,6 @@ const MandibularSurgicalSiteMesh: React.FC<{
             linewidth={2}
           />
         </line>
-
-        {/* Live Distance Floating Indicator */}
-        <Html
-          position={[
-            (toothApexPos[0] + canalTargetPos[0]) / 2 + (isRight ? -0.008 : 0.008),
-            (toothApexPos[1] + canalTargetPos[1]) / 2,
-            (toothApexPos[2] + canalTargetPos[2]) / 2
-          ]}
-          center
-        >
-          <div
-            className="px-2 py-0.5 rounded-full border text-[8px] font-black tracking-wider flex items-center gap-1 shadow-2xl pointer-events-none whitespace-nowrap animate-pulse"
-            style={{
-              backgroundColor: distToCanalMm <= 1.0 ? '#7f1d1d' : '#451a03',
-              borderColor: riskColor,
-              color: riskColor
-            }}
-          >
-            <Activity className="w-2.5 h-2.5" />
-            <span>K/c IAN: {distToCanalMm.toFixed(1)} mm</span>
-          </div>
-        </Html>
       </group>
 
       {/* 3. RĂNG KHÔN NGẦM GIẢI PHẪU 3D (ANATOMICAL MOLAR 3D) */}
@@ -414,18 +384,6 @@ const MandibularSurgicalSiteMesh: React.FC<{
           isSeparated={isToothElevated}
           elevationOffset={isToothElevated ? [isRight ? -0.008 : 0.008, 0.015, 0.006] : [0, 0, 0]}
         />
-
-        {/* Dynamic Tooth Clinical Status Badge */}
-        <Html position={[toothPos[0], toothPos[1] + 0.013, toothPos[2]]} center>
-          <div className="px-2 py-0.5 rounded bg-amber-500 text-slate-950 font-bold text-[8px] font-mono whitespace-nowrap shadow-md pointer-events-none">
-            {isRight ? 'R.48' : 'R.38'}{' '}
-            {isToothElevated
-              ? '(Đã Bẩy Rời)'
-              : isOdontotomyCut
-              ? '(Đã Cắt Thân)'
-              : '(Răng Khôn Ngầm)'}
-          </div>
-        </Html>
       </group>
 
       {/* 4. GÂY TÊ VÙNG SPIX (Step 1) */}
@@ -447,11 +405,6 @@ const MandibularSurgicalSiteMesh: React.FC<{
               opacity={0.45}
             />
           </mesh>
-          <Html position={[0, 0.010, 0]} center>
-            <div className="px-1.5 py-0.5 rounded bg-cyan-950/90 border border-cyan-500/50 text-cyan-300 text-[7px] font-mono whitespace-nowrap pointer-events-none">
-              Gây tê gai Spix (Lidocaine 2%)
-            </div>
-          </Html>
         </group>
       )}
 
@@ -463,11 +416,6 @@ const MandibularSurgicalSiteMesh: React.FC<{
             position={[isRight ? -0.004 : 0.004, 0.006, 0.004]}
             rotation={[0.3, isRight ? 0.5 : -0.5, 0.1]}
           />
-          <Html position={[isRight ? -0.004 : 0.004, 0.010, 0]} center>
-            <div className="px-1.5 py-0.5 rounded bg-rose-950/90 border border-rose-500/50 text-rose-300 text-[7px] font-mono whitespace-nowrap pointer-events-none">
-              Vạt tam giác Ward (Bóc tách toàn phần)
-            </div>
-          </Html>
         </group>
       )}
 
@@ -481,11 +429,6 @@ const MandibularSurgicalSiteMesh: React.FC<{
               rotation={[0.35, isRight ? 0.4 : -0.4, 0]}
             />
           )}
-          <Html position={[isRight ? -0.004 : 0.004, -0.008, 0]} center>
-            <div className="px-1.5 py-0.5 rounded bg-sky-950/90 border border-sky-500/50 text-sky-200 text-[7px] font-mono whitespace-nowrap pointer-events-none">
-              Rãnh mở xương má (Bone Guttering)
-            </div>
-          </Html>
         </group>
       )}
 
@@ -496,11 +439,6 @@ const MandibularSurgicalSiteMesh: React.FC<{
             position={[0, 0.002, 0]}
             rotation={[0.65, isRight ? 0.25 : -0.25, 0]}
           />
-          <Html position={[0, 0.010, 0]} center>
-            <div className="px-2 py-0.5 rounded bg-rose-900/90 border border-rose-400 text-rose-200 text-[8px] font-mono whitespace-nowrap shadow-lg pointer-events-none">
-              Cắt thân răng 45° (Mũi #702)
-            </div>
-          </Html>
         </group>
       )}
 
@@ -521,11 +459,6 @@ const MandibularSurgicalSiteMesh: React.FC<{
             <coneGeometry args={[0.0012, 0.003, 8]} />
             <meshStandardMaterial color="#10b981" emissive="#10b981" emissiveIntensity={0.8} />
           </mesh>
-          <Html position={[0, 0.022, 0]} center>
-            <div className="px-2 py-0.5 rounded bg-emerald-900/90 border border-emerald-400 text-emerald-200 text-[8px] font-mono whitespace-nowrap shadow-xl pointer-events-none">
-              Điểm tựa bẩy (Đòn bẩy loại 1)
-            </div>
-          </Html>
         </group>
       )}
 
@@ -547,32 +480,16 @@ const MandibularSurgicalSiteMesh: React.FC<{
             rotation={[0, isRight ? 0.1 : -0.1, 0]}
             scale={0.9}
           />
-          <Html position={[0, 0.008, 0]} center>
-            <div className="px-2 py-0.5 rounded bg-sky-900 border border-sky-400 text-sky-200 text-[8px] font-mono whitespace-nowrap pointer-events-none shadow-lg">
-              3 Mũi Khâu Rời (Silk 3-0 / Vicryl 4-0)
-            </div>
-          </Html>
         </group>
       )}
 
-      {/* 10. DEBUG COORDINATES HELPER: 3D AXES & TELEMETRY */}
+      {/* 10. DEBUG COORDINATES HELPER: 3D AXES */}
       {showDebugCoords && (
         <group>
           {/* Socket Axes Helper: Red=X (Sagittal), Green=Y (Coronal), Blue=Z (Axial) */}
           <axesHelper args={[0.03]} position={toothPos} />
           <axesHelper args={[0.02]} position={spixPos} />
           <axesHelper args={[0.02]} position={mentalPos} />
-
-          <Html position={[toothPos[0], toothPos[1] - 0.015, toothPos[2]]} center>
-            <div className="p-2 rounded-xl bg-black/90 border border-emerald-500/80 text-emerald-400 text-[8px] font-mono whitespace-nowrap pointer-events-none shadow-2xl backdrop-blur-md">
-              <div className="font-bold text-amber-300 mb-0.5">DENTAL VIEW TELEMETRY</div>
-              <div>🎯 Active: {selectedAnatomyId || (isRight ? 'tooth.48' : 'tooth.38')}</div>
-              <div>📍 Socket: [{toothPos.map((n) => n.toFixed(4)).join(', ')}]m</div>
-              <div>⚡ IAN Target: [{canalTargetPos.map((n) => n.toFixed(4)).join(', ')}]m</div>
-              <div>📏 Proximity: {distToCanalMm.toFixed(2)}mm</div>
-              <div>👁️ Nerves: {showNerves ? 'VISIBLE' : 'HIDDEN'} | Spix: [{spixPos.map((n) => n.toFixed(4)).join(', ')}]m</div>
-            </div>
-          </Html>
         </group>
       )}
     </group>
@@ -719,6 +636,153 @@ export const WisdomSurgeryStage: React.FC = () => {
     WISDOM_SURGICAL_DATABASE.surgicalSteps.find((s) => s.stepNumber === wisdomSurgicalStep) ||
     WISDOM_SURGICAL_DATABASE.surgicalSteps[0];
 
+  const isOdontotomyCut = wisdomSurgicalStep >= 4;
+  const isToothElevated = wisdomSurgicalStep >= 5;
+
+  const distToCanalMm = useMemo(() => {
+    let dist = 2.5;
+    if (wisdomWinterType === 'mesioangular') dist = 1.1;
+    else if (wisdomWinterType === 'horizontal') dist = 0.5;
+    else if (wisdomWinterType === 'distoangular') dist = 1.8;
+    else dist = 3.2;
+
+    if (wisdomPellGregoryPos === 'B') dist = Math.max(0.4, dist - 0.7);
+    else if (wisdomPellGregoryPos === 'C') dist = Math.max(0.2, dist - 1.4);
+
+    return dist;
+  }, [wisdomWinterType, wisdomPellGregoryPos]);
+
+  // Responsive viewer container sizing
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerSize, setContainerSize] = useState<{ width: number; height: number }>({
+    width: 1280,
+    height: 720
+  });
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const updateSize = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          setContainerSize({
+            width: Math.round(rect.width),
+            height: Math.round(rect.height)
+          });
+        }
+      }
+    };
+    updateSize();
+    const ro = new ResizeObserver(updateSize);
+    ro.observe(containerRef.current);
+    window.addEventListener('resize', updateSize);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', updateSize);
+    };
+  }, []);
+
+  // 3D Projected Labels state and context toggle
+  const [rawLabels, setRawLabels] = useState<RawProjectedLabel[]>([]);
+  const [showContextLabels, setShowContextLabels] = useState<boolean>(true);
+
+  // 3D Anchors for projected Anatomy Labels
+  const labelAnchors = useMemo<LabelAnchorDefinition[]>(() => {
+    const isTooth48 = wisdomToothId === 'tooth_48';
+    const isSelectedTooth =
+      selectedAnatomyId === wisdomToothId ||
+      selectedAnatomyId === 'tooth_48' ||
+      selectedAnatomyId === 'tooth_38' ||
+      (selectedAnatomyId?.startsWith('tooth.') && selectedAnatomyId.includes(isTooth48 ? '48' : '38'));
+
+    const anchors: LabelAnchorDefinition[] = [
+      {
+        id: wisdomToothId,
+        nameVi: isTooth48 ? 'R.48 (Răng khôn dưới phải)' : 'R.38 (Răng khôn dưới trái)',
+        nameEn: isTooth48 ? 'Mandibular Right 3rd Molar' : 'Mandibular Left 3rd Molar',
+        subtitle: isToothElevated ? 'Đã bẩy' : isOdontotomyCut ? 'Đã cắt' : 'Răng ngầm',
+        worldPos: isTooth48 ? coords.tooth48.socketPos : coords.tooth38.socketPos,
+        priority: isSelectedTooth ? 1 : 2,
+        isSelected: isSelectedTooth
+      },
+      {
+        id: 'nerve_ian',
+        nameVi: isRight ? 'TK Huyệt răng dưới (IAN.r)' : 'TK Huyệt răng dưới (IAN.l)',
+        nameEn: 'Inferior Alveolar Nerve',
+        worldPos: isRight ? coords.ianRight.center : coords.ianLeft.center,
+        priority: selectedAnatomyId === 'nerve_ian' ? 1 : 2,
+        isSelected: selectedAnatomyId === 'nerve_ian',
+        isCritical: true
+      },
+      {
+        id: 'mandibular_canal',
+        nameVi: isRight ? 'Ống hàm dưới P' : 'Ống hàm dưới T',
+        nameEn: 'Mandibular Canal',
+        worldPos: isRight ? coords.ianRight.center : coords.ianLeft.center,
+        priority: selectedAnatomyId === 'mandibular_canal' ? 1 : 2,
+        isSelected: selectedAnatomyId === 'mandibular_canal',
+        isCritical: true
+      },
+      {
+        id: 'nerve_lingual',
+        nameVi: isRight ? 'TK Lưỡi (Lingual.r)' : 'TK Lưỡi (Lingual.l)',
+        nameEn: 'Lingual Nerve',
+        worldPos: isRight ? coords.lingualRight.center : coords.lingualLeft.center,
+        priority: selectedAnatomyId === 'nerve_lingual' ? 1 : 3,
+        isSelected: selectedAnatomyId === 'nerve_lingual'
+      },
+      {
+        id: 'mental_foramen',
+        nameVi: isRight ? 'Lỗ cằm P (Mental)' : 'Lỗ cằm T (Mental)',
+        nameEn: 'Mental Foramen',
+        worldPos: isRight ? coords.mentalRight.center : coords.mentalLeft.center,
+        priority: selectedAnatomyId === 'mental_foramen' ? 1 : 3,
+        isSelected: selectedAnatomyId === 'mental_foramen'
+      },
+      {
+        id: 'mandibular_foramen',
+        nameVi: isRight ? 'Lỗ hàm dưới (Gai Spix.r)' : 'Lỗ hàm dưới (Gai Spix.l)',
+        nameEn: 'Mandibular Foramen (Spix)',
+        worldPos: isRight ? coords.mandibularForamenRight.center : coords.mandibularForamenLeft.center,
+        priority: selectedAnatomyId === 'mandibular_foramen' ? 1 : 3,
+        isSelected: selectedAnatomyId === 'mandibular_foramen'
+      },
+      {
+        id: 'bone_mandible',
+        nameVi: 'Xương hàm dưới (Mandible)',
+        nameEn: 'Mandible Bone',
+        worldPos: coords.mandible.center,
+        priority: selectedAnatomyId === 'bone_mandible' || selectedAnatomyId === 'mandible' ? 1 : 3,
+        isSelected: selectedAnatomyId === 'bone_mandible' || selectedAnatomyId === 'mandible'
+      }
+    ];
+
+    return anchors;
+  }, [wisdomToothId, selectedAnatomyId, isToothElevated, isOdontotomyCut, isRight, coords]);
+
+  // Compute placed labels with collision avoidance
+  const placedLabels = useMemo(() => {
+    const obstacles: LayoutObstacle[] = [
+      {
+        id: 'top-controls',
+        type: 'top-controls',
+        ...TopControlsManager.getBounds(containerSize.width)
+      },
+      {
+        id: 'bottom-toolbar',
+        type: 'bottom-toolbar',
+        ...ToolbarSafeArea.getBounds(containerSize.width, containerSize.height)
+      }
+    ];
+
+    return LabelLayoutManager.resolveLayout(rawLabels, obstacles, {
+      containerWidth: containerSize.width,
+      containerHeight: containerSize.height,
+      showContext: showContextLabels,
+      maxVisibleLabels: containerSize.width < 640 ? 3 : containerSize.width < 1024 ? 4 : 6
+    });
+  }, [rawLabels, containerSize, showContextLabels]);
+
   // Camera inspection presets calculated from canonical coordinates
   const handleCameraPreset = (preset: DentalViewPreset) => {
     const currentId = selectedAnatomyId || wisdomToothId;
@@ -733,13 +797,19 @@ export const WisdomSurgeryStage: React.FC = () => {
     : [0.135, 0.795, 0.110];
 
   return (
-    <div className="relative w-full h-full select-none overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
-      {/* 1. TOP FLOATING CONTROL BAR: QUICK ACTIONS, VIEW MODES & STUDY TOGGLE */}
-      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 w-[96%] max-w-4xl flex flex-wrap items-center justify-between gap-2 pointer-events-auto select-none">
-        {/* Left: Quick Anatomical Chips */}
+    <div
+      ref={containerRef}
+      className="relative w-full h-full select-none overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950"
+    >
+      {/* 1. TOP CONTROLS STACK (Zone A: Structure Navigation + Zone B: View Controls & Presets) */}
+      <div
+        data-ui="top-controls-stack"
+        className="absolute top-2.5 sm:top-3.5 left-1/2 -translate-x-1/2 z-20 w-auto max-w-[calc(100vw-32px)] sm:max-w-[calc(100%-140px)] flex flex-col items-center gap-1.5 sm:gap-2 pointer-events-none select-none"
+      >
+        {/* Zone A: Structure Navigation (Row 1) */}
         <div
-          className={`flex items-center gap-1 p-1 rounded-2xl border backdrop-blur-md shadow-lg overflow-x-auto scrollbar-none ${
-            isDark ? 'bg-slate-900/85 border-slate-800' : 'bg-[#f7f2ea]/90 border-[#dfd5c6]'
+          className={`flex items-center gap-1 p-1 rounded-2xl border backdrop-blur-md shadow-lg overflow-x-auto scrollbar-none flex-nowrap max-w-full pointer-events-auto ${
+            isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-[#f7f2ea]/95 border-[#dfd5c6]'
           }`}
         >
           {[
@@ -753,12 +823,13 @@ export const WisdomSurgeryStage: React.FC = () => {
           ].map((chip) => {
             const isSelected =
               selectedAnatomyId === chip.id ||
-              (chip.id === 'tooth_48' && wisdomToothId === 'tooth_48' && selectedAnatomyId?.startsWith('tooth_')) ||
-              (chip.id === 'tooth_38' && wisdomToothId === 'tooth_38' && selectedAnatomyId?.startsWith('tooth_'));
+              (chip.id === 'tooth_48' && wisdomToothId === 'tooth_48' && (selectedAnatomyId?.startsWith('tooth_') || selectedAnatomyId?.startsWith('tooth.'))) ||
+              (chip.id === 'tooth_38' && wisdomToothId === 'tooth_38' && (selectedAnatomyId?.startsWith('tooth_') || selectedAnatomyId?.startsWith('tooth.')));
             return (
               <button
                 key={chip.id}
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   if (chip.id === 'tooth_48' || chip.id === 'tooth_38') {
                     setWisdomToothId(chip.id as any);
                   }
@@ -767,9 +838,9 @@ export const WisdomSurgeryStage: React.FC = () => {
                 }}
                 className={`px-2.5 py-1 rounded-xl text-[10px] font-bold transition cursor-pointer whitespace-nowrap ${
                   isSelected
-                    ? 'bg-amber-600 text-white shadow-sm'
+                    ? 'bg-amber-600 text-white shadow-sm ring-1 ring-amber-400/40'
                     : isDark
-                    ? 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                    ? 'text-slate-300 hover:bg-slate-800 hover:text-white'
                     : 'text-slate-700 hover:bg-[#ede3d5] hover:text-[#28231d]'
                 }`}
               >
@@ -777,16 +848,69 @@ export const WisdomSurgeryStage: React.FC = () => {
               </button>
             );
           })}
+
+          {/* Context Toggle (Bối cảnh: BẬT / TẮT) */}
+          <div className="w-px h-3.5 bg-slate-700 mx-0.5" />
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowContextLabels(!showContextLabels);
+            }}
+            className={`px-2 py-0.5 rounded-lg text-[9px] font-bold transition cursor-pointer whitespace-nowrap border ${
+              showContextLabels
+                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                : 'bg-slate-800 text-slate-400 border-slate-700'
+            }`}
+            title="Bật/Tắt hiển thị nhãn các cấu trúc bối cảnh lân cận"
+          >
+            <Layers className="w-3 h-3 inline mr-1" />
+            {showContextLabels ? 'Bối cảnh: BẬT' : 'Bối cảnh: TẮT'}
+          </button>
         </div>
 
-        {/* Right: View Mode Selector & Context Toggles */}
+        {/* Zone B: View Presets & Modes (Row 2, guaranteed below Row 1 with 8px gap) */}
         <div
-          className={`flex items-center gap-1.5 p-1 rounded-2xl border backdrop-blur-md shadow-lg ${
-            isDark ? 'bg-slate-900/85 border-slate-800' : 'bg-[#f7f2ea]/90 border-[#dfd5c6]'
-          }`}
+          className={`flex items-center justify-center gap-1.5 p-1 rounded-2xl border backdrop-blur-md shadow-lg overflow-x-auto scrollbar-none flex-nowrap max-w-full pointer-events-auto ${
+            isDark ? 'bg-slate-900/85 border-slate-800 text-slate-200' : 'bg-[#f7f2ea]/90 border-[#dfd5c6] text-slate-700'
+          } text-[10px]`}
         >
+          <span className="px-1.5 font-mono text-[9px] text-amber-400 font-bold tracking-wider uppercase flex items-center gap-1 flex-shrink-0">
+            <Eye className="w-3 h-3 text-amber-400" />
+            Góc nhìn:
+          </span>
+          <button
+            onClick={(e) => { e.stopPropagation(); handleCameraPreset('occlusal'); }}
+            className="px-2 py-0.5 rounded-lg font-medium transition hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/60 cursor-pointer whitespace-nowrap"
+            title="Nhìn thẳng từ trên xuống mặt nhai"
+          >
+            Mặt Nhai (Occlusal)
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); handleCameraPreset('buccal'); }}
+            className="px-2 py-0.5 rounded-lg font-medium transition hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/60 cursor-pointer whitespace-nowrap"
+            title="Nhìn từ phía má vào thân răng"
+          >
+            Phía Má (Buccal)
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); handleCameraPreset('lingual'); }}
+            className="px-2 py-0.5 rounded-lg font-medium transition hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/60 cursor-pointer whitespace-nowrap"
+            title="Nhìn từ phía lưỡi vào mặt trong"
+          >
+            Phía Lưỡi (Lingual)
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); handleCameraPreset('closeup'); }}
+            className="px-2 py-0.5 rounded-lg font-bold transition bg-amber-600/25 text-amber-300 hover:bg-amber-600/40 border border-amber-500/40 cursor-pointer whitespace-nowrap"
+            title="Cận cảnh chóp răng và thần kinh IAN"
+          >
+            Cận Cảnh (Close-up)
+          </button>
+
+          <div className="w-px h-3.5 bg-slate-700 mx-0.5" />
+
           {/* View Modes */}
-          <div className="flex rounded-xl p-0.5 bg-black/10 dark:bg-white/10">
+          <div className="flex rounded-lg p-0.5 bg-black/30">
             {[
               { id: 'standard', label: 'Chuẩn' },
               { id: 'bone_only', label: 'Xương & Răng' },
@@ -795,8 +919,8 @@ export const WisdomSurgeryStage: React.FC = () => {
             ].map((v) => (
               <button
                 key={v.id}
-                onClick={() => setWisdomViewMode(v.id as any)}
-                className={`px-2 py-0.5 rounded-lg text-[9px] font-bold transition cursor-pointer ${
+                onClick={(e) => { e.stopPropagation(); setWisdomViewMode(v.id as any); }}
+                className={`px-2 py-0.5 rounded-md text-[9px] font-bold transition cursor-pointer whitespace-nowrap ${
                   wisdomViewMode === v.id
                     ? 'bg-amber-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-current'
@@ -807,10 +931,12 @@ export const WisdomSurgeryStage: React.FC = () => {
             ))}
           </div>
 
+          <div className="w-px h-3.5 bg-slate-700 mx-0.5" />
+
           {/* Skull context toggle */}
           <button
-            onClick={() => setShowFullSkull(!showFullSkull)}
-            className={`px-2 py-0.5 rounded-lg text-[9px] font-bold transition cursor-pointer border ${
+            onClick={(e) => { e.stopPropagation(); setShowFullSkull(!showFullSkull); }}
+            className={`px-2 py-0.5 rounded-lg text-[9px] font-bold transition cursor-pointer whitespace-nowrap border ${
               showFullSkull
                 ? 'bg-emerald-600/20 text-emerald-400 border-emerald-500/40'
                 : 'bg-slate-800 text-slate-400 border-slate-700'
@@ -822,8 +948,8 @@ export const WisdomSurgeryStage: React.FC = () => {
 
           {/* Debug Coordinate Toggle */}
           <button
-            onClick={() => setShowDebugCoords(!showDebugCoords)}
-            className={`px-2 py-0.5 rounded-lg text-[9px] font-mono font-bold transition cursor-pointer border ${
+            onClick={(e) => { e.stopPropagation(); setShowDebugCoords(!showDebugCoords); }}
+            className={`px-2 py-0.5 rounded-lg text-[9px] font-mono font-bold transition cursor-pointer whitespace-nowrap border ${
               showDebugCoords
                 ? 'bg-amber-500/20 text-amber-300 border-amber-500/50'
                 : 'bg-slate-800 text-slate-400 border-slate-700'
@@ -836,41 +962,20 @@ export const WisdomSurgeryStage: React.FC = () => {
         </div>
       </div>
 
-      {/* 1B. CAMERA INSPECTION PRESETS (GÓC QUAN SÁT RĂNG KHÔN THẬT) */}
-      <div className="absolute top-14 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 p-1 rounded-2xl border backdrop-blur-md shadow-lg bg-slate-900/85 border-slate-800 text-[10px] pointer-events-auto">
-        <span className="px-2 font-mono text-[9px] text-amber-400 font-bold tracking-wider uppercase flex items-center gap-1">
-          <Eye className="w-3 h-3 text-amber-400" />
-          Góc nhìn:
-        </span>
-        <button
-          onClick={() => handleCameraPreset('occlusal')}
-          className="px-2.5 py-1 rounded-xl font-bold transition hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-700/60 cursor-pointer"
-          title="Nhìn thẳng từ trên xuống mặt nhai, múi và rãnh trũng"
-        >
-          Mặt Nhai (Occlusal)
-        </button>
-        <button
-          onClick={() => handleCameraPreset('buccal')}
-          className="px-2.5 py-1 rounded-xl font-bold transition hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-700/60 cursor-pointer"
-          title="Nhìn từ phía má vào đường cổ răng và thân răng"
-        >
-          Phía Má (Buccal)
-        </button>
-        <button
-          onClick={() => handleCameraPreset('lingual')}
-          className="px-2.5 py-1 rounded-xl font-bold transition hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-700/60 cursor-pointer"
-          title="Nhìn từ phía lưỡi vào mặt trong và bản xương lưỡi"
-        >
-          Phía Lưỡi (Lingual)
-        </button>
-        <button
-          onClick={() => handleCameraPreset('closeup')}
-          className="px-2.5 py-1 rounded-xl font-bold transition bg-amber-600/25 text-amber-300 hover:bg-amber-600/40 border border-amber-500/40 cursor-pointer"
-          title="Cận cảnh chóp răng và thần kinh huyệt răng dưới (IAN)"
-        >
-          Cận Cảnh (Close-up)
-        </button>
-      </div>
+      {/* Floating 3D Telemetry HUD (Rendered cleanly in 2D space when enabled, outside canvas) */}
+      {showDebugCoords && (
+        <div className="absolute top-28 left-4 z-20 p-2.5 rounded-2xl bg-slate-950/90 border border-emerald-500/70 text-emerald-400 text-[9px] font-mono shadow-2xl backdrop-blur-md pointer-events-auto select-text animate-fade-in max-w-xs">
+          <div className="font-bold text-amber-300 mb-1 flex items-center gap-1.5 border-b border-emerald-500/30 pb-1">
+            <Compass className="w-3.5 h-3.5 text-amber-400" />
+            DENTAL VIEW TELEMETRY
+          </div>
+          <div>🎯 Cấu trúc: {selectedAnatomyId || wisdomToothId}</div>
+          <div>📍 Huyệt răng: [{canonicalToothPos.map((n) => n.toFixed(4)).join(', ')}]m</div>
+          <div>⚡ Khoảng cách IAN: {distToCanalMm.toFixed(2)}mm</div>
+          <div>👁️ Thần kinh: {wisdomShowNerves ? 'HIỂN THỊ' : 'ẨN'}</div>
+          <div>📐 Viewport: {containerSize.width} × {containerSize.height}px</div>
+        </div>
+      )}
 
       {/* 2. 3D WEBGL CANVAS STAGE (CLEAN & UNOBSTRUCTED) */}
       <Canvas
@@ -902,6 +1007,12 @@ export const WisdomSurgeryStage: React.FC = () => {
             showDebugCoords={showDebugCoords}
           />
 
+          {/* 3D Anatomy Label Projector (calculates screen coordinates in real time) */}
+          <DentalAnatomyLabelProjector
+            anchors={labelAnchors}
+            onProject={setRawLabels}
+          />
+
           {/* Dynamic Camera Glide & Orbit Controls */}
           <WisdomCameraController controlsRef={controlsRef} />
           <OrbitControls
@@ -915,10 +1026,30 @@ export const WisdomSurgeryStage: React.FC = () => {
         </Suspense>
       </Canvas>
 
-      {/* 3. BOTTOM SLEEK SURGICAL STEP CONTROLLER */}
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-3 py-1.5 rounded-full border backdrop-blur-md shadow-xl pointer-events-auto bg-slate-900/85 border-slate-800 text-slate-200">
+      {/* 3. ANATOMY LABELS LAYER (2D Projected with Collision Avoidance) */}
+      <AnatomyLabelLayer
+        labels={placedLabels}
+        selectedId={selectedAnatomyId}
+        onSelect={(id) => {
+          if (id === 'tooth_48' || id === 'tooth_38') {
+            setWisdomToothId(id as any);
+          }
+          selectAnatomy(id);
+          focusAnatomy(id);
+        }}
+      />
+
+      {/* 4. BOTTOM SLEEK SURGICAL STEP CONTROLLER (Protected Safe Area) */}
+      <div
+        data-ui="bottom-toolbar"
+        id="medanatomy-bottom-toolbar"
+        className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-3 py-1.5 rounded-full border backdrop-blur-md shadow-xl pointer-events-auto bg-slate-900/90 border-slate-800 text-slate-200"
+      >
         <button
-          onClick={() => setWisdomSurgicalStep(Math.max(1, wisdomSurgicalStep - 1))}
+          onClick={(e) => {
+            e.stopPropagation();
+            setWisdomSurgicalStep(Math.max(1, wisdomSurgicalStep - 1));
+          }}
           disabled={wisdomSurgicalStep <= 1}
           className="p-1 rounded-full text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
           title="Bước trước"
@@ -939,7 +1070,10 @@ export const WisdomSurgeryStage: React.FC = () => {
           {[1, 2, 3, 4, 5, 6].map((st) => (
             <button
               key={st}
-              onClick={() => setWisdomSurgicalStep(st)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setWisdomSurgicalStep(st);
+              }}
               className={`w-4 h-4 rounded-full text-[9px] font-mono font-bold transition cursor-pointer ${
                 wisdomSurgicalStep === st
                   ? 'bg-amber-500 text-slate-950'
@@ -952,7 +1086,10 @@ export const WisdomSurgeryStage: React.FC = () => {
         </div>
 
         <button
-          onClick={() => setWisdomSurgicalStep(Math.min(6, wisdomSurgicalStep + 1))}
+          onClick={(e) => {
+            e.stopPropagation();
+            setWisdomSurgicalStep(Math.min(6, wisdomSurgicalStep + 1));
+          }}
           disabled={wisdomSurgicalStep >= 6}
           className="p-1 rounded-full text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
           title="Bước tiếp theo"
