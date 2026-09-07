@@ -14,6 +14,7 @@ import {
 } from '../../data/dentalNeuroData';
 import { ToothPositionResolver } from '../../utils/ToothPositionResolver';
 import { TOOTH_REGISTRY } from '../../data/ToothRegistry';
+import { DentalCameraFocusController } from '../../anatomy/dental/DentalCameraFocusController';
 
 // Normalizes and articulates any head mesh into the standard Craniofacial coordinate system
 export function createCraniofacialOrganGroup(
@@ -60,7 +61,8 @@ const DentalCameraController: React.FC<{ controlsRef: React.RefObject<any> }> = 
   const animRef = useRef({
     isAnimating: false,
     startTime: 0,
-    duration: 750,
+    duration: 500,
+    requestId: 0,
     startPos: new THREE.Vector3(),
     endPos: new THREE.Vector3(),
     startTarget: new THREE.Vector3(),
@@ -71,25 +73,34 @@ const DentalCameraController: React.FC<{ controlsRef: React.RefObject<any> }> = 
   useEffect(() => {
     if (!cameraTarget || cameraTarget.timestamp === animRef.current.lastTimestamp) return;
 
-    animRef.current.lastTimestamp = cameraTarget.timestamp;
-    animRef.current.startPos.copy(camera.position);
+    let [px, py, pz] = cameraTarget.position;
+    let [lx, ly, lz] = cameraTarget.lookAt;
+
+    // Bounds safety: reject NaN, Infinity, or degenerate coordinates
+    if (!Number.isFinite(px) || !Number.isFinite(py) || !Number.isFinite(pz) ||
+        !Number.isFinite(lx) || !Number.isFinite(ly) || !Number.isFinite(lz)) {
+      return;
+    }
 
     // If cameraTarget position was in legacy standing human space (> 1.15m), adapt to craniofacial space
-    let targetPos = new THREE.Vector3(...cameraTarget.position);
-    let lookPos = new THREE.Vector3(...cameraTarget.lookAt);
-    if (targetPos.y > 1.15) {
-      targetPos.y -= 0.60;
-    }
-    if (lookPos.y > 1.15) {
-      lookPos.y -= 0.60;
-    }
+    if (py > 1.15) py -= 0.60;
+    if (ly > 1.15) ly -= 0.60;
 
-    animRef.current.endPos.copy(targetPos);
+    const reqId = DentalCameraFocusController.nextRequestId();
+    animRef.current.requestId = reqId;
+    animRef.current.lastTimestamp = cameraTarget.timestamp;
+
+    // Smooth transition from current live camera state (prevents teleporting/jumping)
+    animRef.current.startPos.copy(camera.position);
+    animRef.current.endPos.set(px, py, pz);
 
     const controls = controlsRef.current;
     if (controls) {
       animRef.current.startTarget.copy(controls.target);
-      animRef.current.endTarget.copy(lookPos);
+      animRef.current.endTarget.set(lx, ly, lz);
+    } else {
+      animRef.current.startTarget.set(lx, ly, lz);
+      animRef.current.endTarget.set(lx, ly, lz);
     }
 
     animRef.current.startTime = performance.now();
@@ -97,21 +108,27 @@ const DentalCameraController: React.FC<{ controlsRef: React.RefObject<any> }> = 
   }, [cameraTarget, camera, controlsRef]);
 
   useFrame(() => {
-    if (animRef.current.isAnimating) {
-      const elapsed = performance.now() - animRef.current.startTime;
-      const progress = Math.min(1.0, elapsed / animRef.current.duration);
-      const ease = 1 - Math.pow(1 - progress, 3);
+    if (!animRef.current.isAnimating) return;
 
-      camera.position.lerpVectors(animRef.current.startPos, animRef.current.endPos, ease);
+    // Invalidate if a newer focus request was initiated
+    if (!DentalCameraFocusController.isCurrentRequest(animRef.current.requestId)) {
+      animRef.current.isAnimating = false;
+      return;
+    }
 
-      if (controlsRef.current) {
-        controlsRef.current.target.lerpVectors(animRef.current.startTarget, animRef.current.endTarget, ease);
-        controlsRef.current.update();
-      }
+    const elapsed = performance.now() - animRef.current.startTime;
+    const progress = Math.min(1.0, elapsed / animRef.current.duration);
+    const ease = 1 - Math.pow(1 - progress, 3);
 
-      if (progress >= 1.0) {
-        animRef.current.isAnimating = false;
-      }
+    camera.position.lerpVectors(animRef.current.startPos, animRef.current.endPos, ease);
+
+    if (controlsRef.current) {
+      controlsRef.current.target.lerpVectors(animRef.current.startTarget, animRef.current.endTarget, ease);
+      controlsRef.current.update();
+    }
+
+    if (progress >= 1.0) {
+      animRef.current.isAnimating = false;
     }
   });
 

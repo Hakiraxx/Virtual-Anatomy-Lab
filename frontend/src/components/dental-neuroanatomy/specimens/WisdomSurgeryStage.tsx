@@ -18,6 +18,8 @@ import { useAnatomyStore } from '../../../stores/useAnatomyStore';
 import { WISDOM_SURGICAL_DATABASE } from '../../../data/dentalSpecimensData';
 import { ToothPositionResolver } from '../../../utils/ToothPositionResolver';
 import { CoordinateAlignmentValidator } from '../../../anatomy/dental/CoordinateAlignmentValidator';
+import { DentalTargetResolver } from '../../../anatomy/dental/DentalTargetResolver';
+import { DentalCameraFocusController, DentalViewPreset } from '../../../anatomy/dental/DentalCameraFocusController';
 import {
   AnatomicalMolarMesh,
   DentalSyringe3D,
@@ -191,6 +193,7 @@ const MandibularSurgicalSiteMesh: React.FC<{
   showDebugCoords: boolean;
 }> = ({ toothId, winterType, pellClass, pellPos, surgicalStep, showNerves, showDebugCoords }) => {
   const isRight = toothId === 'tooth_48';
+  const selectedAnatomyId = useDentalNeuroStore((s) => s.selectedAnatomyId);
   const coords = CoordinateAlignmentValidator.CANONICAL_COORDINATES;
 
   // Canonical base socket position:
@@ -561,10 +564,13 @@ const MandibularSurgicalSiteMesh: React.FC<{
           <axesHelper args={[0.02]} position={mentalPos} />
 
           <Html position={[toothPos[0], toothPos[1] - 0.015, toothPos[2]]} center>
-            <div className="p-1.5 rounded bg-black/90 border border-emerald-500/80 text-emerald-400 text-[7px] font-mono whitespace-nowrap pointer-events-none shadow-2xl backdrop-blur-md">
-              <div>🎯 Socket: [{toothPos.map((n) => n.toFixed(4)).join(', ')}]m</div>
+            <div className="p-2 rounded-xl bg-black/90 border border-emerald-500/80 text-emerald-400 text-[8px] font-mono whitespace-nowrap pointer-events-none shadow-2xl backdrop-blur-md">
+              <div className="font-bold text-amber-300 mb-0.5">DENTAL VIEW TELEMETRY</div>
+              <div>🎯 Active: {selectedAnatomyId || (isRight ? 'tooth.48' : 'tooth.38')}</div>
+              <div>📍 Socket: [{toothPos.map((n) => n.toFixed(4)).join(', ')}]m</div>
               <div>⚡ IAN Target: [{canalTargetPos.map((n) => n.toFixed(4)).join(', ')}]m</div>
               <div>📏 Proximity: {distToCanalMm.toFixed(2)}mm</div>
+              <div>👁️ Nerves: {showNerves ? 'VISIBLE' : 'HIDDEN'} | Spix: [{spixPos.map((n) => n.toFixed(4)).join(', ')}]m</div>
             </div>
           </Html>
         </group>
@@ -574,8 +580,7 @@ const MandibularSurgicalSiteMesh: React.FC<{
 };
 
 // ============================================================================
-// 3. SMOOTH CAMERA GLIDE CONTROLLER
-// Aligned to Metric Canonical Craniofacial Coordinates
+// 3. SMOOTH CAMERA GLIDE CONTROLLER WITH CANCELABLE TOKENS & FAILSAFE
 // ============================================================================
 const WisdomCameraController: React.FC<{ controlsRef: React.RefObject<any> }> = ({ controlsRef }) => {
   const { camera } = useThree();
@@ -584,7 +589,8 @@ const WisdomCameraController: React.FC<{ controlsRef: React.RefObject<any> }> = 
   const animRef = useRef({
     isAnimating: false,
     startTime: 0,
-    duration: 750,
+    duration: 500,
+    requestId: 0,
     startPos: new THREE.Vector3(),
     endPos: new THREE.Vector3(),
     startTarget: new THREE.Vector3(),
@@ -595,14 +601,30 @@ const WisdomCameraController: React.FC<{ controlsRef: React.RefObject<any> }> = 
   React.useEffect(() => {
     if (!cameraTarget || cameraTarget.timestamp === animRef.current.lastTimestamp) return;
 
+    const [px, py, pz] = cameraTarget.position;
+    const [lx, ly, lz] = cameraTarget.lookAt;
+
+    // Bounds safety: reject NaN, Infinity, or degenerate coordinates
+    if (!Number.isFinite(px) || !Number.isFinite(py) || !Number.isFinite(pz) ||
+        !Number.isFinite(lx) || !Number.isFinite(ly) || !Number.isFinite(lz)) {
+      return;
+    }
+
+    const reqId = DentalCameraFocusController.nextRequestId();
+    animRef.current.requestId = reqId;
     animRef.current.lastTimestamp = cameraTarget.timestamp;
+
+    // Smooth transition from current live camera state (prevents teleporting/jumping)
     animRef.current.startPos.copy(camera.position);
-    animRef.current.endPos.set(...cameraTarget.position);
+    animRef.current.endPos.set(px, py, pz);
 
     const controls = controlsRef.current;
     if (controls) {
       animRef.current.startTarget.copy(controls.target);
-      animRef.current.endTarget.set(...cameraTarget.lookAt);
+      animRef.current.endTarget.set(lx, ly, lz);
+    } else {
+      animRef.current.startTarget.set(lx, ly, lz);
+      animRef.current.endTarget.set(lx, ly, lz);
     }
 
     animRef.current.startTime = performance.now();
@@ -612,12 +634,16 @@ const WisdomCameraController: React.FC<{ controlsRef: React.RefObject<any> }> = 
   useFrame(() => {
     if (!animRef.current.isAnimating) return;
 
+    // Invalidate if a newer focus request was initiated
+    if (!DentalCameraFocusController.isCurrentRequest(animRef.current.requestId)) {
+      animRef.current.isAnimating = false;
+      return;
+    }
+
     const elapsed = performance.now() - animRef.current.startTime;
     const progress = Math.min(elapsed / animRef.current.duration, 1.0);
-    const t =
-      progress < 0.5
-        ? 4 * progress * progress * progress
-        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+    // Cubic ease-out
+    const t = 1 - Math.pow(1 - progress, 3);
 
     camera.position.lerpVectors(animRef.current.startPos, animRef.current.endPos, t);
 
@@ -694,13 +720,11 @@ export const WisdomSurgeryStage: React.FC = () => {
     WISDOM_SURGICAL_DATABASE.surgicalSteps[0];
 
   // Camera inspection presets calculated from canonical coordinates
-  const handleCameraPreset = (preset: 'occlusal' | 'buccal' | 'lingual' | 'closeup') => {
-    const presetResult = CoordinateAlignmentValidator.calculateViewPreset(
-      canonicalToothPos,
-      preset,
-      isRight
-    );
-    setCameraTarget(presetResult.position, presetResult.target, 0.1);
+  const handleCameraPreset = (preset: DentalViewPreset) => {
+    const currentId = selectedAnatomyId || wisdomToothId;
+    const target = DentalTargetResolver.resolveTarget(currentId, null, { isRight });
+    const framing = DentalCameraFocusController.calculateCameraFraming(target, preset, 30);
+    setCameraTarget(framing.position, framing.lookAt, framing.distance);
   };
 
   // Initial camera position centered on dental arch

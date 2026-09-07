@@ -7,6 +7,8 @@ import {
 } from '../data/dentalNeuroData';
 import { resolveCanonicalId } from '../data/AnatomyAssetRegistry';
 import { ToothPositionResolver } from '../utils/ToothPositionResolver';
+import { DentalTargetResolver } from '../anatomy/dental/DentalTargetResolver';
+import { DentalCameraFocusController } from '../anatomy/dental/DentalCameraFocusController';
 
 export type VisualizationDepth = 'surface' | 'skeletal' | 'neural' | 'dental' | 'deep';
 export type SpecimenMode = 'general' | 'cranial_nerves' | 'tooth_specimen' | 'tmj_specimen' | 'wisdom_surgery';
@@ -512,6 +514,26 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
       if (get().activeSpecimenMode !== 'general' && !(get().activeSpecimenMode === 'wisdom_surgery' && isWisdomStructure)) {
         updates.activeSpecimenMode = 'general';
       }
+
+      // Visibility synchronization: ensure neural or mandibular context is visible
+      const isNeural = [
+        'nerve_ian',
+        'nerve_lingual',
+        'mental_foramen',
+        'mandibular_foramen',
+        'mandibular_canal'
+      ].includes(id);
+
+      if (isNeural) {
+        updates.wisdomShowNerves = true;
+        updates.layerVisibility = { ...get().layerVisibility, 6: true };
+      }
+      if (id === 'bone_mandible' || id === 'mandible') {
+        updates.layerVisibility = { ...get().layerVisibility, 4: true, 11: true };
+        if (get().wisdomBoneOpacity < 0.25) {
+          updates.wisdomBoneOpacity = 0.45;
+        }
+      }
     }
 
     const finalId = updates.selectedAnatomyId || id;
@@ -531,97 +553,52 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
 
   focusAnatomy: (id) => {
     set({ focusedAnatomyId: id });
+    const isRight = get().wisdomToothId === 'tooth_48';
 
-    // 1. Authoritative Tooth resolution via ToothPositionResolver
-    const resolvedTooth = ToothPositionResolver.resolve(id);
-    if (resolvedTooth) {
-      const focus = ToothPositionResolver.getCameraFocus(resolvedTooth.fdi, 'craniofacial');
+    // 1. Authoritative resolution via DentalTargetResolver in Canonical Metric Craniofacial Space
+    const resolvedTarget = DentalTargetResolver.resolveTarget(id, null, { isRight });
+    if (resolvedTarget.isValid) {
+      const framing = DentalCameraFocusController.calculateCameraFraming(resolvedTarget, 'default', 30);
       set({
         cameraTarget: {
-          position: focus.position,
-          lookAt: focus.lookAt,
-          distance: focus.distance,
+          position: framing.position,
+          lookAt: framing.lookAt,
+          distance: framing.distance,
           timestamp: Date.now()
         }
       });
       return;
     }
 
-    // 2. Mandible landmarks in craniofacial space
-    if (id === 'bone_mandible' || id === 'mandible') {
-      set({
-        cameraTarget: {
-          position: [0.0451, 0.78, 0.26],
-          lookAt: [0.0451, 0.748, 0.05],
-          distance: 0.22,
-          timestamp: Date.now()
-        }
-      });
-      return;
-    }
-
-    if (id === 'mandibular_canal') {
-      const isRight = get().wisdomToothId === 'tooth_48';
-      const sideX = isRight ? 0.015 : 0.075;
-      set({
-        cameraTarget: {
-          position: [sideX + (isRight ? -0.06 : 0.06), 0.77, 0.12],
-          lookAt: [sideX, 0.752, 0.035],
-          distance: 0.11,
-          timestamp: Date.now()
-        }
-      });
-      return;
-    }
-
-    if (id === 'nerve_lingual') {
-      const isRight = get().wisdomToothId === 'tooth_48';
-      const sideX = isRight ? 0.022 : 0.068;
-      set({
-        cameraTarget: {
-          position: [sideX + (isRight ? -0.05 : 0.05), 0.765, 0.11],
-          lookAt: [sideX, 0.755, 0.038],
-          distance: 0.09,
-          timestamp: Date.now()
-        }
-      });
-      return;
-    }
-
-    // 3. Look for structure in cranial nerves
+    // 2. Cranial Nerves fallback (adapts legacy Y > 1.15 to craniofacial space)
     const nerve = DENTAL_NERVE_STRUCTURES[id];
     if (nerve && nerve.cameraFocus) {
+      const pos: [number, number, number] = [...nerve.cameraFocus.position];
+      const look: [number, number, number] = [...nerve.cameraFocus.lookAt];
+      if (pos[1] > 1.15) pos[1] -= 0.60;
+      if (look[1] > 1.15) look[1] -= 0.60;
       set({
         cameraTarget: {
-          position: nerve.cameraFocus.position,
-          lookAt: nerve.cameraFocus.lookAt,
-          distance: nerve.cameraFocus.distance,
+          position: pos,
+          lookAt: look,
+          distance: nerve.cameraFocus.distance || 0.25,
           timestamp: Date.now()
         }
       });
       return;
     }
 
-    // 4. Look for TMJ or masticatory muscles
-    if (id === 'joint_tmj' || id === 'specimen_tmj' || id?.startsWith('muscle_')) {
-      set({
-        cameraTarget: {
-          position: [-0.095, 1.375, 0.125],
-          lookAt: [-0.046, 1.366, 0.068],
-          distance: 0.14,
-          timestamp: Date.now()
-        }
-      });
-      return;
-    }
-
-    // 5. Look for structure in foramina
+    // 3. Foramina fallback (adapts legacy Y > 1.15)
     const foramen = CRANIAL_FORAMINA[id];
     if (foramen && foramen.cameraFocus) {
+      const pos: [number, number, number] = [...foramen.cameraFocus.position];
+      const look: [number, number, number] = [...foramen.cameraFocus.lookAt];
+      if (pos[1] > 1.15) pos[1] -= 0.60;
+      if (look[1] > 1.15) look[1] -= 0.60;
       set({
         cameraTarget: {
-          position: foramen.cameraFocus.position,
-          lookAt: foramen.cameraFocus.lookAt,
+          position: pos,
+          lookAt: look,
           distance: 0.22,
           timestamp: Date.now()
         }
@@ -629,7 +606,7 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
       return;
     }
 
-    // Default craniofacial framing centered on dental arch
+    // 4. Default craniofacial framing centered on dental arch
     set({
       cameraTarget: {
         position: [0.0451, 0.78, 0.32],
@@ -1044,12 +1021,16 @@ export const useDentalNeuroStore = create<DentalNeuroState>((set, get) => ({
       selectedAnatomyId: foramenId,
       foramenPassingStructures: passing
     });
-    if (foramen?.cameraFocus) {
-      get().setCameraTarget(
-        foramen.cameraFocus.position,
-        foramen.cameraFocus.lookAt,
-        0.22
-      );
+    const target = DentalTargetResolver.resolveTarget(foramenId, null, { isRight: true });
+    if (target.isValid) {
+      const framing = DentalCameraFocusController.calculateCameraFraming(target, 'default', 30);
+      get().setCameraTarget(framing.position, framing.lookAt, framing.distance);
+    } else if (foramen?.cameraFocus) {
+      const pos: [number, number, number] = [...foramen.cameraFocus.position];
+      const look: [number, number, number] = [...foramen.cameraFocus.lookAt];
+      if (pos[1] > 1.15) pos[1] -= 0.60;
+      if (look[1] > 1.15) look[1] -= 0.60;
+      get().setCameraTarget(pos, look, 0.22);
     }
   },
   highlightedToothRelations: { innervation: false, vascular: false, canal: false },
