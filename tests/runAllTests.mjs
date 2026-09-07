@@ -9,6 +9,7 @@ import { runAnnotationPositioningAuditTests } from './anatomy/annotationPosition
 import { runAnatomyPositionAuditTests } from './anatomyPositionAudit.mjs';
 import { runGenderSpecimenAuditTests } from './anatomy/genderSpecimenAudit.test.mjs';
 import { runLayerSeparationTests } from './anatomy/layerSeparation.test.mjs';
+import { runDentalCoordinateAlignmentTests } from './anatomy/dentalCoordinateAlignment.test.mjs';
 
 async function main() {
   console.log('========================================================================');
@@ -27,7 +28,8 @@ async function main() {
     runAnnotationPositioningAuditTests,
     runAnatomyPositionAuditTests,
     runGenderSpecimenAuditTests,
-    runLayerSeparationTests
+    runLayerSeparationTests,
+    runDentalCoordinateAlignmentTests
   ];
 
   let totalPassed = 0;
