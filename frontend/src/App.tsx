@@ -49,6 +49,13 @@ export function App() {
     const structureParam = searchParams.get('structure');
     const labParam = searchParams.get('lab');
     const specimenParam = searchParams.get('specimen') || labParam;
+    const genderParam = searchParams.get('gender')?.toLowerCase();
+
+    if (genderParam === 'female' || genderParam === 'nu' || genderParam === 'woman') {
+      useAnatomyStore.setState({ gender: 'female' });
+    } else if (genderParam === 'male' || genderParam === 'nam' || genderParam === 'man') {
+      useAnatomyStore.setState({ gender: 'male' });
+    }
 
     const isDentalStructure = structureParam && (
       structureParam.startsWith('tooth') ||
@@ -65,7 +72,8 @@ export function App() {
 
     // Explicit client routes: /toanthan, /lab/craniofacial, /lab/dental-neuroanatomy, /lab/rhm
     if (pathname === '/' || pathname === '' || pathname === '/toanthan') {
-      window.history.replaceState({ viewMode: 'full-body' }, '', '/toanthan');
+      const currentSearch = window.location.search;
+      window.history.replaceState({ viewMode: 'full-body' }, '', '/toanthan' + currentSearch);
     } else if (
       pathname.includes('/lab/dental-neuroanatomy') ||
       pathname.includes('/lab/craniofacial') ||
@@ -133,6 +141,13 @@ export function App() {
       const searchParams = new URLSearchParams(window.location.search);
       const structureParam = searchParams.get('structure');
       const specimenParam = searchParams.get('specimen');
+      const popGender = searchParams.get('gender')?.toLowerCase();
+
+      if (popGender === 'female' || popGender === 'nu' || popGender === 'woman') {
+        useAnatomyStore.setState({ gender: 'female' });
+      } else if (popGender === 'male' || popGender === 'nam' || popGender === 'man') {
+        useAnatomyStore.setState({ gender: 'male' });
+      }
 
       if (currentPath.includes('dental-neuro') || currentPath.includes('craniofacial') || currentPath.includes('rhm')) {
         useAnatomyStore.setState({ viewMode: 'dental-neuro' });

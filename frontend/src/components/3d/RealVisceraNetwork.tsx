@@ -2,12 +2,15 @@ import React, { useMemo } from 'react';
 import * as THREE from 'three';
 import { useGLTF } from '@react-three/drei';
 import { ThreeEvent } from '@react-three/fiber';
+import { HumanSpecimenRegistry, SpecimenGender } from '../../anatomy/specimen/HumanSpecimenRegistry';
+import { useAnatomyStore } from '../../stores/useAnatomyStore';
 
 export interface RealVisceraNetworkProps {
   opacity?: number;
   selectedId?: string | null;
   isIsolated?: boolean;
   clippingPlanes?: THREE.Plane[];
+  gender?: SpecimenGender;
   onSelect?: (structureId: string, worldCenter: [number, number, number]) => void;
 }
 
@@ -35,7 +38,10 @@ export function classifyOrganNode(name: string): string {
   // 4. Genitourinary System
   if (/kidney|renal/i.test(n)) return 'kidneys';
   if (/bladder|ureter|urethra/i.test(n)) return 'bladder';
-  if (/prostate|penis|testis|scrotum|epididymis|deferens|seminal/i.test(n)) return 'reproductive';
+  if (/prostate/i.test(n)) return 'prostate';
+  if (/penis|glans\s*penis|cavernosum|spongiosum/i.test(n)) return 'penis';
+  if (/testis|testicle|scrotum|epididymis|deferens|seminal/i.test(n)) return 'testis';
+  if (/reproductive|genital/i.test(n)) return 'reproductive';
 
   return 'viscera';
 }
@@ -89,8 +95,12 @@ export const RealVisceraNetwork: React.FC<RealVisceraNetworkProps> = ({
   selectedId = null,
   isIsolated = false,
   clippingPlanes = [],
+  gender: propGender,
   onSelect
 }) => {
+  const storeGender = useAnatomyStore((s) => s.gender);
+  const activeGender = (propGender || storeGender || 'male') as SpecimenGender;
+
   const { scene: organsScene } = useGLTF('/models/anatomy/organs_complete.glb');
   const { scene: spleenScene } = useGLTF('/models/spleen.glb');
   const { scene: heartScene } = useGLTF('/models/heart.glb');
@@ -127,6 +137,9 @@ export const RealVisceraNetwork: React.FC<RealVisceraNetworkProps> = ({
       adrenal: makeMat('#fbbf24', 0.50),
       larynx: makeMat('#e2e8f0', 0.40),
       reproductive: makeMat('#c084fc', 0.45),
+      prostate: makeMat('#c084fc', 0.45),
+      penis: makeMat('#c084fc', 0.45),
+      testis: makeMat('#c084fc', 0.45),
       viscera: makeMat('#cbd5e1', 0.50)
     };
 
@@ -184,6 +197,23 @@ export const RealVisceraNetwork: React.FC<RealVisceraNetworkProps> = ({
     const applyMaterial = (target: THREE.Object3D) => {
       target.traverse((child: any) => {
         if (child.isMesh && child.geometry) {
+          // Check if this mesh or any of its parent groups match excluded patterns for active gender
+          let shouldExclude = false;
+          let curr: THREE.Object3D | null = child;
+          while (curr && curr !== target) {
+            if (curr.name && HumanSpecimenRegistry.shouldExcludeNode(curr.name, activeGender)) {
+              shouldExclude = true;
+              break;
+            }
+            curr = curr.parent;
+          }
+
+          if (shouldExclude) {
+            child.visible = false;
+            child.raycast = () => null;
+            return;
+          }
+
           child.castShadow = false;
           child.receiveShadow = false;
           child.frustumCulled = true;
@@ -195,7 +225,9 @@ export const RealVisceraNetwork: React.FC<RealVisceraNetworkProps> = ({
 
           const isThisSelected =
             selectedId &&
-            (selectedId === structureId || (selectedId === 'viscera' && true));
+            (selectedId === structureId ||
+              (selectedId === 'reproductive' && ['reproductive', 'penis', 'testis', 'prostate'].includes(structureId)) ||
+              (selectedId === 'viscera' && true));
 
           if (isIsolated) {
             child.visible = Boolean(isThisSelected);
@@ -217,11 +249,12 @@ export const RealVisceraNetwork: React.FC<RealVisceraNetworkProps> = ({
     applyMaterial(calibratedHeart);
 
     return clone;
-  }, [organsScene, calibratedSpleen, calibratedHeart, selectedId, isIsolated, materials]);
+  }, [organsScene, calibratedSpleen, calibratedHeart, selectedId, isIsolated, materials, activeGender]);
 
   const handlePointerDown = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
     const mesh = e.object as THREE.Mesh;
+    if (!mesh.visible) return;
     const structureId = mesh.userData?.structureId || 'viscera';
 
     const box = new THREE.Box3().setFromObject(mesh);

@@ -23,6 +23,7 @@ import { ConnectedVesselsNetwork } from './ConnectedVesselsNetwork';
 import { ConnectedNervesNetwork } from './ConnectedNervesNetwork';
 import { RealVisceraNetwork } from './RealVisceraNetwork';
 import { RealSkeletonNetwork } from './RealSkeletonNetwork';
+import { HumanSpecimenRegistry } from '../../anatomy/specimen/HumanSpecimenRegistry';
 
 interface NormalizedOrganProps {
   organKey: string;
@@ -635,7 +636,7 @@ export const FullBodyViewer: React.FC = () => {
               )}
 
               {/* Continuous Anatomical Systems from Z-Anatomy (CC-BY-SA 4.0, pelvic origin at Y=0, offset by +0.99 to ground feet) */}
-              <group name="ZAnatomySystems" position={[0, 0.99, 0]}>
+              <group key={`ZAnatomySystems-${HumanSpecimenRegistry.getCacheKey(gender)}`} name="ZAnatomySystems" position={[0, 0.99, 0]}>
                 {/* LAYER 4: Continuous Anatomical Skeletal System (1,948 Bones) */}
                 {layerVisibility[4] && (
                   <RealSkeletonNetwork
@@ -654,6 +655,7 @@ export const FullBodyViewer: React.FC = () => {
                     selectedId={selectedStructureId}
                     isIsolated={isIsolated}
                     clippingPlanes={clippingPlanes}
+                    gender={gender}
                     onSelect={handleSelectStructure}
                   />
                 )}
@@ -683,7 +685,7 @@ export const FullBodyViewer: React.FC = () => {
 
               {/* FEMALE REPRODUCTIVE SYSTEM (Rendered specifically when female gender is selected) */}
               {gender === 'female' && (
-                <>
+                <group key="female-reproductive-system">
                   <NormalizedOrganMesh
                     organKey="uterus"
                     modelPath="/models/uterus.glb"
@@ -762,7 +764,7 @@ export const FullBodyViewer: React.FC = () => {
                     clippingPlanes={clippingPlanes}
                     onSelect={handleSelectStructure}
                   />
-                </>
+                </group>
               )}
             </group>
           </React.Suspense>

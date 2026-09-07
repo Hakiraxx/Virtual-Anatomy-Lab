@@ -154,6 +154,14 @@ interface AnatomyState {
   setQuizListener: (targetOrganId: string | null, onSelect?: (organId: string) => void) => void;
 }
 
+const getInitialGender = (): 'male' | 'female' => {
+  if (typeof window === 'undefined') return 'male';
+  const params = new URLSearchParams(window.location.search);
+  const g = params.get('gender')?.toLowerCase();
+  if (g === 'female' || g === 'nu' || g === 'woman') return 'female';
+  return 'male';
+};
+
 const getInitialViewMode = (): 'full-body' | 'specimen' | 'dental-neuro' => {
   if (typeof window === 'undefined') return 'full-body';
   const path = window.location.pathname.toLowerCase();
@@ -304,8 +312,17 @@ export const useAnatomyStore = create<AnatomyState>((set, get) => ({
   currentCameraTarget: [0, 0, 0],
   isLayersActive: false,
 
-  gender: 'male',
-  setGender: (gender) => set({ gender }),
+  gender: getInitialGender(),
+  setGender: (gender) => {
+    set({ gender });
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('gender', gender);
+      if (window.location.search !== url.search) {
+        window.history.pushState({ gender }, '', url.pathname + url.search);
+      }
+    }
+  },
 
   viewMode: getInitialViewMode(),
   setViewMode: (viewMode) => {
