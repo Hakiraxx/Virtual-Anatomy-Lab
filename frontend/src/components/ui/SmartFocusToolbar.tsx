@@ -398,20 +398,16 @@ export const SmartFocusToolbar: React.FC = () => {
           {/* Bung lớp (Explode) Trigger */}
           <button
             onClick={() => {
-              if (viewMode === 'full-body' && !selectedStructureId) return;
               setShowExplodeSlider(!showExplodeSlider);
               setShowAnglesMenu(false);
               setShowSectionControls(false);
             }}
-            disabled={viewMode === 'full-body' && !selectedStructureId}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-full transition ${
-              viewMode === 'full-body' && !selectedStructureId
-                ? 'opacity-40 cursor-not-allowed text-slate-400'
-                : explodeFactor > 0 || showExplodeSlider
-                ? 'bg-amber-500/20 text-amber-500 border border-amber-500/50 cursor-pointer'
-                : 'hover:bg-black/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 cursor-pointer'
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-full transition cursor-pointer ${
+              explodeFactor > 0 || showExplodeSlider
+                ? 'bg-amber-500/20 text-amber-500 border border-amber-500/50'
+                : 'hover:bg-black/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300'
             }`}
-            title="Bung tách các cấu trúc con ra ngoài"
+            title="Bung tách các lớp giải phẫu ra ngoài (Explode)"
           >
             <Sliders className="w-3.5 h-3.5" />
             <span>{isVi ? 'Bung lớp' : 'Explode'}</span>

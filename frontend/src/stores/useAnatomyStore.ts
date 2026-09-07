@@ -494,7 +494,14 @@ export const useAnatomyStore = create<AnatomyState>((set, get) => ({
   setShowPronunciation: (show) => set({ showPronunciation: show }),
   toggleShowPronunciation: () => set((s) => ({ showPronunciation: !s.showPronunciation })),
 
-  toggleLayers: () => set((s) => ({ isLayersActive: !s.isLayersActive })),
+  toggleLayers: () =>
+    set((s) => {
+      const nextActive = !s.isLayersActive;
+      return {
+        isLayersActive: nextActive,
+        explodeFactor: nextActive ? (s.explodeFactor > 0.05 ? s.explodeFactor : 0.45) : 0.0
+      };
+    }),
 
   resetAllToDefault: () =>
     set({
@@ -667,7 +674,13 @@ export const useAnatomyStore = create<AnatomyState>((set, get) => ({
 
   setFocusMode: (mode) => set({ focusMode: mode }),
   setIsIsolated: (isolated) => set({ isIsolated: isolated }),
-  setExplodeFactor: (factor) => set({ explodeFactor: Math.max(0, Math.min(1, factor)) }),
+  setExplodeFactor: (factor) => {
+    const clamped = Math.max(0, Math.min(1, factor));
+    set({
+      explodeFactor: clamped,
+      isLayersActive: clamped > 0.001
+    });
+  },
   setAutoRotateSpeed: (speed) => set({ autoRotateSpeed: speed }),
   setCameraAnglePreset: (angle) => set({ cameraAnglePreset: angle }),
   updateCurrentCamera: (pos, target) => set({ currentCameraPosition: pos, currentCameraTarget: target }),
