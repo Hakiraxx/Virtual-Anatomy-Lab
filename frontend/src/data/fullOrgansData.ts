@@ -1,4 +1,4 @@
-// Full Specimen Dataset extracted directly from xuonggiaiphau.com
+// Full Specimen Dataset for MedAnatomy
 export interface Hotspot {
   id: string;
   ta: string;

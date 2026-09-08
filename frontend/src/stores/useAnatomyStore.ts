@@ -76,7 +76,7 @@ interface AnatomyState {
   cameraFocusTarget: CameraFocusTarget | null;
   currentCameraPosition: [number, number, number];
   currentCameraTarget: [number, number, number];
-  isLayersActive: boolean; // Dissection / muscle fiber wireframe layer (as in xuonggiaiphau)
+  isLayersActive: boolean; // Dissection / muscle fiber wireframe layer (as in MedAnatomy)
 
   // Multi-gender & Whole-body Lab vs Specimen Atelier mode
   gender: 'male' | 'female';
@@ -275,7 +275,7 @@ export const useAnatomyStore = create<AnatomyState>((set, get) => ({
   activeSpecimenId: getInitialSpecimenId(),
   autoRotate: false,
   language: 'vi',
-  atelierTheme: 'light', // Matches xuonggiaiphau.com default ivory aesthetic
+  atelierTheme: 'light', // Matches MedAnatomy default ivory aesthetic
   activeHotspotId: null,
   isLibraryOpen: false,
   showHotspots: true,

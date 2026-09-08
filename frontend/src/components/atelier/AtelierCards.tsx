@@ -57,7 +57,7 @@ export const AtelierCards: React.FC = () => {
               </em>
             </div>
             <div className="text-[11px] text-slate-400 font-mono">
-              Anatomy Atelier · {specimen.scientificName}
+              MedAnatomy · {specimen.scientificName}
             </div>
           </article>
 

@@ -187,7 +187,7 @@ export const AtelierLibraryDrawer: React.FC = () => {
                 "Learning is an act of curiosity. Keep exploring!"
               </p>
               <div className="text-[10px] text-slate-400 font-mono mt-1">
-                Anatomy Atelier · v1.0.67
+                MedAnatomy · v1.0.67
               </div>
             </div>
           </div>

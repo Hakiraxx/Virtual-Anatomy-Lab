@@ -32,7 +32,7 @@ Trước khi thực hiện đợt sửa đổi này, module `/lab/dental-neuroan
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
 │ ROW 1: GLOBAL MEDANATOMY HEADER (AtelierTopBar)                                        │
-│ [Xưởng Giải Phẫu ✦] [Khám phá] [Hệ cơ quan] [Bài học] [Ôn tập] [Ghi chú]             │
+│ [MedAnatomy ✦] [Khám phá] [Hệ cơ quan] [Bài học] [Ôn tập] [Ghi chú]             │
 │ [Toàn thân | Tiêu bản sâu | Sọ Mặt & RHM] [Nam | Nữ] [Tìm kiếm Ctrl+K] [Theme] [Avatar]│
 ├────────────────────────────────────────────────────────────────────────────────────────┤
 │ ROW 2: CRANIOFACIAL & DENTAL NEURO LAB SUB-HEADER                                      │

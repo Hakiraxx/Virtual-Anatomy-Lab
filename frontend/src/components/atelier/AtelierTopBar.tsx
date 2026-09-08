@@ -75,7 +75,7 @@ export const AtelierTopBar: React.FC = () => {
         >
           <div className="flex items-center gap-1.5">
             <span className="font-serif text-base sm:text-lg font-bold tracking-tight text-current whitespace-nowrap">
-              {isVi ? 'Xưởng Giải Phẫu' : 'Anatomy Atelier'}
+              MedAnatomy
             </span>
             <sup className="text-amber-600 font-serif text-xs font-normal">✦</sup>
           </div>
