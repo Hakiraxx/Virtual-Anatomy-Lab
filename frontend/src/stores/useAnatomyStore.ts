@@ -81,8 +81,8 @@ interface AnatomyState {
   // Multi-gender & Whole-body Lab vs Specimen Atelier mode
   gender: 'male' | 'female';
   setGender: (g: 'male' | 'female') => void;
-  viewMode: 'full-body' | 'specimen' | 'dental-neuro' | 'digestive';
-  setViewMode: (m: 'full-body' | 'specimen' | 'dental-neuro' | 'digestive') => void;
+  viewMode: 'full-body' | 'specimen' | 'dental-neuro' | 'digestive' | 'vascular';
+  setViewMode: (m: 'full-body' | 'specimen' | 'dental-neuro' | 'digestive' | 'vascular') => void;
 
   // 8-Layer Dissection Engine
   layerVisibility: Record<number, boolean>;
@@ -162,9 +162,12 @@ const getInitialGender = (): 'male' | 'female' => {
   return 'male';
 };
 
-const getInitialViewMode = (): 'full-body' | 'specimen' | 'dental-neuro' | 'digestive' => {
+const getInitialViewMode = (): 'full-body' | 'specimen' | 'dental-neuro' | 'digestive' | 'vascular' => {
   if (typeof window === 'undefined') return 'full-body';
   const path = window.location.pathname.toLowerCase();
+  if (path.includes('vascular') || path.includes('mach-mau') || path.includes('machmau') || path.includes('tuan-hoan')) {
+    return 'vascular';
+  }
   if (path.includes('digestive') || path.includes('tieu-hoa') || path.includes('tieuhoa')) {
     return 'digestive';
   }
@@ -332,7 +335,9 @@ export const useAnatomyStore = create<AnatomyState>((set, get) => ({
     set({ viewMode });
     if (typeof window !== 'undefined') {
       const targetPath =
-        viewMode === 'digestive'
+        viewMode === 'vascular'
+          ? '/lab/vascular'
+          : viewMode === 'digestive'
           ? '/lab/digestive'
           : viewMode === 'dental-neuro'
           ? '/lab/dental-neuroanatomy'

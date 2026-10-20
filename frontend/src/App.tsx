@@ -27,6 +27,8 @@ import { DentalNeuroLab } from './components/dental-neuroanatomy/DentalNeuroLab'
 import { useDentalNeuroStore } from './stores/useDentalNeuroStore';
 import { DigestiveLab } from './components/digestive/DigestiveLab';
 import { useDigestiveStore } from './stores/useDigestiveStore';
+import { VascularLab } from './components/vascular/VascularLab';
+import { useVascularStore } from './stores/useVascularStore';
 
 export function App() {
   const fetchInitialData = useAnatomyStore((s) => s.fetchInitialData);
@@ -50,6 +52,7 @@ export function App() {
     const searchParams = new URLSearchParams(window.location.search);
     const structureParam = searchParams.get('structure');
     const organParam = searchParams.get('organ');
+    const vesselParam = searchParams.get('vessel');
     const labParam = searchParams.get('lab');
     const specimenParam = searchParams.get('specimen') || labParam;
     const genderParam = searchParams.get('gender')?.toLowerCase();
@@ -77,6 +80,17 @@ export function App() {
     if (pathname === '/' || pathname === '' || pathname === '/toanthan') {
       const currentSearch = window.location.search;
       window.history.replaceState({ viewMode: 'full-body' }, '', '/toanthan' + currentSearch);
+    } else if (
+      pathname.includes('/lab/vascular') ||
+      pathname.includes('/lab/mach-mau') ||
+      pathname.includes('/machmau') ||
+      pathname.includes('vascular') ||
+      Boolean(vesselParam)
+    ) {
+      useAnatomyStore.setState({ viewMode: 'vascular' });
+      if (vesselParam) {
+        useVascularStore.getState().selectVessel(vesselParam.toLowerCase().trim());
+      }
     } else if (
       pathname.includes('/lab/digestive') ||
       pathname.includes('/lab/he-tieu-hoa') ||
@@ -155,6 +169,7 @@ export function App() {
       const searchParams = new URLSearchParams(window.location.search);
       const structureParam = searchParams.get('structure');
       const organParam = searchParams.get('organ');
+      const vesselParam = searchParams.get('vessel');
       const specimenParam = searchParams.get('specimen');
       const popGender = searchParams.get('gender')?.toLowerCase();
 
@@ -165,6 +180,16 @@ export function App() {
       }
 
       if (
+        currentPath.includes('vascular') ||
+        currentPath.includes('mach-mau') ||
+        currentPath.includes('machmau') ||
+        Boolean(vesselParam)
+      ) {
+        useAnatomyStore.setState({ viewMode: 'vascular' });
+        if (vesselParam) {
+          useVascularStore.getState().selectVessel(vesselParam.toLowerCase().trim());
+        }
+      } else if (
         currentPath.includes('digestive') ||
         currentPath.includes('he-tieu-hoa') ||
         currentPath.includes('tieuhoa') ||
@@ -253,6 +278,9 @@ export function App() {
           {/* Right Detailed Medical Dossier & Relationships Panel */}
           <AnatomyInfoPanel />
         </main>
+      ) : viewMode === 'vascular' ? (
+        // MODE E: HIGH-PRECISION 3D VASCULAR LAB (100 Verified Details, TA2, Z-Anatomy CC BY-SA 4.0)
+        <VascularLab />
       ) : viewMode === 'digestive' ? (
         // MODE D: DEDICATED 3D DIGESTIVE SYSTEM LAB (TA2 & Z-Anatomy CC BY-SA 4.0)
         <DigestiveLab />

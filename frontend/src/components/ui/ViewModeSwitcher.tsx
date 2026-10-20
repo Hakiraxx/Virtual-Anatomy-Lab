@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Sparkles, Brain, Apple } from 'lucide-react';
+import { User, Sparkles, Brain, Apple, Heart } from 'lucide-react';
 import { useAnatomyStore } from '../../stores/useAnatomyStore';
 
 export const ViewModeSwitcher: React.FC = () => {
@@ -48,6 +48,21 @@ export const ViewModeSwitcher: React.FC = () => {
       >
         <Apple className="w-3.5 h-3.5 text-amber-300" />
         <span className="hidden sm:inline">{isVi ? 'Hệ Tiêu Hóa' : 'Digestive'}</span>
+      </button>
+
+      <button
+        role="tab"
+        aria-selected={viewMode === 'vascular'}
+        onClick={() => setViewMode('vascular')}
+        className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:outline-none ${
+          viewMode === 'vascular'
+            ? 'bg-red-600 text-white shadow-sm'
+            : 'hover:text-red-500 dark:hover:text-red-400 opacity-75 hover:opacity-100'
+        }`}
+        title="Phòng thí nghiệm Hệ Mạch Máu 3D với 100 chi tiết giải phẫu (TA2)"
+      >
+        <Heart className="w-3.5 h-3.5 text-red-300" />
+        <span className="hidden sm:inline">{isVi ? 'Hệ Mạch Máu' : 'Vascular'}</span>
       </button>
 
       <button

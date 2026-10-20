@@ -13,6 +13,7 @@ import { runDentalCoordinateAlignmentTests } from './anatomy/dentalCoordinateAli
 import { runDentalViewTransitionTests } from './anatomy/dentalViewTransition.test.mjs';
 import { runDentalLayoutAuditTests } from './anatomy/dentalLayoutAudit.test.mjs';
 import { runDigestiveModuleAuditTests } from './anatomy/digestiveModuleAudit.test.mjs';
+import { runVascularModuleAuditTests } from './anatomy/vascularModuleAudit.test.mjs';
 
 async function main() {
   console.log('========================================================================');
@@ -35,7 +36,8 @@ async function main() {
     runDentalCoordinateAlignmentTests,
     runDentalViewTransitionTests,
     runDentalLayoutAuditTests,
-    runDigestiveModuleAuditTests
+    runDigestiveModuleAuditTests,
+    runVascularModuleAuditTests
   ];
 
   let totalPassed = 0;
