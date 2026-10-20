@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState, useEffect, Suspense } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, useGLTF, Html } from '@react-three/drei';
+import { OrbitControls, useGLTF } from '@react-three/drei';
 import {
   DIGESTIVE_SYSTEM_DATA,
   DIGESTIVE_STRUCTURE_LIST,
@@ -9,92 +9,130 @@ import {
 } from '../../data/digestiveSystemData';
 import { useDigestiveStore, DigestiveCameraPreset } from '../../stores/useDigestiveStore';
 import { useAnatomyStore } from '../../stores/useAnatomyStore';
+import {
+  LabelLayoutManager,
+  TopControlsManager,
+  ToolbarSafeArea,
+  LayoutObstacle,
+  RawProjectedLabel,
+  PlacedLabel
+} from '../../utils/ViewerLayoutManager';
+import { DigestiveLabelProjector, DigestiveLabelAnchor } from './DigestiveLabelProjector';
+import { DigestiveLabelLayer } from './DigestiveLabelLayer';
 
 // ============================================================================
-// CAMERA CONTROLLER: SMOOTH TRANSITION TO PRESETS OR SELECTED ORGAN BOUNDS
+// CAMERA CONTROLLER: SMOOTH GLIDE TO PRESETS, BOUNDS OR SELECTED ORGAN
 // ============================================================================
+export interface CameraFocusTrigger {
+  position: [number, number, number];
+  target: [number, number, number];
+  timestamp: number;
+}
+
 const CameraController: React.FC<{
   cameraPreset: DigestiveCameraPreset;
   selectedOrgan: DigestiveOrganData | null;
-}> = ({ cameraPreset, selectedOrgan }) => {
+  focusTrigger: CameraFocusTrigger | null;
+  controlsRef: React.RefObject<any>;
+}> = ({ cameraPreset, selectedOrgan, focusTrigger, controlsRef }) => {
   const { camera } = useThree();
-  const controlsRef = useRef<any>(null);
 
-  // Target camera state
-  const targetLookAt = useRef(new THREE.Vector3(0.045, 0.30, 0.02));
-  const targetPosition = useRef(new THREE.Vector3(0.045, 0.35, 0.65));
-  const isTransitioning = useRef(true);
+  const animRef = useRef({
+    isAnimating: false,
+    startTime: 0,
+    duration: 550,
+    startPos: new THREE.Vector3(),
+    endPos: new THREE.Vector3(0.045, 0.35, 0.65),
+    startTarget: new THREE.Vector3(),
+    endTarget: new THREE.Vector3(0.045, 0.30, 0.02),
+    lastTriggerTimestamp: 0
+  });
 
-  // Update target when preset or selected organ changes
+  // Calculate target camera positions based on preset / selected organ
   useEffect(() => {
-    isTransitioning.current = true;
-    if (selectedOrgan) {
-      targetLookAt.current.set(...selectedOrgan.cameraPreset.target);
-      targetPosition.current.set(...selectedOrgan.cameraPreset.position);
+    let nextPos: [number, number, number] = [0.045, 0.35, 0.65];
+    let nextTarget: [number, number, number] = [0.045, 0.30, 0.02];
+
+    if (focusTrigger && focusTrigger.timestamp !== animRef.current.lastTriggerTimestamp) {
+      animRef.current.lastTriggerTimestamp = focusTrigger.timestamp;
+      nextPos = focusTrigger.position;
+      nextTarget = focusTrigger.target;
+    } else if (selectedOrgan) {
+      nextPos = selectedOrgan.cameraPreset.position;
+      nextTarget = selectedOrgan.cameraPreset.target;
     } else {
       switch (cameraPreset) {
         case 'oral':
-          targetLookAt.current.set(0.045, 0.74, 0.04);
-          targetPosition.current.set(0.045, 0.78, 0.30);
+          nextTarget = [0.045, 0.74, 0.04];
+          nextPos = [0.045, 0.78, 0.30];
           break;
         case 'gastroduodenal':
-          targetLookAt.current.set(0.05, 0.30, 0.02);
-          targetPosition.current.set(0.05, 0.34, 0.36);
+          nextTarget = [0.05, 0.30, 0.02];
+          nextPos = [0.05, 0.34, 0.36];
           break;
         case 'small_bowel':
-          targetLookAt.current.set(0.045, 0.14, 0.03);
-          targetPosition.current.set(0.045, 0.18, 0.38);
+          nextTarget = [0.045, 0.14, 0.03];
+          nextPos = [0.045, 0.18, 0.38];
           break;
         case 'colorectal':
-          targetLookAt.current.set(0.05, 0.15, 0.01);
-          targetPosition.current.set(0.05, 0.18, 0.45);
+          nextTarget = [0.05, 0.15, 0.01];
+          nextPos = [0.05, 0.18, 0.45];
           break;
         case 'hepatobiliary':
-          targetLookAt.current.set(0.02, 0.34, 0.04);
-          targetPosition.current.set(0.02, 0.38, 0.38);
+          nextTarget = [0.02, 0.34, 0.04];
+          nextPos = [0.02, 0.38, 0.38];
           break;
         case 'pancreas':
-          targetLookAt.current.set(0.045, 0.28, 0.0);
-          targetPosition.current.set(0.045, 0.31, 0.28);
+          nextTarget = [0.045, 0.28, 0.0];
+          nextPos = [0.045, 0.31, 0.28];
           break;
         case 'posterior':
-          targetLookAt.current.set(0.045, 0.30, 0.0);
-          targetPosition.current.set(0.045, 0.35, -0.65);
+          nextTarget = [0.045, 0.30, 0.0];
+          nextPos = [0.045, 0.35, -0.65];
           break;
         case 'overview':
         default:
-          targetLookAt.current.set(0.045, 0.30, 0.02);
-          targetPosition.current.set(0.045, 0.35, 0.65);
+          nextTarget = [0.045, 0.30, 0.02];
+          nextPos = [0.045, 0.35, 0.65];
           break;
       }
     }
-  }, [cameraPreset, selectedOrgan]);
 
-  // Smooth lerp frame loop
-  useFrame((_, delta) => {
-    if (!isTransitioning.current) return;
-    const factor = Math.min(1.0, delta * 4.5);
-    camera.position.lerp(targetPosition.current, factor);
+    animRef.current.startPos.copy(camera.position);
+    animRef.current.endPos.set(...nextPos);
+
     if (controlsRef.current) {
-      controlsRef.current.target.lerp(targetLookAt.current, factor);
+      animRef.current.startTarget.copy(controlsRef.current.target);
+    } else {
+      animRef.current.startTarget.set(...nextTarget);
+    }
+    animRef.current.endTarget.set(...nextTarget);
+
+    animRef.current.startTime = performance.now();
+    animRef.current.isAnimating = true;
+  }, [cameraPreset, selectedOrgan, focusTrigger, camera, controlsRef]);
+
+  useFrame(() => {
+    if (!animRef.current.isAnimating) return;
+
+    const elapsed = performance.now() - animRef.current.startTime;
+    const t = Math.min(1.0, elapsed / animRef.current.duration);
+    // Smooth ease-out cubic curve
+    const ease = 1 - Math.pow(1 - t, 3);
+
+    camera.position.lerpVectors(animRef.current.startPos, animRef.current.endPos, ease);
+
+    if (controlsRef.current) {
+      controlsRef.current.target.lerpVectors(animRef.current.startTarget, animRef.current.endTarget, ease);
       controlsRef.current.update();
     }
-    if (camera.position.distanceTo(targetPosition.current) < 0.005) {
-      isTransitioning.current = false;
+
+    if (t >= 1.0) {
+      animRef.current.isAnimating = false;
     }
   });
 
-  return (
-    <OrbitControls
-      ref={controlsRef}
-      enableDamping
-      dampingFactor={0.08}
-      minDistance={0.12}
-      maxDistance={1.4}
-      maxPolarAngle={Math.PI - 0.05}
-      target={[0.045, 0.30, 0.02]}
-    />
-  );
+  return null;
 };
 
 // ============================================================================
@@ -148,7 +186,7 @@ const OrganMeshCluster: React.FC<{
     let opacity = 1.0;
     if (isSelected) opacity = 1.0;
     else if (xrayMode) opacity = 0.22;
-    else if (isDimmed) opacity = 0.45;
+    else if (isDimmed) opacity = 0.40;
 
     // Base color tones calibrated to international medical models
     let baseColor = '#e28775';
@@ -158,67 +196,66 @@ const OrganMeshCluster: React.FC<{
     switch (organ.category) {
       case 'hepatobiliary':
         if (organ.id === 'gallbladder') {
-          baseColor = '#10b981'; // Vibrant emerald-green bile
-          roughness = 0.30;
-          metalness = 0.12;
+          baseColor = '#4d7c0f'; // Dark amber olive green for gallbladder
+          roughness = 0.35;
         } else {
-          baseColor = '#9a3412'; // Rich deep hepatic reddish-brown
-          roughness = 0.42;
-        }
-        break;
-      case 'esophagus_stomach':
-        if (organ.id === 'esophagus') {
-          baseColor = '#f472b6'; // Muscular esophageal pink
-          roughness = 0.50;
-        } else {
-          baseColor = '#ea580c'; // Gastric mucous-amber warm tone
+          baseColor = '#881337'; // Deep hepatic red-brown
           roughness = 0.40;
         }
         break;
       case 'pancreas':
-        baseColor = '#eab308'; // Lobulated pancreatic amber-yellow
+        baseColor = '#d97706'; // Golden amber glandular tone
         roughness = 0.55;
-        metalness = 0.05;
+        break;
+      case 'esophagus_stomach':
+        if (organ.id === 'stomach') {
+          baseColor = '#e11d48'; // Rich gastric mucosal crimson
+          roughness = 0.38;
+        } else {
+          baseColor = '#fb7185'; // Esophageal muscular pink
+        }
         break;
       case 'small_intestine':
-        baseColor = organ.id === 'duodenum' ? '#f97316' : '#fb923c';
-        roughness = 0.48;
+        baseColor = '#f97316'; // Enteric salmon-coral tone
+        roughness = 0.50;
         break;
       case 'large_intestine':
-        baseColor = organ.id === 'appendix' ? '#dc2626' : '#a16207';
+        baseColor = '#a855f7'; // Colonic haustral lilac-purple tone
         roughness = 0.52;
         break;
-      case 'peritoneum':
-        baseColor = '#ca8a04';
-        roughness = 0.35;
-        opacity = isSelected ? 0.70 : (isTransp ? 0.15 : 0.40);
-        break;
       case 'oral_pharynx':
-        baseColor = '#f43f5e';
-        roughness = 0.45;
+        baseColor = '#f43f5e'; // Lingual & pharyngeal muscular tone
+        roughness = 0.42;
         break;
-      default:
-        baseColor = '#d97706';
+      case 'peritoneum':
+        baseColor = '#eab308'; // Omental adipose golden sheen
+        roughness = 0.65;
+        opacity = 0.55;
         break;
+    }
+
+    // Interactive state highlights
+    if (isSelected) {
+      baseColor = '#f59e0b'; // Amber selection highlight
+    } else if (isHovered) {
+      baseColor = '#fbbf24';
     }
 
     return new THREE.MeshStandardMaterial({
       color: new THREE.Color(baseColor),
       roughness,
       metalness,
-      transparent: isTransp || organ.category === 'peritoneum',
+      transparent: isTransp,
       opacity,
-      depthWrite: !isTransp,
-      emissive: isSelected ? new THREE.Color('#fbbf24') : (isHovered ? new THREE.Color('#38bdf8') : new THREE.Color('#000000')),
-      emissiveIntensity: isSelected ? 0.55 : (isHovered ? 0.30 : 0.0)
+      depthWrite: !xrayMode
     });
   }, [organ.id, organ.category, isSelected, isHovered, isDimmed, xrayMode]);
 
-  if (isIsolated && !isSelected) return null;
   if (geometries.length === 0) return null;
 
   return (
     <group
+      name={`organ-${organ.id}`}
       onClick={(e) => {
         e.stopPropagation();
         onSelect();
@@ -233,20 +270,14 @@ const OrganMeshCluster: React.FC<{
       }}
     >
       {geometries.map((geom, idx) => (
-        <mesh
-          key={`${organ.id}-mesh-${idx}`}
-          geometry={geom}
-          material={material}
-          castShadow={isSelected}
-          receiveShadow
-        />
+        <mesh key={`${organ.id}-${idx}`} geometry={geom} material={material} castShadow receiveShadow />
       ))}
     </group>
   );
 };
 
 // ============================================================================
-// SPLANCHNIC VASCULATURE MESH LAYER (From vessels_complete.glb)
+// SPLANCHNIC VASCULATURE MESH LAYER (Celiac Trunk, Mesenteric & Portal Veins)
 // ============================================================================
 const SplanchnicVessels: React.FC<{
   vesselsScene: THREE.Object3D;
@@ -256,25 +287,10 @@ const SplanchnicVessels: React.FC<{
   const arteriesGeom = useMemo(() => {
     vesselsScene.updateMatrixWorld(true);
     const geoms: THREE.BufferGeometry[] = [];
-    const targetArteries = new Set([
-      'Coeliac trunk',
-      'Common hepatic artery',
-      'Proper hepatic artery',
-      'Left gastric artery',
-      'Splenic artery',
-      'Superior mesenteric artery',
-      'Right colic artery',
-      'Middle colic artery',
-      'Ileocolic artery',
-      'Inferior mesenteric artery',
-      'Left colic artery',
-      'Superior anorectal artery',
-      'Inferior pancreaticoduodenal artery'
-    ]);
 
     vesselsScene.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh && targetArteries.has(child.name)) {
-        const mesh = child as THREE.Mesh;
+      const mesh = child as THREE.Mesh;
+      if (mesh.isMesh && mesh.name.toLowerCase().includes('arter')) {
         const cloned = mesh.geometry.clone();
         cloned.applyMatrix4(mesh.matrixWorld);
         cloned.computeVertexNormals();
@@ -288,14 +304,13 @@ const SplanchnicVessels: React.FC<{
   const veinsGeom = useMemo(() => {
     vesselsScene.updateMatrixWorld(true);
     const geoms: THREE.BufferGeometry[] = [];
-    const targetVeins = new Set([
-      'Hepatic portal vein',
-      'Inferior mesenteric vein'
-    ]);
 
     vesselsScene.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh && targetVeins.has(child.name)) {
-        const mesh = child as THREE.Mesh;
+      const mesh = child as THREE.Mesh;
+      if (
+        mesh.isMesh &&
+        (mesh.name.toLowerCase().includes('vein') || mesh.name.toLowerCase().includes('vena'))
+      ) {
         const cloned = mesh.geometry.clone();
         cloned.applyMatrix4(mesh.matrixWorld);
         cloned.computeVertexNormals();
@@ -345,66 +360,14 @@ const SplanchnicVessels: React.FC<{
 };
 
 // ============================================================================
-// 3D ANATOMICAL PIN LABELS OVERLAY
-// ============================================================================
-const Anatomical3DLabels: React.FC<{
-  showLabels: boolean;
-  selectedOrganId: string | null;
-  onSelectOrgan: (id: string) => void;
-  isVi: boolean;
-}> = ({ showLabels, selectedOrganId, onSelectOrgan, isVi }) => {
-  if (!showLabels) return null;
-
-  return (
-    <group name="anatomical-3d-labels">
-      {DIGESTIVE_STRUCTURE_LIST.map((organ) => {
-        const isSelected = selectedOrganId === organ.id;
-        const name = isVi ? organ.nameVi : organ.nameEn;
-
-        return (
-          <Html
-            key={`label-${organ.id}`}
-            position={organ.canonicalCenter}
-            center
-            distanceFactor={1.2}
-            zIndexRange={[10, 50]}
-            style={{
-              pointerEvents: 'auto',
-              transition: 'transform 0.15s ease, opacity 0.15s ease'
-            }}
-          >
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onSelectOrgan(organ.id);
-              }}
-              className={`group flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-sans font-medium whitespace-nowrap border transition-all cursor-pointer shadow-sm select-none ${
-                isSelected
-                  ? 'bg-amber-600 text-white border-amber-400 ring-2 ring-amber-400/50 scale-105'
-                  : 'bg-slate-900/85 hover:bg-slate-900 text-slate-200 hover:text-white border-slate-700 hover:border-slate-500'
-              }`}
-              title={`${name} (${organ.nameLa})`}
-            >
-              <span
-                className={`w-1.5 h-1.5 rounded-full ${
-                  isSelected ? 'bg-white animate-pulse' : 'bg-amber-400'
-                }`}
-              />
-              <span className="truncate max-w-[120px]">{name}</span>
-            </button>
-          </Html>
-        );
-      })}
-    </group>
-  );
-};
-
-// ============================================================================
-// MAIN DIGESTIVE 3D SCENE ROOT
+// MAIN DIGESTIVE 3D SCENE CONTENT
 // ============================================================================
 const DigestiveScene: React.FC<{
-  showLabels: boolean;
-}> = ({ showLabels }) => {
+  labelAnchors: DigestiveLabelAnchor[];
+  onProjectLabels: (labels: RawProjectedLabel[]) => void;
+  focusTrigger: CameraFocusTrigger | null;
+  controlsRef: React.RefObject<any>;
+}> = ({ labelAnchors, onProjectLabels, focusTrigger, controlsRef }) => {
   const { scene: organsScene } = useGLTF('/models/anatomy/organs_complete.glb');
   const { scene: vesselsScene } = useGLTF('/models/anatomy/vessels_complete.glb');
 
@@ -416,8 +379,6 @@ const DigestiveScene: React.FC<{
   const cameraPreset = useDigestiveStore((s) => s.cameraPreset);
   const selectOrgan = useDigestiveStore((s) => s.selectOrgan);
   const hoverOrgan = useDigestiveStore((s) => s.hoverOrgan);
-  const language = useAnatomyStore((s) => s.language);
-  const isVi = language === 'vi';
 
   const selectedOrganData = useMemo(() => {
     return selectedOrganId ? DIGESTIVE_SYSTEM_DATA[selectedOrganId] || null : null;
@@ -446,13 +407,18 @@ const DigestiveScene: React.FC<{
 
   return (
     <>
-      <CameraController cameraPreset={cameraPreset} selectedOrgan={selectedOrganData} />
+      <CameraController
+        cameraPreset={cameraPreset}
+        selectedOrgan={selectedOrganData}
+        focusTrigger={focusTrigger}
+        controlsRef={controlsRef}
+      />
 
-      {/* Studio Anatomical Lighting (restrained, no cyan tint slop) */}
+      {/* Studio Anatomical Lighting (natural museum grade, no fake cyan tint) */}
       <ambientLight intensity={0.9} color="#ffffff" />
-      <directionalLight position={[4, 8, 6]} intensity={1.3} color="#fffcf5" castShadow />
-      <directionalLight position={[-4, 4, -4]} intensity={0.65} color="#f0f4f8" />
-      <directionalLight position={[0, -4, 4]} intensity={0.35} color="#fef3c7" />
+      <directionalLight position={[4, 8, 6]} intensity={1.4} color="#fffcf5" castShadow />
+      <directionalLight position={[-4, 4, -4]} intensity={0.7} color="#f0f4f8" />
+      <directionalLight position={[0, -4, 4]} intensity={0.4} color="#fef3c7" />
 
       {/* Real 3D Segmented Digestive Organs */}
       <group name="digestive-organs-root">
@@ -487,47 +453,158 @@ const DigestiveScene: React.FC<{
         xrayMode={xrayMode}
       />
 
-      {/* 3D Anatomical Pin Labels */}
-      <Anatomical3DLabels
-        showLabels={showLabels}
-        selectedOrganId={selectedOrganId}
-        onSelectOrgan={selectOrgan}
-        isVi={isVi}
+      {/* 3D Real-time Screen-space Label Projector */}
+      <DigestiveLabelProjector
+        anchors={labelAnchors}
+        onProject={onProjectLabels}
+      />
+
+      {/* Camera Orbit Controls */}
+      <OrbitControls
+        ref={controlsRef}
+        enableDamping
+        dampingFactor={0.08}
+        minDistance={0.12}
+        maxDistance={1.6}
+        maxPolarAngle={Math.PI - 0.05}
+        target={[0.045, 0.30, 0.02]}
       />
     </>
   );
 };
 
 // ============================================================================
-// CANVAS CONTAINER WRAPPER
+// STAGE CONTAINER WRAPPER WITH 2D COLLISION-AVOIDING LABEL OVERLAY
 // ============================================================================
-export const Digestive3DStage: React.FC<{
-  showLabels: boolean;
-}> = ({ showLabels }) => {
+export interface Digestive3DStageProps {
+  showLabels?: boolean;
+  focusTrigger?: CameraFocusTrigger | null;
+}
+
+export const Digestive3DStage: React.FC<Digestive3DStageProps> = ({
+  showLabels = true,
+  focusTrigger = null
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const controlsRef = useRef<any>(null);
+
+  const selectedOrganId = useDigestiveStore((s) => s.selectedOrganId);
+  const selectOrgan = useDigestiveStore((s) => s.selectOrgan);
+  const isolatedView = useDigestiveStore((s) => s.isolatedView);
   const isDark = useAnatomyStore((s) => s.atelierTheme === 'dark');
 
+  // Track container dimensions for collision avoidance
+  const [containerSize, setContainerSize] = useState({ width: 1200, height: 800 });
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const updateSize = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          setContainerSize({
+            width: Math.round(rect.width),
+            height: Math.round(rect.height)
+          });
+        }
+      }
+    };
+    updateSize();
+    const ro = new ResizeObserver(updateSize);
+    ro.observe(containerRef.current);
+    window.addEventListener('resize', updateSize);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', updateSize);
+    };
+  }, []);
+
+  // Raw projected labels from 3D space
+  const [rawLabels, setRawLabels] = useState<RawProjectedLabel[]>([]);
+
+  // 3D Anchors for projected Anatomy Labels
+  const labelAnchors = useMemo<DigestiveLabelAnchor[]>(() => {
+    if (!showLabels) return [];
+
+    return DIGESTIVE_STRUCTURE_LIST.map((organ) => {
+      const isSelected = selectedOrganId === organ.id;
+      // Core GI organs get priority 2, other organs get priority 3
+      const isCore =
+        organ.id === 'stomach' ||
+        organ.id === 'liver' ||
+        organ.id === 'pancreas' ||
+        organ.id === 'duodenum' ||
+        organ.id === 'gallbladder' ||
+        organ.id === 'appendix';
+
+      return {
+        id: organ.id,
+        nameVi: organ.nameVi,
+        nameEn: organ.nameEn,
+        subtitle: organ.nameLa,
+        worldPos: organ.canonicalCenter,
+        priority: isSelected ? 1 : isCore ? 2 : 3,
+        isSelected,
+        isCritical: isCore
+      };
+    });
+  }, [selectedOrganId, showLabels]);
+
+  // Compute placed labels with collision avoidance
+  const placedLabels: PlacedLabel[] = useMemo(() => {
+    if (!showLabels || rawLabels.length === 0) return [];
+
+    const obstacles: LayoutObstacle[] = [
+      {
+        id: 'top-controls',
+        type: 'top-controls',
+        ...TopControlsManager.getBounds(containerSize.width)
+      },
+      {
+        id: 'bottom-toolbar',
+        type: 'bottom-toolbar',
+        ...ToolbarSafeArea.getBounds(containerSize.width, containerSize.height)
+      }
+    ];
+
+    return LabelLayoutManager.resolveLayout(rawLabels, obstacles, {
+      containerWidth: containerSize.width,
+      containerHeight: containerSize.height,
+      showContext: !isolatedView,
+      maxVisibleLabels: containerSize.width < 640 ? 3 : containerSize.width < 1024 ? 5 : 8
+    });
+  }, [rawLabels, containerSize, showLabels, isolatedView]);
+
   return (
-    <div className="relative w-full h-full min-h-[460px] overflow-hidden select-none">
+    <div
+      ref={containerRef}
+      className={`relative w-full h-full min-h-[460px] overflow-hidden select-none ${
+        isDark ? 'bg-[#080c14]' : 'bg-[#f4efe8]'
+      }`}
+    >
       <Canvas
         camera={{ position: [0.045, 0.35, 0.65], fov: 42, near: 0.05, far: 20 }}
         gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
-        className={`w-full h-full cursor-grab active:cursor-grabbing ${
-          isDark ? 'bg-[#0b0f17]' : 'bg-[#f4efe8]'
-        }`}
+        className="w-full h-full cursor-grab active:cursor-grabbing"
       >
-        <Suspense
-          fallback={
-            <Html center>
-              <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-slate-900/90 text-slate-200 border border-slate-700 text-xs shadow-lg">
-                <div className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-                <span>Đang tải mô hình Hệ Tiêu Hóa 3D…</span>
-              </div>
-            </Html>
-          }
-        >
-          <DigestiveScene showLabels={showLabels} />
+        <Suspense fallback={null}>
+          <DigestiveScene
+            labelAnchors={labelAnchors}
+            onProjectLabels={setRawLabels}
+            focusTrigger={focusTrigger}
+            controlsRef={controlsRef}
+          />
         </Suspense>
       </Canvas>
+
+      {/* 2D Collision-Avoiding Anatomy Labels Overlay */}
+      {showLabels && (
+        <DigestiveLabelLayer
+          labels={placedLabels}
+          selectedId={selectedOrganId}
+          onSelect={(id) => selectOrgan(id)}
+        />
+      )}
     </div>
   );
 };

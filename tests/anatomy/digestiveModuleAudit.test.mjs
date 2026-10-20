@@ -138,6 +138,60 @@ export function runDigestiveModuleAuditTests() {
     assert.ok(txt.includes("CC BY-SA 4.0"));
   });
 
+  // 7. UI / Layout Architecture & Non-overlapping Labels Verification
+  const stageSrc = fs.readFileSync("frontend/src/components/digestive/Digestive3DStage.tsx", "utf8");
+  record('Digestive3DStage: In-scene Drei <Html> tags eliminated to prevent overlapping label bugs', () => {
+    assert.ok(!stageSrc.includes("<Html"), "Drei <Html> must not be used in-scene");
+  });
+
+  record('Digestive3DStage: Integrates 3D DigestiveLabelProjector and 2D DigestiveLabelLayer', () => {
+    assert.ok(stageSrc.includes("<DigestiveLabelProjector"));
+    assert.ok(stageSrc.includes("<DigestiveLabelLayer"));
+    assert.ok(stageSrc.includes("LabelLayoutManager.resolveLayout"));
+  });
+
+  record('Digestive3DStage: Studio neutral lighting & warm paper canvas background applied', () => {
+    assert.ok(stageSrc.includes("#f4efe8"), "Warm paper light mode color");
+    assert.ok(stageSrc.includes("#080c14") || stageSrc.includes("#0b0f17"), "Deep slate dark mode color");
+  });
+
+  const labSrc = fs.readFileSync("frontend/src/components/digestive/DigestiveLab.tsx", "utf8");
+  record('DigestiveLab: 3-row architecture with Lab Sub-header, Section Switcher strip & Resizable Splitters', () => {
+    assert.ok(labSrc.includes("<DigestiveSectionSwitcher"));
+    assert.ok(labSrc.includes("<DigestiveTree"));
+    assert.ok(labSrc.includes("<DigestiveInfoPanel"));
+    assert.ok(labSrc.includes("handleTreeSplitterPointerDown"));
+    assert.ok(labSrc.includes("handleInfoSplitterPointerDown"));
+  });
+
+  record('DigestiveLab: Compact annotation card shown when right panel is closed', () => {
+    assert.ok(labSrc.includes("<AnatomyInfoCard"));
+  });
+
+  const toolbarSrc = fs.readFileSync("frontend/src/components/digestive/DigestiveToolbar.tsx", "utf8");
+  record('DigestiveToolbar: Tagged with data-ui="bottom-toolbar" for safe area collision engine', () => {
+    assert.ok(toolbarSrc.includes('data-ui="bottom-toolbar"'));
+    assert.ok(toolbarSrc.includes('RotateCcw'));
+    assert.ok(toolbarSrc.includes('Compass'));
+  });
+
+  const treeSrc = fs.readFileSync("frontend/src/components/digestive/DigestiveTree.tsx", "utf8");
+  record('DigestiveTree: Hierarchical categories with search and layer toggles', () => {
+    assert.ok(treeSrc.includes('data-ui="digestive-tree"'));
+    assert.ok(treeSrc.includes('giTract'));
+    assert.ok(treeSrc.includes('hepatobiliary'));
+    assert.ok(treeSrc.includes('pancreas'));
+  });
+
+  const panelSrc = fs.readFileSync("frontend/src/components/digestive/DigestiveInfoPanel.tsx", "utf8");
+  record('DigestiveInfoPanel: Detailed dossier with TA2, subdivisions, neurovasculature & histology', () => {
+    assert.ok(panelSrc.includes('data-ui="digestive-info-panel"'));
+    assert.ok(panelSrc.includes('subdivisions'));
+    assert.ok(panelSrc.includes('neurovasculature'));
+    assert.ok(panelSrc.includes('histology'));
+    assert.ok(panelSrc.includes('clinical'));
+  });
+
   return {
     suite: '3D Digestive System & Clinical Audit',
     passed,
