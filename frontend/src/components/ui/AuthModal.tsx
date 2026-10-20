@@ -183,10 +183,10 @@ export const AuthModal: React.FC = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 text-white font-bold text-xs shadow-lg shadow-cyan-500/25 transition disabled:opacity-50"
+            className="w-full py-2.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs transition-colors disabled:opacity-50 cursor-pointer"
           >
             {isLoading
-              ? 'Đang xử lý...'
+              ? 'Đang xử lý…'
               : mode === 'login'
               ? 'Đăng nhập ngay'
               : 'Tạo tài khoản mới'}

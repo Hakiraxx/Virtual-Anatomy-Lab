@@ -27,7 +27,7 @@ export const ViewportToolbar: React.FC = () => {
     <>
       {/* Slicing Controls Popup (When Slice Tool Active or Toggled) */}
       {showSlicePanel && (
-        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 bg-slate-950/90 border border-rose-500/40 p-4 rounded-2xl backdrop-blur-xl shadow-2xl z-30 w-80 select-none animate-slide-up">
+        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 bg-slate-900 border border-rose-500/40 p-4 rounded-xl shadow-xl z-30 w-80 select-none animate-slide-up">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2 text-rose-400 font-bold text-xs">
               <Scissors className="w-4 h-4" />
@@ -100,7 +100,7 @@ export const ViewportToolbar: React.FC = () => {
 
       {/* Camera Preset Popup */}
       {showViewMenu && (
-        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 bg-slate-950/95 border border-slate-800 p-2 rounded-2xl backdrop-blur-xl shadow-2xl z-30 grid grid-cols-3 gap-1.5 text-xs w-72 select-none">
+        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 bg-slate-900 border border-slate-800 p-2 rounded-xl shadow-xl z-30 grid grid-cols-3 gap-1.5 text-xs w-72 select-none">
           {[
             { id: 'front', label: 'Trước (Front)' },
             { id: 'back', label: 'Sau (Back)' },
@@ -115,7 +115,7 @@ export const ViewportToolbar: React.FC = () => {
                 setCameraPreset(v.id);
                 setShowViewMenu(false);
               }}
-              className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-cyan-950 border border-slate-800 hover:border-cyan-500/50 text-slate-200 text-center font-medium transition"
+              className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 border border-slate-700 text-slate-200 text-center font-medium transition cursor-pointer"
             >
               {v.label}
             </button>
@@ -124,11 +124,11 @@ export const ViewportToolbar: React.FC = () => {
       )}
 
       {/* Main Bottom Toolbar */}
-      <nav className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-slate-950/85 border border-slate-800/90 px-3 py-1.5 rounded-2xl backdrop-blur-xl shadow-2xl flex items-center gap-1.5 z-20 select-none">
+      <nav className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl shadow-lg flex items-center gap-1.5 z-20 select-none">
         {/* Reset Camera */}
         <button
           onClick={() => setCameraPreset('reset')}
-          className="p-2 text-slate-300 hover:text-cyan-400 rounded-xl hover:bg-slate-900 border border-transparent hover:border-slate-800 transition"
+          className="p-2 text-slate-300 hover:text-amber-400 rounded-lg hover:bg-slate-800 border border-transparent hover:border-slate-700 transition cursor-pointer"
           title="Đặt lại góc nhìn"
         >
           <RotateCcw className="w-4 h-4" />

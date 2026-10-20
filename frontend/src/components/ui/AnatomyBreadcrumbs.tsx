@@ -34,9 +34,9 @@ export const AnatomyBreadcrumbs: React.FC = () => {
       {isFocusedBeyondBody && (
         <button
           onClick={backToBody}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border shadow-md backdrop-blur-md transition cursor-pointer ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border shadow-sm transition cursor-pointer ${
             isDark
-              ? 'bg-amber-600/90 border-amber-500 text-white hover:bg-amber-500'
+              ? 'bg-amber-600 border-amber-500 text-white hover:bg-amber-500'
               : 'bg-[#c05a4e] border-[#c05a4e] text-white hover:bg-[#a94a3e]'
           }`}
           title={isVi ? 'Quay lại xem toàn thân' : 'Back to entire body view'}
@@ -48,10 +48,10 @@ export const AnatomyBreadcrumbs: React.FC = () => {
 
       {/* Breadcrumb Trail */}
       <nav
-        className={`flex items-center gap-1 px-3 py-1.5 rounded-full border shadow-sm backdrop-blur-md text-xs font-medium transition ${
+        className={`flex items-center gap-1 px-3 py-1.5 rounded-lg border shadow-sm text-xs font-medium transition ${
           isDark
-            ? 'bg-slate-900/85 border-slate-800 text-slate-300'
-            : 'bg-white/80 border-[#e7ded3] text-slate-700'
+            ? 'bg-slate-900 border-slate-800 text-slate-300'
+            : 'bg-[#ede3d5] border-[#dfd4c4] text-slate-800'
         }`}
       >
         <button
@@ -99,10 +99,10 @@ export const AnatomyBreadcrumbs: React.FC = () => {
             {/* History Dropdown List */}
             {showHistory && (
               <div
-                className={`absolute left-0 top-full mt-2 w-52 py-1.5 rounded-xl border shadow-xl backdrop-blur-md text-xs z-50 animate-fade-in ${
+                className={`absolute left-0 top-full mt-2 w-52 py-1.5 rounded-lg border shadow-lg text-xs z-50 animate-fade-in ${
                   isDark
-                    ? 'bg-slate-900/95 border-slate-800 text-slate-200'
-                    : 'bg-white/95 border-[#e7ded3] text-slate-800'
+                    ? 'bg-slate-900 border-slate-800 text-slate-200'
+                    : 'bg-white border-[#e7ded3] text-slate-800'
                 }`}
               >
                 <div className="px-3 py-1 font-serif text-[11px] font-bold text-slate-400 border-b border-inherit">

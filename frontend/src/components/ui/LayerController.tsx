@@ -19,10 +19,10 @@ export const LayerController: React.FC = () => {
 
   return (
     <div
-      className={`p-3 rounded-2xl border shadow-xl backdrop-blur-md text-xs select-none transition-colors ${
+      className={`p-3 rounded-xl border shadow-lg text-xs select-none transition-colors ${
         isDark
-          ? 'bg-slate-900/95 border-slate-800 text-slate-200'
-          : 'bg-white/95 border-[#e7ded3] text-slate-800'
+          ? 'bg-slate-900 border-slate-800 text-slate-200'
+          : 'bg-[#faf6f0] border-[#e7ded3] text-slate-800'
       }`}
     >
       <div className="flex items-center justify-between pb-2 border-b border-inherit mb-2">

@@ -25,6 +25,8 @@ import { AnatomyOrientationValidator } from './utils/AnatomyOrientationValidator
 import { AnatomyValidationPipeline } from './utils/AnatomyValidationPipeline';
 import { DentalNeuroLab } from './components/dental-neuroanatomy/DentalNeuroLab';
 import { useDentalNeuroStore } from './stores/useDentalNeuroStore';
+import { DigestiveLab } from './components/digestive/DigestiveLab';
+import { useDigestiveStore } from './stores/useDigestiveStore';
 
 export function App() {
   const fetchInitialData = useAnatomyStore((s) => s.fetchInitialData);
@@ -47,6 +49,7 @@ export function App() {
     const pathname = window.location.pathname.toLowerCase();
     const searchParams = new URLSearchParams(window.location.search);
     const structureParam = searchParams.get('structure');
+    const organParam = searchParams.get('organ');
     const labParam = searchParams.get('lab');
     const specimenParam = searchParams.get('specimen') || labParam;
     const genderParam = searchParams.get('gender')?.toLowerCase();
@@ -70,10 +73,21 @@ export function App() {
       structureParam.includes('mandib')
     );
 
-    // Explicit client routes: /toanthan, /lab/craniofacial, /lab/dental-neuroanatomy, /lab/rhm
+    // Explicit client routes: /toanthan, /lab/digestive, /lab/dental-neuroanatomy, /tieubansau
     if (pathname === '/' || pathname === '' || pathname === '/toanthan') {
       const currentSearch = window.location.search;
       window.history.replaceState({ viewMode: 'full-body' }, '', '/toanthan' + currentSearch);
+    } else if (
+      pathname.includes('/lab/digestive') ||
+      pathname.includes('/lab/he-tieu-hoa') ||
+      pathname.includes('/tieuhoa') ||
+      pathname.includes('digestive') ||
+      Boolean(organParam)
+    ) {
+      useAnatomyStore.setState({ viewMode: 'digestive' });
+      if (organParam) {
+        useDigestiveStore.getState().selectOrgan(organParam.toLowerCase().trim());
+      }
     } else if (
       pathname.includes('/lab/dental-neuroanatomy') ||
       pathname.includes('/lab/craniofacial') ||
@@ -140,6 +154,7 @@ export function App() {
       const currentPath = window.location.pathname.toLowerCase();
       const searchParams = new URLSearchParams(window.location.search);
       const structureParam = searchParams.get('structure');
+      const organParam = searchParams.get('organ');
       const specimenParam = searchParams.get('specimen');
       const popGender = searchParams.get('gender')?.toLowerCase();
 
@@ -149,7 +164,17 @@ export function App() {
         useAnatomyStore.setState({ gender: 'male' });
       }
 
-      if (currentPath.includes('dental-neuro') || currentPath.includes('craniofacial') || currentPath.includes('rhm')) {
+      if (
+        currentPath.includes('digestive') ||
+        currentPath.includes('he-tieu-hoa') ||
+        currentPath.includes('tieuhoa') ||
+        Boolean(organParam)
+      ) {
+        useAnatomyStore.setState({ viewMode: 'digestive' });
+        if (organParam) {
+          useDigestiveStore.getState().selectOrgan(organParam.toLowerCase().trim());
+        }
+      } else if (currentPath.includes('dental-neuro') || currentPath.includes('craniofacial') || currentPath.includes('rhm')) {
         useAnatomyStore.setState({ viewMode: 'dental-neuro' });
         if (structureParam) {
           const clean = structureParam.toLowerCase().trim();
@@ -228,6 +253,9 @@ export function App() {
           {/* Right Detailed Medical Dossier & Relationships Panel */}
           <AnatomyInfoPanel />
         </main>
+      ) : viewMode === 'digestive' ? (
+        // MODE D: DEDICATED 3D DIGESTIVE SYSTEM LAB (TA2 & Z-Anatomy CC BY-SA 4.0)
+        <DigestiveLab />
       ) : viewMode === 'dental-neuro' ? (
         // MODE C: CRANIOFACIAL & DENTAL NEUROANATOMY LAB
         <DentalNeuroLab />

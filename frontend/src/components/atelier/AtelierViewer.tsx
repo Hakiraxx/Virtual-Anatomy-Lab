@@ -373,10 +373,10 @@ const SpecimenGroup: React.FC<SpecimenGroupProps> = ({
 
                   {/* Clean, Elegant Medical Pin Bead (Fixed 10px size on screen, never blows up!) */}
                   <div
-                    className={`rounded-full border-[1.5px] border-white shadow-md transition-transform duration-150 ${
+                    className={`rounded-full border-[1.5px] border-white shadow-md transition-colors duration-150 ${
                       showBadge
-                        ? 'w-3.5 h-3.5 ring-2 ring-amber-400 scale-125'
-                        : 'w-2.5 h-2.5 opacity-90 hover:opacity-100 hover:scale-125'
+                        ? 'w-3.5 h-3.5 ring-2 ring-amber-400 opacity-100'
+                        : 'w-2.5 h-2.5 opacity-90 hover:opacity-100'
                     }`}
                     style={{ backgroundColor: hs.color || '#c05a4e' }}
                   />
@@ -651,7 +651,7 @@ export const AtelierViewer: React.FC = () => {
           </span>
           <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1">
             <span>{specimen.scientificName}</span>
-            <Volume2 className="w-3.5 h-3.5 text-amber-600 cursor-pointer hover:scale-110 transition" />
+            <Volume2 className="w-3.5 h-3.5 text-amber-600 cursor-pointer hover:text-amber-500 transition-colors" />
           </span>
         </div>
 

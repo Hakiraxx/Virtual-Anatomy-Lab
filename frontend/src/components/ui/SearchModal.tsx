@@ -5,6 +5,7 @@ import { searchAnatomyStructures, AnatomicalStructure } from '../../data/anatomy
 import { AnatomicalPronunciation } from './AnatomicalPronunciation';
 
 import { useDentalNeuroStore } from '../../stores/useDentalNeuroStore';
+import { useDigestiveStore } from '../../stores/useDigestiveStore';
 
 export const SearchModal: React.FC = () => {
   const activeModal = useAnatomyStore((s) => s.activeModal);
@@ -13,6 +14,7 @@ export const SearchModal: React.FC = () => {
   const triggerCameraFocus = useAnatomyStore((s) => s.triggerCameraFocus);
   const gender = useAnatomyStore((s) => s.gender);
   const language = useAnatomyStore((s) => s.language);
+  const viewMode = useAnatomyStore((s) => s.viewMode);
   const setViewMode = useAnatomyStore((s) => s.setViewMode);
   const setActiveSpecimen = useAnatomyStore((s) => s.setActiveSpecimen);
 
@@ -45,6 +47,23 @@ export const SearchModal: React.FC = () => {
       return;
     }
 
+    if (viewMode === 'digestive' || (st.systemId === 'digestive' && typeof window !== 'undefined' && window.location.pathname.includes('digestive'))) {
+      const organMap: Record<string, string> = {
+        liver: 'liver',
+        stomach: 'stomach',
+        gallbladder: 'gallbladder',
+        pancreas: 'pancreas',
+        intestine: 'small_intestine',
+        appendix: 'appendix',
+        colon: 'large_intestine',
+        esophagus: 'esophagus'
+      };
+      const targetOrgan = organMap[st.id] || 'stomach';
+      useDigestiveStore.getState().selectOrgan(targetOrgan);
+      setActiveModal(null);
+      return;
+    }
+
     selectStructure(st.id);
 
     // Focus camera onto structure position
@@ -60,7 +79,7 @@ export const SearchModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-start justify-center pt-20 px-4 z-50 animate-fade-in select-none">
-      <div className="w-full max-w-xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+      <div className="w-full max-w-xl bg-slate-900 border border-slate-700/80 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
         {/* Search Header Input */}
         <div className="p-4 border-b border-slate-800 flex items-center gap-3 bg-slate-950/60">
           <Search className="w-5 h-5 text-amber-500" />
@@ -69,8 +88,8 @@ export const SearchModal: React.FC = () => {
             type="text"
             placeholder={
               isVi
-                ? 'Tìm theo Tiếng Việt (Tim, Não...), Tiếng Anh (Heart...), Latin (Cor) hoặc Đồng nghĩa (Cardiac)...'
-                : 'Search by English (Heart...), Vietnamese (Tim...), Latin (Cor) or Synonyms (Cardiac)...'
+                ? 'Tìm theo Tiếng Việt (Tim, Não…), Tiếng Anh (Heart…), Latin (Cor) hoặc Đồng nghĩa (Cardiac)…'
+                : 'Search by English (Heart…), Vietnamese (Tim…), Latin (Cor) or Synonyms (Cardiac)…'
             }
             value={query}
             onChange={(e) => setQuery(e.target.value)}

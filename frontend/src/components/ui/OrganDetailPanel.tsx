@@ -37,7 +37,7 @@ export const OrganDetailPanel: React.FC = () => {
   return (
     <aside className="absolute top-16 right-3 bottom-16 w-84 sm:w-96 bg-slate-950/90 border border-slate-800/80 rounded-2xl backdrop-blur-xl shadow-2xl flex flex-col z-20 select-none overflow-hidden animate-slide-in">
       {/* Header with Close and Bookmark */}
-      <div className="p-4 border-b border-slate-800/80 bg-gradient-to-b from-slate-900/60 to-transparent">
+      <div className="p-4 border-b border-slate-800 bg-slate-900/80">
         <div className="flex items-start justify-between gap-2">
           <div>
             <div className="flex items-center gap-2 mb-1">

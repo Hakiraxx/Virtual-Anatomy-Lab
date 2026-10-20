@@ -67,11 +67,11 @@ export const NotesDrawer: React.FC = () => {
 
   return (
     <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-end z-50 animate-fade-in select-none">
-      <div className="w-full max-w-md h-full bg-slate-900 border-l border-slate-800 shadow-2xl flex flex-col">
+      <div className="w-full max-w-md h-full bg-slate-900 border-l border-slate-800 shadow-2xl flex flex-col overscroll-contain">
         {/* Header */}
         <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center">
               <FileText className="w-4 h-4" />
             </div>
             <div>

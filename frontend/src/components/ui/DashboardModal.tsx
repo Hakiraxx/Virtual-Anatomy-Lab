@@ -52,7 +52,7 @@ export const DashboardModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in select-none">
-      <div className="w-full max-w-3xl bg-slate-900 border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+      <div className="w-full max-w-3xl bg-slate-900 border border-slate-700/80 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
         {/* Header */}
         <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
           <div className="flex items-center gap-2.5">
@@ -79,12 +79,12 @@ export const DashboardModal: React.FC = () => {
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Greeting */}
-          <div className="bg-gradient-to-r from-cyan-950/40 via-slate-900 to-purple-950/30 border border-cyan-500/30 rounded-2xl p-5">
-            <h3 className="text-lg font-extrabold text-white">
-              Chào buổi tối, {user?.name || 'Bác sĩ tương lai'} 👋
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
+            <h3 className="text-base font-bold text-white">
+              Chào buổi tối, {user?.name || 'Bác sĩ tương lai'}
             </h3>
             <p className="text-xs text-slate-300 mt-1">
-              Bạn đang duy trì thói quen quan sát giải phẫu 3D rất tốt. Hãy tiếp tục ôn tập hệ thần kinh hôm nay!
+              Bạn đang duy trì thói quen quan sát giải phẫu 3D rất tốt. Hãy tiếp tục ôn tập hệ thần kinh và hệ tiêu hóa hôm nay.
             </p>
           </div>
 

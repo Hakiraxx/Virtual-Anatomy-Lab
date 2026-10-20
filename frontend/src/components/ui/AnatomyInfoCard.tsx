@@ -360,7 +360,7 @@ export const AnatomyInfoCard: React.FC<AnatomyInfoCardProps> = ({
             {onDeepInspect && (
               <button
                 onClick={onDeepInspect}
-                className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-semibold text-[10px] sm:text-[11px] shadow-xs hover:shadow transition cursor-pointer"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-600 hover:bg-amber-500 text-white font-semibold text-[10px] sm:text-[11px] transition-colors cursor-pointer"
                 title="Khám phá mô hình 3D chuyên sâu"
               >
                 <Sparkles className="w-3 h-3" />
@@ -523,7 +523,7 @@ export const AnatomyInfoCard: React.FC<AnatomyInfoCardProps> = ({
           {onDeepInspect && (
             <button
               onClick={onDeepInspect}
-              className="mt-2.5 w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-semibold text-xs shadow-md hover:shadow-lg transition cursor-pointer"
+              className="mt-2.5 w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs transition-colors cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>{isVi ? 'Khám phá tiêu bản 3D chuyên sâu' : 'Inspect 3D Specimen'}</span>

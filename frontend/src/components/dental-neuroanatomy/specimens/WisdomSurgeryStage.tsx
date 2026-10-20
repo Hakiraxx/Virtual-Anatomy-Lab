@@ -799,7 +799,9 @@ export const WisdomSurgeryStage: React.FC = () => {
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-full select-none overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950"
+      className={`relative w-full h-full select-none overflow-hidden ${
+        isDark ? 'bg-[#090d15]' : 'bg-[#f4efe8]'
+      }`}
     >
       {/* 1. TOP CONTROLS STACK (Zone A: Structure Navigation + Zone B: View Controls & Presets) */}
       <div

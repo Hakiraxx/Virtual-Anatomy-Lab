@@ -36,10 +36,10 @@ export const AtelierCards: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card 1: Curiosity Card */}
           <article
-            className={`p-5 rounded-2xl border flex flex-col justify-between ${
+            className={`p-5 rounded-xl border flex flex-col justify-between ${
               isDark
-                ? 'bg-gradient-to-br from-slate-900 to-slate-950 border-slate-800'
-                : 'bg-gradient-to-br from-[#ede3d5] to-[#fbf7f2] border-[#e7ded3]'
+                ? 'bg-slate-900 border-slate-800'
+                : 'bg-[#ede3d5] border-[#dfd4c4]'
             }`}
           >
             <div className="flex items-center justify-between">
@@ -63,10 +63,10 @@ export const AtelierCards: React.FC = () => {
 
           {/* Card 2: Microscopic View */}
           <article
-            className={`p-5 rounded-2xl border flex flex-col justify-between ${
+            className={`p-5 rounded-xl border flex flex-col justify-between ${
               isDark
-                ? 'bg-slate-900/60 border-slate-800'
-                : 'bg-white/70 border-[#e7ded3]'
+                ? 'bg-slate-900 border-slate-800'
+                : 'bg-white border-[#e7ded3]'
             }`}
           >
             <div>
@@ -95,10 +95,10 @@ export const AtelierCards: React.FC = () => {
 
           {/* Card 3: Compare Specimen */}
           <article
-            className={`p-5 rounded-2xl border flex flex-col justify-between ${
+            className={`p-5 rounded-xl border flex flex-col justify-between ${
               isDark
-                ? 'bg-slate-900/60 border-slate-800'
-                : 'bg-white/70 border-[#e7ded3]'
+                ? 'bg-slate-900 border-slate-800'
+                : 'bg-white border-[#e7ded3]'
             }`}
           >
             <div>
@@ -127,10 +127,10 @@ export const AtelierCards: React.FC = () => {
 
           {/* Card 4: System Connection */}
           <article
-            className={`p-5 rounded-2xl border flex flex-col justify-between ${
+            className={`p-5 rounded-xl border flex flex-col justify-between ${
               isDark
-                ? 'bg-slate-900/60 border-slate-800'
-                : 'bg-white/70 border-[#e7ded3]'
+                ? 'bg-slate-900 border-slate-800'
+                : 'bg-white border-[#e7ded3]'
             }`}
           >
             <div>

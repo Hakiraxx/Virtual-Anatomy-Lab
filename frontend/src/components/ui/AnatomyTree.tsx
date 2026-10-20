@@ -50,6 +50,7 @@ export const AnatomyTree: React.FC = () => {
   const focusOnStructure = useAnatomyStore((s) => s.focusOnStructure);
   const isTreeOpen = useAnatomyStore((s) => s.isTreeOpen);
   const setIsTreeOpen = useAnatomyStore((s) => s.setIsTreeOpen);
+  const setViewMode = useAnatomyStore((s) => s.setViewMode);
 
   const [expandedSystems, setExpandedSystems] = useState<Record<string, boolean>>({
     cardiovascular: true,
@@ -202,6 +203,16 @@ export const AnatomyTree: React.FC = () => {
               {/* Child Structures List */}
               {isExpanded && (
                 <div className="pl-4 pr-1 py-1 space-y-0.5 border-l-2 border-amber-600/30 ml-3.5 my-1">
+                  {sys.id === 'digestive' && (
+                    <button
+                      onClick={() => setViewMode('digestive')}
+                      className="w-full mb-1.5 flex items-center justify-between p-1.5 px-2 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-[11px] font-medium hover:bg-amber-500/25 transition cursor-pointer"
+                      title="Chuyển sang Phòng thí nghiệm Hệ Tiêu Hóa 3D tương tác"
+                    >
+                      <span>{isVi ? '✦ Mở Lab Tiêu Hóa 3D' : '✦ Open 3D Digestive Lab'}</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                   {structures.length === 0 ? (
                     <div className="text-[11px] text-slate-400 italic py-1 pl-2">
                       {isVi ? 'Không có cấu trúc phù hợp' : 'No structures matching filter'}

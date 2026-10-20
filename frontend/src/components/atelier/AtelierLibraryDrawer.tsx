@@ -43,7 +43,7 @@ export const AtelierLibraryDrawer: React.FC = () => {
 
       {/* Slide-in Drawer */}
       <aside
-        className={`relative w-80 sm:w-96 h-full flex flex-col shadow-2xl border-r z-50 transition-colors duration-200 ${
+        className={`relative w-80 sm:w-96 h-full flex flex-col shadow-2xl border-r z-50 overscroll-contain transition-colors duration-200 ${
           isDark
             ? 'bg-[#0f141c] border-slate-800 text-slate-100'
             : 'bg-[#fbf7f2] border-[#e7ded3] text-[#28231d]'

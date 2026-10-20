@@ -1,7 +1,8 @@
 # 🫀 MedAnatomy 3D — Nền Tảng Học & Mô Phỏng Giải Phẫu Người 3D Đa Nền Tảng
 
 > **Hệ thống mô phỏng và thực hành giải phẫu y khoa 3D độ chính xác cao dành cho Sinh viên Y khoa, Bác sĩ & Chuyên gia Răng Hàm Mặt.**  
-> Phát triển trên nền tảng **React 18**, **Three.js / React Three Fiber**, **TypeScript**, **Tailwind CSS**, và **Node.js / Express**.
+> Phát triển trên nền tảng **React 18**, **Three.js / React Three Fiber**, **TypeScript**, **Tailwind CSS**, và **Node.js / Express**.  
+> Tuân thủ các nguyên tắc thiết kế nghiêm ngặt: **No-Slop UI Standards**, **Vercel Web Interface Guidelines**, và **Terminologia Anatomica 2 (TA2)**.
 
 ---
 
@@ -26,9 +27,35 @@
 
 ---
 
-### 2. 🦷 Phòng Lab Răng Hàm Mặt & Phẫu Thuật Răng Khôn 3D (*Craniofacial & Dental Neuro Lab*)
+### 2. 🍏 Phòng Lab Hệ Tiêu Hóa 3D Tương Tác & Gan - Mật - Tụy (*Interactive 3D Digestive System*)
+- **Mô hình 3D thực 100% từ Z-Anatomy (CC BY-SA 4.0)**: Tuyệt đối không sử dụng mô hình AI tạo sinh hay hình khối tượng trưng (hình cầu/hình trụ).
+- **Cấu trúc ống tiêu hóa phân đoạn hoàn chỉnh**:
+  - **Miệng & Các tuyến nước bọt lớn**: Tuyến mang tai & ống Stenon, tuyến dưới hàm & ống Wharton, tuyến dưới lưỡi, lưỡi (đỉnh, thân, rễ).
+  - **Hầu & Thực quản**: Tỵ hầu, khẩu hầu, thanh hầu; thực quản 3 đoạn (cổ, ngực, bụng) với 3 chỗ hẹp sinh lý.
+  - **Dạ dày & Tá tràng**: Tâm vị, đáy vị, thân vị, hang môn vị, ống môn vị, cơ thắt môn vị; tá tràng chữ C 4 đoạn (D1-D4, hành tá tràng, góc Treitz).
+  - **Ruột non & Ruột già**: Hỗng tràng, hồi tràng, manh tràng; ruột thừa (*McBurney point*) và mạc treo ruột thừa; đại tràng lên, đại tràng ngang, đại tràng xuống, đại tràng sigma; 3 dải cơ dọc (*Taeniae coli: libera, mesocolica, omentalis*).
+- **Hệ Gan - Mật & 8 Phân Thùy Couinaud Độc Lập**:
+  - Phân thùy I (thùy đuôi), II, III, IV (thùy vuông), V, VI, VII, VIII với cuống cửa và tĩnh mạch gan riêng biệt.
+  - Túi mật (đáy, thân, cổ, túi Hartmann) và ống mật chủ (*Ductus choledochus*), tam giác gan-mật Calot.
+- **Tụy Tạng & Hệ Dẫn Lưu Ống Tụy**:
+  - Đầu tụy, mỏm móc (*Uncinate process*), cổ, thân, đuôi tụy.
+  - Ống tụy chính (*Duct of Wirsung*) đổ vào bóng Vater và ống tụy phụ (*Duct of Santorini*).
+- **Phúc Mạc & Mạc Nối**:
+  - Mạc nối lớn (*Greater omentum - "Người cảnh sát ổ bụng"*), mạc nối nhỏ (*Lesser omentum*), mạc treo đại tràng (*Mesocolon*).
+- **Tuần Hoàn Mạch Máu Tạng (*Splanchnic Vasculature*)**:
+  - Động mạch thân tạng (*Coeliac trunk*), ĐM gan chung, ĐM gan riêng, ĐM vị trái, ĐM lách.
+  - ĐM mạc treo tràng trên (SMA), ĐM mạc treo tràng dưới (IMA), cung mạch viền Drummond.
+  - Hệ tĩnh mạch cửa (*Hepatic portal system*), TM lách, TM mạc treo tràng trên/dưới.
+- **Công Cụ Khám Phá Chuyên Biệt**:
+  - **Chế độ X-Quang xuyên thấu**: Quan sát rõ các cấu trúc nằm sâu trong nhu mô (như ống tụy, đường mật trong gan).
+  - **Chế độ Cô Lập (*Isolate View*)**: Tập trung phân tích chuyên sâu một cơ quan mục tiêu.
+  - **Hồ sơ bệnh học lâm sàng**: Cung cấp kiến thức ngoại khoa, triệu chứng học (tam chứng Charcot, nghiệm pháp Murphy, điểm McBurney, quy tắc 4F).
+
+---
+
+### 3. 🦷 Phòng Lab Răng Hàm Mặt & Phẫu Thuật Răng Khôn 3D (*Craniofacial & Dental Neuro Lab*)
 - **Mô phỏng Phẫu thuật Răng khôn R48 & R38 theo 6 bước chuẩn lâm sàng**:
-  1. **Gây tê gai Spix**: Kim gây tê 27G định hướng vào lỗ hàm dưới (*Mandibular foramen*) từ phía răng cối nhỏ đối bên, hiển thị quầng thuốc tê phát quang.
+  1. **Gây tê gai Spix**: Kim gây tê 27G định hướng vào lỗ hàm dưới (*Mandibular foramen*) từ phía răng cối nhỏ đối bên.
   2. **Đường rạch & Vạt màng xương**: Vạt góc viền nướu bộc lộ xương vỏ với cây bóc tách màng xương Periosteal Elevator.
   3. **Mở xương tạo rãnh má**: Tay khoan phẫu thuật phay xương rãnh má và phía xa thân răng (*Bone guttering*).
   4. **Chia cắt thân răng (*Odontotomy*)**: Chia cắt thân - chân răng theo trục giải phẫu.
@@ -37,24 +64,22 @@
 - **Phân loại Phẫu thuật Chuyên sâu**:
   - **Phân loại Winter**: Răng mọc thẳng (*Vertical*), nghiêng gần (*Mesioangular*), nằm ngang (*Horizontal*), nghiêng xa (*Distoangular*).
   - **Phân loại Pell & Gregory**: Độ ngầm Class I, II, III & Độ sâu Position A, B, C.
-  - **Cảnh báo khoảng cách Thần kinh Huyệt răng dưới (IAN)**: Đo đạc và hiển thị khoảng cách thời gian thực (mm) từ chóp chân răng khôn đến ống hàm dưới, cảnh báo trực quan theo cấp độ an toàn (Xanh / Vàng / Đỏ).
+  - **Cảnh báo khoảng cách Thần kinh Huyệt răng dưới (IAN)**: Đo đạc và hiển thị khoảng cách thời gian thực (mm) từ chóp chân răng khôn đến ống hàm dưới.
 - **Hệ thống Góc nhìn Phẫu thuật Chuẩn Y khoa**:
   - **Mặt Nhai (*Occlusal*)**: Quan sát từ trên xuống mặt nhai và múi răng.
   - **Phía Má (*Buccal*)**: Quan sát mặt ngoài và bản xương má.
   - **Phía Lưỡi (*Lingual*)**: Quan sát mặt trong và thần kinh lưỡi.
   - **Cận Cảnh (*Close-up*)**: Phóng to chóp chân răng và mối liên hệ với dây thần kinh IAN.
-- **Tọa độ Không gian CAD Chuẩn Y khoa**:
-  - Đồng bộ chuẩn xác tuyệt đối các mốc giải phẫu: Xương hàm dưới, Răng 48, Răng 38, TK Huyệt răng dưới, TK Lưỡi, TK Cằm, Lỗ cằm, Lỗ hàm dưới.
 
 ---
 
-### 3. 🔬 Tiêu Bản Chuyên Sâu 59+ Cơ Quan (*Specimen Atelier*)
-- Khám phá độc lập hơn 59 tiêu bản giải phẫu cơ quan chuyên biệt (Tim, Não, Phổi, Gan, Dạ dày, Thận, Hệ cơ quan giác quan...).
+### 4. 🔬 Tiêu Bản Chuyên Sâu 59+ Cơ Quan (*Specimen Atelier*)
+- Khám phá độc lập hơn 59 tiêu bản giải phẫu cơ quan chuyên biệt (Tim, Não, Phổi, Gan, Dạ dày, Thận, Hệ giác quan...).
 - Tích hợp mốc giải phẫu (*Anatomical Hotspots*), chế độ cắt lớp (*Cross-section Slicing*), vi thể mô học (*Histology*), và tổng quan bệnh lý học lâm sàng.
 
 ---
 
-### 4. 📐 Hệ Thống Bố Cục Thông Minh & Vùng An Toàn (*Viewer Layout Manager*)
+### 5. 📐 Hệ Thống Bố Cục Thông Minh & Vùng An Toàn (*Viewer Layout Manager*)
 - **Tránh va chạm đa tầng (*Dynamic Collision Avoidance*)**:
   - Tầng điều hướng cấu trúc (Zone A) và Tầng điều khiển góc nhìn (Zone B) được xếp tầng theo cột dọc, chống đè chéo trên mọi kích thước màn hình.
   - **2D Projected Label Layer**: Nhãn giải phẫu 3D được tính toán tọa độ màn hình thời gian thực với phân cấp ưu tiên (*Selected > Critical > Context*), tự động né các thanh công cụ và né nhau.
@@ -66,13 +91,13 @@
 
 ---
 
-### 5. 🔊 Phát Âm Thuật Ngữ Y Khoa & Ký Hiệu Phiên Âm Quốc Tế (IPA)
+### 6. 🔊 Phát Âm Thuật Ngữ Y Khoa & Ký Hiệu Phiên Âm Quốc Tế (IPA)
 - Tra cứu và lắng nghe phát âm audio chuẩn xác của các cấu trúc giải phẫu bằng tiếng Anh Y khoa và thuật ngữ Latin.
 - Hiển thị đầy đủ phiên âm quốc tế IPA (*International Phonetic Alphabet*) giúp chuẩn hóa giao tiếp y khoa quốc tế.
 
 ---
 
-### 6. 📚 Công Cụ Học Tập & Kiểm Tra Toàn Diện
+### 7. 📚 Công Cụ Học Tập & Kiểm Tra Toàn Diện
 - **Bài học Y khoa (*Lessons*)**: Giáo trình giải phẫu hệ thống được biên soạn cô đọng.
 - **Flashcards 3D**: Luyện tập ghi nhớ vị trí và chức năng giải phẫu nhanh chóng.
 - **Trắc nghiệm Y khoa (*Quiz Mode*)**: Đánh giá kiến thức tương tác trực tiếp trên mô hình 3D.
@@ -115,13 +140,13 @@ npm run build:backend
 
 ## 🧪 Hệ Thống Kiểm Thử Tự Động (QA & Audit Suite)
 
-MedAnatomy 3D trang bị bộ kiểm thử tự động toàn diện gồm **14 suites** với **239 test assertions** nghiêm ngặt:
+MedAnatomy 3D trang bị bộ kiểm thử tự động toàn diện gồm **15 suites** với **257 test assertions** nghiêm ngặt (100% Pass Rate):
 
 ```bash
 node tests/runAllTests.mjs
 ```
 
-### Danh mục các Suite kiểm thử tự động:
+### Danh mục 15 Suite kiểm thử tự động:
 1. `Registry Consistency`: Tính toàn vẹn của danh mục cấu trúc và danh mục tạng phủ.
 2. `Route Audit`: Kiểm tra điều hướng sâu, query parameters và API health.
 3. `Asset Integrity`: Kiểm tra sự tồn tại và tính hợp lệ của toàn bộ mô hình GLB/GLTF.
@@ -136,6 +161,7 @@ node tests/runAllTests.mjs
 12. `Dental Coordinate Alignment`: Kiểm định không gian metric sọ mặt và răng khôn.
 13. `Dental 3D View Transition & Camera Sync`: Kiểm thử chống giật lag camera và đồng bộ góc nhìn.
 14. `Dental 3D Viewer Layout & Safe Area`: Kiểm định chống va chạm lớp phủ giao diện, safe area 24-32px, và responsive drawer.
+15. `3D Digestive System & Clinical Audit`: Kiểm tra 181 node phân đoạn giải phẫu tiêu hóa Z-Anatomy, 8 phân thùy Couinaud, hệ mạch máu mạc treo và cấp phép CC BY-SA 4.0.
 
 ---
 
@@ -146,10 +172,11 @@ node tests/runAllTests.mjs
 - **State Management**: Zustand
 - **Styling & UI**: Tailwind CSS, Lucide React, Cormorant Garamond / DM Sans / JetBrains Mono typography
 - **Backend**: Node.js, Express, TypeScript, Prisma ORM, JWT, Bcrypt
-- **Tài liệu tham khảo Y khoa**: Netter's Atlas of Human Anatomy, Gray's Anatomy, Moore Clinically Oriented Anatomy, Z-Anatomy (CC BY-SA 4.0), FDI World Dental Federation.
+- **Tài liệu tham khảo Y khoa**: Terminologia Anatomica 2 (TA2), Netter's Atlas of Human Anatomy, Gray's Anatomy, Moore Clinically Oriented Anatomy, Z-Anatomy (CC BY-SA 4.0), FDI World Dental Federation.
 
 ---
 
 ## 📄 Bản Quyền & Giấy Phép
 
-Dự án được xây dựng phục vụ mục đích học tập, nghiên cứu và phát triển giáo dục y khoa phi lợi nhuận.
+Dự án được xây dựng phục vụ mục đích học tập, nghiên cứu và phát triển giáo dục y khoa phi lợi nhuận.  
+Mô hình 3D hệ tạng phủ và mạch máu được phân phối theo giấy phép [Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](https://creativecommons.org/licenses/by-sa/4.0/) từ cộng đồng Z-Anatomy.

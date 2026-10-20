@@ -39,7 +39,7 @@ export const AnatomyLabelLayer: React.FC<AnatomyLabelLayerProps> = ({
               transform: 'translate(-50%, -50%)',
               transition: 'left 120ms ease-out, top 120ms ease-out, opacity 150ms ease-out'
             }}
-            className={`pointer-events-auto cursor-pointer rounded-xl border backdrop-blur-md shadow-2xl flex items-center gap-1.5 transition-all duration-150 group hover:scale-105 active:scale-95 ${
+            className={`pointer-events-auto cursor-pointer rounded-lg border backdrop-blur-md shadow-lg flex items-center gap-1.5 transition-colors duration-150 group ${
               isSelected
                 ? 'bg-amber-500/95 text-slate-950 font-bold border-amber-300 ring-2 ring-amber-400/40 px-2.5 py-1 text-[11px] z-30 shadow-amber-500/30'
                 : isCritical

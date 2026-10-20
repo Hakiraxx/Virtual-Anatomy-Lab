@@ -55,8 +55,8 @@ export const AnatomicalPins: React.FC = () => {
                     style={{ backgroundColor: organ.color || '#06b6d4' }}
                   />
                   <div
-                    className={`relative w-3.5 h-3.5 rounded-full border-2 border-white shadow-lg transition-transform duration-200 ${
-                      showBadge ? 'scale-125 ring-2 ring-cyan-400' : 'hover:scale-125'
+                    className={`relative w-3.5 h-3.5 rounded-full border-2 border-white shadow-md transition-colors duration-150 ${
+                      showBadge ? 'ring-2 ring-amber-400' : 'opacity-90 hover:opacity-100'
                     }`}
                     style={{ backgroundColor: organ.color || '#06b6d4' }}
                   />

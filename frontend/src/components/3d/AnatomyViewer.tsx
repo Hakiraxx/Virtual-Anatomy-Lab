@@ -20,7 +20,7 @@ export const AnatomyViewer: React.FC = () => {
   const controlsRef = React.useRef<any>(null);
 
   return (
-    <div className="relative w-full h-full bg-gradient-to-b from-[#0a0e17] via-[#0f172a] to-[#070b12] overflow-hidden select-none">
+    <div className="relative w-full h-full bg-[#0a0e17] overflow-hidden select-none">
       {/* 3D Canvas Scene */}
       <Canvas
         shadows

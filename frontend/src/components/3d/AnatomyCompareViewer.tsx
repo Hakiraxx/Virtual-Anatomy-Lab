@@ -173,7 +173,7 @@ export const AnatomyCompareViewer: React.FC<{
 
           <Canvas
             camera={{ position: [0.03, 0.05, 0.12], fov: 35 }}
-            className="w-full h-full bg-gradient-to-b from-[#090e18] to-[#04070d]"
+            className="w-full h-full bg-[#080d16]"
           >
             <ambientLight intensity={1.2} />
             <directionalLight position={[2, 4, 3]} intensity={2.0} />
@@ -241,7 +241,7 @@ export const AnatomyCompareViewer: React.FC<{
 
           <Canvas
             camera={{ position: [0.03, 0.05, 0.12], fov: 35 }}
-            className="w-full h-full bg-gradient-to-b from-[#090e18] to-[#04070d]"
+            className="w-full h-full bg-[#080d16]"
           >
             <ambientLight intensity={1.2} />
             <directionalLight position={[2, 4, 3]} intensity={2.0} />

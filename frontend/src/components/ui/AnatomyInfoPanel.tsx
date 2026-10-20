@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAnatomyStore } from '../../stores/useAnatomyStore';
+import { useDigestiveStore } from '../../stores/useDigestiveStore';
 import {
   ANATOMICAL_STRUCTURES,
   ANATOMICAL_SYSTEMS,
@@ -35,6 +36,23 @@ export const AnatomyInfoPanel: React.FC = () => {
     if (!structure) {
       setActiveSpecimen('skeleton');
       setViewMode('specimen');
+      return;
+    }
+
+    if (structure.systemId === 'digestive') {
+      setViewMode('digestive');
+      const organMap: Record<string, string> = {
+        liver: 'liver',
+        stomach: 'stomach',
+        gallbladder: 'gallbladder',
+        pancreas: 'pancreas',
+        intestine: 'small_intestine',
+        appendix: 'appendix',
+        colon: 'large_intestine',
+        esophagus: 'esophagus'
+      };
+      const targetOrgan = organMap[structure.id] || 'stomach';
+      useDigestiveStore.getState().selectOrgan(targetOrgan);
       return;
     }
 

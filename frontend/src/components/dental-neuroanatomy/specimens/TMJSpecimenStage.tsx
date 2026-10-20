@@ -457,7 +457,7 @@ export const TMJSpecimenStage: React.FC = () => {
   const mmOpening = Math.round(tmjJawState * 50);
 
   return (
-    <div className="relative w-full h-full select-none overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+    <div className={`relative w-full h-full select-none overflow-hidden ${isDark ? 'bg-[#090d15]' : 'bg-[#f4efe8]'}`}>
       {/* 1. TOP HEADER OVERLAY */}
       <div className="absolute top-4 left-4 z-20 flex flex-col gap-2 pointer-events-auto">
         <div

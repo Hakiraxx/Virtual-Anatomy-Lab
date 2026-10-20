@@ -1078,7 +1078,7 @@ export const DentalNeuroInfoPanel: React.FC<DentalNeuroInfoPanelProps> = ({
           <div className="pt-2">
             <button
               onClick={toggleAnesthesiaMode}
-              className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow cursor-pointer transition"
+              className="w-full py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
             >
               <Syringe className="w-3.5 h-3.5" />
               <span>Chế độ Học Gây Tê Nha Khoa</span>
