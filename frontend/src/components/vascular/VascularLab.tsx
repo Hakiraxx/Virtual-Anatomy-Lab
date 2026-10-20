@@ -61,6 +61,17 @@ export const VascularLab: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Sync initial vessel from URL if present
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const v = params.get('vessel') || params.get('structure');
+      if (v) {
+        useVascularStore.getState().selectVessel(v);
+      }
+    }
+  }, []);
+
   // Drag handler for Left Tree Splitter
   const handleTreeSplitterPointerDown = (e: React.PointerEvent) => {
     e.preventDefault();

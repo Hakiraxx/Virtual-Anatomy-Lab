@@ -347,6 +347,7 @@ const VascularModelContent: React.FC<{
 export const Vascular3DStage: React.FC = () => {
   const {
     selectedVesselId,
+    hoveredVesselId,
     activeRegion,
     isolatedView,
     showLabels,
@@ -407,70 +408,50 @@ export const Vascular3DStage: React.FC = () => {
     });
   };
 
-  // Build active label anchors
+  // Build active label anchors (Clean on-demand display)
   const labelAnchors = useMemo<VascularLabelAnchor[]>(() => {
     if (!showLabels) return [];
 
     const anchors: VascularLabelAnchor[] = [];
     const selected = getSelectedVesselData();
 
-    // 1. Selected Vessel is always priority 1
+    // 1. Show label and segment info for the actively selected vessel
     if (selected) {
       anchors.push({
         id: selected.id,
         nameVi: selected.nameVi,
         nameEn: selected.nameEn,
-        subtitle: selected.nameLa.split(' ')[0],
+        subtitle: selected.nameLa,
         worldPos: selected.canonicalCenter,
         priority: 1,
         isSelected: true,
-        isCritical: true
+        isCritical: true,
+        width: 280,
+        height: 64
       });
     }
 
-    // 2. Add candidates from active region or top landmarks
-    let candidates: VascularStructureData[] = [];
-    if (activeRegion !== 'all') {
-      candidates = getVesselsByRegion(activeRegion);
-    } else {
-      // Pick key anatomical landmarks across regions
-      const landmarkIds = [
-        'ascending_aorta',
-        'brachiocephalic_trunk',
-        'anterior_interventricular_artery',
-        'right_coronary_artery',
-        'common_carotid_artery_left',
-        'middle_cerebral_artery_m1',
-        'superior_sagittal_sinus',
-        'brachial_artery',
-        'radial_artery',
-        'pulmonary_trunk',
-        'celiac_trunk',
-        'superior_mesenteric_artery',
-        'renal_artery_left',
-        'femoral_artery',
-        'anterior_tibial_artery',
-        'great_saphenous_vein'
-      ];
-      candidates = VASCULAR_STRUCTURES.filter((v) => landmarkIds.includes(v.id));
-    }
-
-    for (const v of candidates) {
-      if (v.id === selectedVesselId) continue;
-      anchors.push({
-        id: v.id,
-        nameVi: v.nameVi,
-        nameEn: v.nameEn,
-        subtitle: v.nameLa.split(' ')[0],
-        worldPos: v.canonicalCenter,
-        priority: 2,
-        isSelected: false,
-        isCritical: false
-      });
+    // 2. Light preview label when hovering over another vessel
+    if (hoveredVesselId && hoveredVesselId !== selectedVesselId) {
+      const hovered = getVascularStructureById(hoveredVesselId);
+      if (hovered) {
+        anchors.push({
+          id: hovered.id,
+          nameVi: hovered.nameVi,
+          nameEn: hovered.nameEn,
+          subtitle: hovered.nameLa.split(' ')[0],
+          worldPos: hovered.canonicalCenter,
+          priority: 2,
+          isSelected: false,
+          isCritical: false,
+          width: 140,
+          height: 32
+        });
+      }
     }
 
     return anchors;
-  }, [showLabels, selectedVesselId, activeRegion, getSelectedVesselData]);
+  }, [showLabels, selectedVesselId, hoveredVesselId, getSelectedVesselData]);
 
   // Handle projected 2D labels and run collision avoidance
   const handleProjectedLabels = useCallback(

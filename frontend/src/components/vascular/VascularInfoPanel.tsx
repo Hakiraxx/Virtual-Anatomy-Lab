@@ -16,6 +16,7 @@ import {
 import { useVascularStore, VascularTab } from '../../stores/useVascularStore';
 import { useAnatomyStore } from '../../stores/useAnatomyStore';
 import { VASCULAR_REGIONS } from '../../data/vascularSystemData';
+import { VascularSegmentBreadcrumb } from './VascularSegmentBreadcrumb';
 
 export const VascularInfoPanel: React.FC = () => {
   const {
@@ -167,6 +168,11 @@ export const VascularInfoPanel: React.FC = () => {
             {isolatedView ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
             <span>{isolatedView ? 'Hủy Cô Lập' : 'Cô Lập'}</span>
           </button>
+        </div>
+
+        {/* Anatomical Segment & Pathway Progression Hierarchy */}
+        <div className="mt-3">
+          <VascularSegmentBreadcrumb vesselId={vessel.id} />
         </div>
       </div>
 

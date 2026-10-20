@@ -16,6 +16,7 @@ import {
   VascularRegion,
   VesselType
 } from '../../data/vascularSystemData';
+import { getVascularSegmentHierarchy } from '../../utils/VascularSegmentManager';
 
 export const VascularTree: React.FC = () => {
   const {
@@ -249,7 +250,25 @@ export const VascularTree: React.FC = () => {
                             }`}
                           />
                           <div className="truncate min-w-0">
-                            <div className="truncate font-medium">{v.nameVi}</div>
+                            <div className="truncate font-medium flex items-center gap-1.5">
+                              <span className="truncate">{v.nameVi}</span>
+                              {(() => {
+                                const hier = getVascularSegmentHierarchy(v.id);
+                                if (!hier) return null;
+                                const shortSeg = hier.currentSegmentName.split(':')[0].trim();
+                                return (
+                                  <span
+                                    className={`text-[9px] font-mono px-1 py-0.2 rounded font-semibold flex-shrink-0 ${
+                                      isSelected
+                                        ? 'bg-slate-950/25 text-white'
+                                        : 'bg-amber-500/15 text-amber-400 border border-amber-500/25'
+                                    }`}
+                                  >
+                                    {shortSeg}
+                                  </span>
+                                );
+                              })()}
+                            </div>
                             <div
                               className={`text-[10px] font-mono truncate ${
                                 isSelected ? 'text-amber-100' : 'text-slate-500 group-hover:text-slate-400'

@@ -47,7 +47,7 @@ interface VascularState {
 }
 
 export const useVascularStore = create<VascularState>((set, get) => ({
-  selectedVesselId: 'ascending_aorta', // Default to Ascending Aorta for immediate cardiovascular immersion
+  selectedVesselId: null, // Clean on initial load; clicks or URL ?vessel= will select
   hoveredVesselId: null,
   activeRegion: 'all',
   typeFilter: 'all',
