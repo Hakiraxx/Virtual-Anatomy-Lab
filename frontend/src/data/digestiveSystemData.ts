@@ -303,7 +303,7 @@ export const DIGESTIVE_SYSTEM_DATA: Record<string, DigestiveOrganData> = {
     category: 'esophagus_stomach',
     primaryNodeName: 'Stomach',
     meshNodeNames: ['Stomach'],
-    canonicalCenter: [0.05, 0.3383, 0.02],
+    canonicalCenter: [0.095, 0.345, 0.065],
     approximateDimensions: 'Dài 25 cm, rộng 12 cm, dung tích 1.2 - 1.5 L',
     anatomicalQuadrant: 'Vùng Thượng vị (Epigastrium) & Hạ sườn trái (LUQ)',
     embryologicalOrigin: 'Ruột trước (Foregut) xoay 90 độ theo chiều kim đồng hồ quanh trục dọc',
@@ -347,8 +347,8 @@ export const DIGESTIVE_SYSTEM_DATA: Record<string, DigestiveOrganData> = {
       'Infantile hypertrophic pyloric stenosis causes projectile non-bilious vomiting, treated by Ramstedt pyloromyotomy.'
     ],
     cameraPreset: {
-      target: [0.05, 0.34, 0.02],
-      position: [0.05, 0.38, 0.38]
+      target: [0.095, 0.34, 0.03],
+      position: [0.095, 0.38, 0.36]
     }
   },
 
@@ -600,7 +600,7 @@ export const DIGESTIVE_SYSTEM_DATA: Record<string, DigestiveOrganData> = {
       'Posterior lateral segment of liver (VII)',
       'Posterior medial segment of liver (VIII)'
     ],
-    canonicalCenter: [0.02, 0.3476, 0.04],
+    canonicalCenter: [-0.018, 0.355, 0.055],
     approximateDimensions: 'Nặng 1.4 - 1.8 kg (tạng lớn nhất trong ổ bụng), rộng 25-28 cm, cao 15-20 cm',
     anatomicalQuadrant: 'Toàn bộ Hạ sườn phải (RUQ), Thượng vị và lấn một phần Hạ sườn trái (LUQ)',
     embryologicalOrigin: 'Nội bì ruột trước (Mầm gan phát triển vào mạc treo vị bụng / vách ngang)',

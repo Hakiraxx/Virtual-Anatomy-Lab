@@ -57,8 +57,8 @@ export const DigestiveLabelProjector: React.FC<DigestiveLabelProjectorProps> = (
         screenY: py,
         inFront,
         priority: anchor.priority,
-        width: anchor.width || (anchor.priority === 1 ? 160 : anchor.priority === 2 ? 135 : 115),
-        height: anchor.height || (anchor.priority === 1 ? 30 : 26),
+        width: anchor.width || (anchor.priority === 1 ? 180 : anchor.priority === 2 ? 150 : 130),
+        height: anchor.height || (anchor.priority === 1 ? 38 : 32),
         isSelected: anchor.isSelected,
         isCritical: anchor.isCritical
       });

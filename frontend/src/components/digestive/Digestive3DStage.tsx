@@ -350,10 +350,10 @@ const SplanchnicVessels: React.FC<{
   return (
     <group name="splanchnic-vessels">
       {arteriesGeom.map((g, i) => (
-        <mesh key={`art-${i}`} geometry={g} material={arteryMat} />
+        <mesh key={`art-${i}`} geometry={g} material={arteryMat} raycast={() => null} />
       ))}
       {veinsGeom.map((g, i) => (
-        <mesh key={`vein-${i}`} geometry={g} material={veinMat} />
+        <mesh key={`vein-${i}`} geometry={g} material={veinMat} raycast={() => null} />
       ))}
     </group>
   );
