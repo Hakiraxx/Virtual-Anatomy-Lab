@@ -1,16 +1,20 @@
 import React from 'react';
+import { X } from 'lucide-react';
 import { PlacedLabel } from '../../utils/ViewerLayoutManager';
+import { DIGESTIVE_SYSTEM_DATA } from '../../data/digestiveSystemData';
 
 export interface DigestiveLabelLayerProps {
   labels: PlacedLabel[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  onDismiss?: () => void;
 }
 
 export const DigestiveLabelLayer: React.FC<DigestiveLabelLayerProps> = ({
   labels,
   selectedId,
-  onSelect
+  onSelect,
+  onDismiss
 }) => {
   if (!labels || labels.length === 0) return null;
 
@@ -24,7 +28,7 @@ export const DigestiveLabelLayer: React.FC<DigestiveLabelLayerProps> = ({
         if (!item.isVisible) return null;
 
         const isSelected = item.isSelected || item.id === selectedId;
-        const isCritical = item.isCritical || item.priority === 2;
+        const organData = DIGESTIVE_SYSTEM_DATA[item.id];
 
         return (
           <div
@@ -42,42 +46,66 @@ export const DigestiveLabelLayer: React.FC<DigestiveLabelLayerProps> = ({
               top: `${item.placedY}px`,
               transform: 'translate(-50%, -50%)',
               transition: 'left 120ms ease-out, top 120ms ease-out, opacity 150ms ease-out',
-              zIndex: isSelected ? 30 : isCritical ? 20 : 10
+              zIndex: isSelected ? 30 : 15
             }}
-            className={`pointer-events-auto cursor-pointer rounded-xl border backdrop-blur-md shadow-lg flex items-center gap-2 transition-all duration-150 select-none group touch-manipulation relative before:absolute before:-inset-2 before:content-[''] ${
+            className={`pointer-events-auto cursor-pointer rounded-lg border backdrop-blur-md shadow-lg flex flex-col transition-colors select-none group touch-manipulation relative before:absolute before:-inset-2 before:content-[''] ${
               isSelected
-                ? 'bg-amber-500 text-slate-950 font-bold border-amber-300 ring-2 ring-amber-400/50 px-3.5 py-1.5 text-xs shadow-amber-500/40 scale-105'
-                : isCritical
-                ? 'bg-slate-900/95 text-amber-300 font-semibold border-amber-500/70 hover:border-amber-400 hover:bg-slate-900 px-3 py-1.5 text-xs hover:scale-105 shadow-black/70'
-                : 'bg-slate-950/85 text-slate-200 font-medium border-slate-700/80 hover:border-slate-500 hover:text-white px-2.5 py-1 text-[11px] hover:scale-105'
+                ? 'bg-amber-500 text-slate-950 border-amber-300 ring-2 ring-amber-400/50 p-2 text-xs shadow-amber-500/40 min-w-[180px] max-w-[280px]'
+                : 'bg-slate-950/85 text-slate-200 font-medium border-slate-700/80 hover:border-slate-500 hover:text-white px-2.5 py-1 text-xs'
             }`}
-            title={`Nhấp để chọn và định vị góc nhìn vào ${item.nameVi}`}
+            title={isSelected ? `${item.nameVi} (Đang chọn)` : `Nhấp để chọn và định vị góc nhìn vào ${item.nameVi}`}
           >
-            {/* Status dot indicator */}
-            {isSelected ? (
-              <span className="w-2.5 h-2.5 rounded-full bg-slate-950 flex-shrink-0 animate-pulse" />
-            ) : isCritical ? (
-              <span className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" />
-            ) : (
-              <span className="w-1.5 h-1.5 rounded-full bg-slate-400 flex-shrink-0" />
-            )}
-
-            {/* Organ Name */}
-            <span className="truncate max-w-[140px] sm:max-w-[180px] tracking-wide">
-              {item.nameVi}
-            </span>
-
-            {/* Subtitle / Latin tag */}
-            {item.subtitle && (
+            {/* Header row */}
+            <div className="flex items-center gap-1.5 w-full">
+              {/* Status dot indicator */}
               <span
-                className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-normal ${
+                className={`rounded-full flex-shrink-0 ${
                   isSelected
-                    ? 'bg-slate-950/20 text-slate-950 font-bold'
-                    : 'bg-black/40 text-slate-400'
+                    ? 'w-2 h-2 bg-slate-950 animate-pulse'
+                    : 'w-1.5 h-1.5 bg-amber-400'
                 }`}
-              >
-                {item.subtitle}
+              />
+
+              {/* Organ Name */}
+              <span className={`truncate flex-1 tracking-wide ${isSelected ? 'font-bold' : 'font-medium'}`}>
+                {item.nameVi}
               </span>
+
+              {/* Subtitle / Latin tag */}
+              {item.subtitle && (
+                <span
+                  className={`text-[9px] font-mono px-1.5 py-0.2 rounded font-normal flex-shrink-0 ${
+                    isSelected
+                      ? 'bg-slate-950/20 text-slate-950 font-semibold'
+                      : 'bg-black/40 text-slate-400'
+                  }`}
+                >
+                  {item.subtitle}
+                </span>
+              )}
+
+              {/* Close / Dismiss button when selected */}
+              {isSelected && onDismiss && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDismiss();
+                  }}
+                  className="ml-1 p-0.5 rounded hover:bg-slate-950/20 active:bg-slate-950/30 text-slate-950 transition-colors cursor-pointer flex-shrink-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950"
+                  title="Ẩn nhãn này"
+                  aria-label="Ẩn nhãn"
+                >
+                  <X className="w-3.5 h-3.5 stroke-[2.5]" />
+                </button>
+              )}
+            </div>
+
+            {/* When selected, show concise description snippet / function */}
+            {isSelected && organData && (
+              <div className="mt-1 pt-1 border-t border-slate-950/20 text-[10.5px] leading-snug text-slate-900 font-normal line-clamp-2">
+                {organData.overviewVi || (organData.functionVi && organData.functionVi[0]) || ''}
+              </div>
             )}
           </div>
         );

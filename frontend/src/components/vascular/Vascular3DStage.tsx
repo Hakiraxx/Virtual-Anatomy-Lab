@@ -515,6 +515,7 @@ export const Vascular3DStage: React.FC = () => {
         camera={{ position: [0.045, 0.45, 0.70], fov: 45, near: 0.01, far: 20 }}
         gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
         className="w-full h-full cursor-grab active:cursor-grabbing"
+        onPointerMissed={() => selectVessel(null)}
       >
         <color attach="background" args={['#070b12']} />
 
@@ -560,6 +561,7 @@ export const Vascular3DStage: React.FC = () => {
           labels={placedLabels}
           selectedId={selectedVesselId}
           onSelect={(id) => selectVessel(id)}
+          onDismiss={() => selectVessel(null)}
         />
       )}
 

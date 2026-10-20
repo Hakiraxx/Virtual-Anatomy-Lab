@@ -489,6 +489,7 @@ export const Digestive3DStage: React.FC<Digestive3DStageProps> = ({
   const controlsRef = useRef<any>(null);
 
   const selectedOrganId = useDigestiveStore((s) => s.selectedOrganId);
+  const hoveredOrganId = useDigestiveStore((s) => s.hoveredOrganId);
   const selectOrgan = useDigestiveStore((s) => s.selectOrgan);
   const isolatedView = useDigestiveStore((s) => s.isolatedView);
   const isDark = useAnatomyStore((s) => s.atelierTheme === 'dark');
@@ -522,33 +523,52 @@ export const Digestive3DStage: React.FC<Digestive3DStageProps> = ({
   // Raw projected labels from 3D space
   const [rawLabels, setRawLabels] = useState<RawProjectedLabel[]>([]);
 
-  // 3D Anchors for projected Anatomy Labels
+  // 3D Anchors for projected Anatomy Labels (Clean on-demand display)
   const labelAnchors = useMemo<DigestiveLabelAnchor[]>(() => {
     if (!showLabels) return [];
 
-    return DIGESTIVE_STRUCTURE_LIST.map((organ) => {
-      const isSelected = selectedOrganId === organ.id;
-      // Core GI organs get priority 2, other organs get priority 3
-      const isCore =
-        organ.id === 'stomach' ||
-        organ.id === 'liver' ||
-        organ.id === 'pancreas' ||
-        organ.id === 'duodenum' ||
-        organ.id === 'gallbladder' ||
-        organ.id === 'appendix';
+    const anchors: DigestiveLabelAnchor[] = [];
 
-      return {
+    // Show label and description for the actively selected organ
+    if (selectedOrganId && DIGESTIVE_SYSTEM_DATA[selectedOrganId]) {
+      const organ = DIGESTIVE_SYSTEM_DATA[selectedOrganId];
+      anchors.push({
         id: organ.id,
         nameVi: organ.nameVi,
         nameEn: organ.nameEn,
         subtitle: organ.nameLa,
         worldPos: organ.canonicalCenter,
-        priority: isSelected ? 1 : isCore ? 2 : 3,
-        isSelected,
-        isCritical: isCore
-      };
-    });
-  }, [selectedOrganId, showLabels]);
+        priority: 1,
+        isSelected: true,
+        isCritical: true,
+        width: 260,
+        height: 64
+      });
+    }
+
+    // Optionally show a light preview label when hovering over another organ
+    if (
+      hoveredOrganId &&
+      hoveredOrganId !== selectedOrganId &&
+      DIGESTIVE_SYSTEM_DATA[hoveredOrganId]
+    ) {
+      const organ = DIGESTIVE_SYSTEM_DATA[hoveredOrganId];
+      anchors.push({
+        id: organ.id,
+        nameVi: organ.nameVi,
+        nameEn: organ.nameEn,
+        subtitle: organ.nameLa,
+        worldPos: organ.canonicalCenter,
+        priority: 2,
+        isSelected: false,
+        isCritical: false,
+        width: 140,
+        height: 32
+      });
+    }
+
+    return anchors;
+  }, [selectedOrganId, hoveredOrganId, showLabels]);
 
   // Compute placed labels with collision avoidance
   const placedLabels: PlacedLabel[] = useMemo(() => {
@@ -586,6 +606,7 @@ export const Digestive3DStage: React.FC<Digestive3DStageProps> = ({
         camera={{ position: [0.045, 0.35, 0.65], fov: 42, near: 0.05, far: 20 }}
         gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
         className="w-full h-full cursor-grab active:cursor-grabbing"
+        onPointerMissed={() => selectOrgan(null)}
       >
         <Suspense fallback={null}>
           <DigestiveScene
@@ -603,6 +624,7 @@ export const Digestive3DStage: React.FC<Digestive3DStageProps> = ({
           labels={placedLabels}
           selectedId={selectedOrganId}
           onSelect={(id) => selectOrgan(id)}
+          onDismiss={() => selectOrgan(null)}
         />
       )}
     </div>

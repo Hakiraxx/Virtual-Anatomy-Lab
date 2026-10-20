@@ -58,7 +58,7 @@ const DEFAULT_LAYERS: DigestiveLayers = {
 };
 
 export const useDigestiveStore = create<DigestiveState>((set, get) => ({
-  selectedOrganId: 'stomach', // Default to stomach for immediate anatomical immersion
+  selectedOrganId: null, // Clean on initial load; clicks or URL ?organ= will select
   hoveredOrganId: null,
   activeSubdivisionId: null,
   activeCategory: 'all',
